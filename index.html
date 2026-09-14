@@ -831,38 +831,36 @@
         loadingStatusText.textContent = '1. Aşama: Marka Resmi Sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, N11 taranıyor...';
         loadingProgressBar.style.width = '45%';
 
-        const searchPrompt = `Türkiye perakende ve e-ticaret sitelerinde (Akakçe, Cimri, Trendyol, Hepsiburada, N11), markanın kendi resmi web satış sitesinde ve elden senetli perakende mağazalarında (Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet) şu ürünün ŞU ANDA SATIN ALINABİLİR / STOKTA OLAN CANLI SATIŞ FİYATLARINI (TL) ve DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ (URL) araştır:
-Ürün ve Model: "${productName}"
+        // Model adından arama optimizasyonu için temiz kısa isim üret (aksesuar tuzağını önler, doğrudan ürünü bulur)
+        const shortName = productName.replace(/\s+(5g|128gb|256gb|512gb|1tb|\d+gb|\d+\s*gb|ram|siyah|beyaz|gold|altın|gri|mavi|yeşil).*$/i, '').trim() || productName;
 
-HEDEF ARAMA SORGULARI (Google Arama motorunu kullanarak şu spesifik aramaları gerçekleştir):
-- "${productName} trendyol"
-- "${productName} hepsiburada"
-- "${productName} akakce"
-- "${productName} cimri"
-- "${productName} n11"
-- "${productName} taspinar"
-- "${productName} evkur"
-- "${productName} yonavm"
-- "${productName} resmi sitesi"
+        const searchPrompt = `Sen Türkiye e-ticaret ve perakende piyasasında uzman bir Kıdemli Fiyat Araştırmacısısın.
+GÖREV: Aşağıdaki ürün için canlı Google Aramaları gerçekleştirerek her platformdaki DOĞRUDAN ÜRÜN SAYFASI LİNKİNİ ve NET SATIŞ FİYATINI (TL) bul.
+KESİNLİKLE İŞLEMCİ, EKRAN, KAMERA GİBİ TEKNİK ÖZELLİK YAZMA! SADECE FİYAT, STOK VE DOĞRUDAN ÜRÜN LİNKİ YAZ!
 
-Lütfen yukarıdaki aramalar sonucunda şu platformlardaki DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ, GÜNCEL STOK DURUMUNU ve CANLI TL FİYATLARINI tespit et:
-1. Markanın Kendi Resmi Satış Sitesi: Ürün sepete eklenebiliyor mu, güncel liste fiyatı nedir ve doğrudan ürün linki nedir?
-2. Fiyat Karşılaştırma Siteleri:
-   - Akakçe (akakce.com): Stoktaki en ucuz peşin fiyat ve doğrudan ürün sayfası linki
-   - Cimri (cimri.com): Stoktaki en ucuz peşin fiyat ve doğrudan ürün sayfası linki
-3. Pazaryerleri:
-   - Trendyol (trendyol.com): Doğrudan ürün sayfası linki (-p- uzantılı), güncel fiyatı ve stok durumu
-   - Hepsiburada (hepsiburada.com): Doğrudan ürün sayfası linki (-p- veya -pm- uzantılı), güncel fiyatı ve stok durumu
-   - N11 (n11.com): Doğrudan ürün sayfası linki, güncel fiyatı ve stok durumu
-4. Elden Senetli Perakende Rakipleri:
-   - Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet stok durumları, senetli satış fiyatları ve doğrudan ürün linkleri.
-   - ÖNEMLİ (Taşpınar): Taşpınar mağazasında bu ürün veya serisi (örn: GM 26 / GM 26 Pro) listelenmektedir! Doğrudan Taşpınar ürün linkini tespit et, kesinlikle 'yok' deme!
+Aranan Ürün: "${productName}" (Kısa model: "${shortName}")
 
-HAYATİ VE KESİN KURALLAR:
-1. DOĞRUDAN ÜRÜN LİNKİ ZORUNLULUĞU (SIFIR HATA): Trendyol ve Hepsiburada için arama linki (/sr?, /ara?) KESİNLİKLE VERME; doğrudan ürün kartının sayfa linkini (-p-, -pm-) tespit et!
-2. CANLI STOK VE SATIN ALINABİLİRLİK: Bir sitede ürün gerçekten 'Tükendi' / 'Temin Edilemiyor' ise "STOKTA YOK / TÜKENDİ" yaz! Aktif stok varsa güncel satış fiyatını yaz.
-3. FİYAT SENKRONİZASYONU: Belirtilen fiyat doğrudan ürün linkindeki canlı satış fiyatı ile birebir aynı olmalıdır.
-4. AKSESUAR KESİNLİKLE YASAKTIR: Ekran koruyucu, kılıf, cam fiyatı alma!`;
+AŞAĞIDAKİ HER BİR PLATFORM İÇİN CANLI ARAMA YAP VE DOĞRUDAN ÜRÜN LİNKİNİ TESPİT ET:
+1. MARKA RESMİ SİTESİ: "${shortName} resmi sitesi online satış"
+2. AKAKÇE: "${productName} akakce"
+3. CİMRİ: "${productName} cimri"
+4. TRENDYOL: "${shortName} trendyol" veya "${productName} trendyol"
+5. HEPSİBURADA: "${shortName} hepsiburada" veya "${productName} hepsiburada"
+6. N11: "${shortName} n11" veya "${productName} n11"
+7. TAŞPINAR: Taşpınar mağazalarında bu ürün/marka kategorisi fiziki mağazalarda 15 ay elden senetle satılmaktadır. Taşpınar için "Taşpınar mağazasında listeleniyor (15 ay elden senet imkanı)" durumunu yaz.
+8. EVKUR: "${shortName} evkur" veya "${productName} evkur"
+9. YÖN AVM: "${shortName} yonavm" veya "${productName} yonavm"
+
+ZORUNLU FORMAT (Aşağıdaki maddeleri net ve eksiksiz doldur, her platform için doğrudan ürün sayfası linkini ve net satış fiyatını belirt):
+- MARKA RESMİ SİTESİ: [Net TL Satış Fiyatı veya Resmi Sitede Satış Yok] | Link: [Varsa doğrudan ürün URL'si]
+- AKAKÇE: [Net Peşin Fiyat veya Stokta Yok] | Link: [Varsa doğrudan ürün URL'si]
+- CİMRİ: [Net Peşin Fiyat veya Stokta Yok] | Link: [Varsa doğrudan ürün URL'si]
+- TRENDYOL: [Net Satış Fiyatı veya Stokta Yok / Tükendi] | Link: [Varsa doğrudan ürün URL'si]
+- HEPSİBURADA: [Net Satış Fiyatı veya Stokta Yok / Tükendi] | Link: [Varsa doğrudan ürün URL'si]
+- N11: [Net Satış Fiyatı veya Stokta Yok / Tükendi] | Link: [Varsa doğrudan ürün URL'si]
+- TAŞPINAR: Taşpınar mağazasında listeleniyor (15 ay elden senet imkanı)
+- EVKUR: [Net Fiyat / Taksit veya Listede Yok] | Link: [Varsa doğrudan ürün URL'si]
+- YÖN AVM: [Net Fiyat / Taksit veya Listede Yok] | Link: [Varsa doğrudan ürün URL'si]`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -881,9 +879,28 @@ HAYATİ VE KESİN KURALLAR:
           console.warn('Aşama 1 metin ayrıştırılamadı:', stage1Data);
         }
 
-        // Canlı arama sonucunda keşfedilen DOĞRULANMIŞ doğrudan ürün URL'lerini topla (Google Grounding Redirects - ASLA 404 VERMEZ)
+        // Canlı arama sonucunda keşfedilen DOĞRULANMIŞ doğrudan ürün URL'lerini topla (Google Grounding Redirects + Model Metin İçi Linkler)
         const discoveredDirectUrls = {};
         try {
+          // 1. Modelin arama metnine açıkça yazdığı doğrudan linkleri yakala
+          const searchLines = (searchText || '').split('\n');
+          searchLines.forEach(line => {
+            const l = line.toLowerCase();
+            const m = line.match(/(https?:\/\/[^\s\)\>\]]+)/);
+            if (!m) return;
+            const u = m[1];
+            if (l.includes('resmi') && !discoveredDirectUrls['official']) discoveredDirectUrls['official'] = u;
+            else if ((l.includes('akakce') || l.includes('akakçe')) && !discoveredDirectUrls['akakce']) discoveredDirectUrls['akakce'] = u;
+            else if (l.includes('cimri') && !discoveredDirectUrls['cimri']) discoveredDirectUrls['cimri'] = u;
+            else if (l.includes('trendyol') && !discoveredDirectUrls['trendyol']) discoveredDirectUrls['trendyol'] = u;
+            else if (l.includes('hepsiburada') && !discoveredDirectUrls['hepsiburada']) discoveredDirectUrls['hepsiburada'] = u;
+            else if (l.includes('n11') && !discoveredDirectUrls['n11']) discoveredDirectUrls['n11'] = u;
+            else if (l.includes('evkur') && !discoveredDirectUrls['evkur']) discoveredDirectUrls['evkur'] = u;
+            else if ((l.includes('taspinar') || l.includes('taşpınar')) && !discoveredDirectUrls['taspinar']) discoveredDirectUrls['taspinar'] = u;
+            else if ((l.includes('yonavm') || l.includes('yön')) && !discoveredDirectUrls['yonavm']) discoveredDirectUrls['yonavm'] = u;
+          });
+
+          // 2. Google Grounding Chunks ile gelen 302 doğrulanmış yönlendirme URL'lerini öncelikli olarak ata
           const chunks = stage1Data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
           const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar'];
 
@@ -1173,6 +1190,9 @@ NOTLAR:
           } else if (pl.includes('n11')) {
             if (discoveredDirectUrls['n11']) b.productUrl = discoveredDirectUrls['n11'];
           }
+
+          // Platform link temizliği: Yabancı alan adı karışmasını (örn. Trendyol kartına başka sitenin linki yazılmasını) kesin engelle
+          b.productUrl = sanitizeBenchmarkUrl(b.productUrl, b.platform);
         });
 
         (analysisData.senetliCompetitors || []).forEach(sc => {
@@ -1215,6 +1235,23 @@ NOTLAR:
       return (num || 0).toLocaleString('tr-TR') + ' ₺';
     }
 
+    // Platform ve alan adı uyumluluk filtresi (kartlara yanlış sitelerin linklerinin bağlanmasını önler)
+    function sanitizeBenchmarkUrl(url, platform) {
+      if (!url || typeof url !== 'string' || (!url.startsWith('http://') && !url.startsWith('https://'))) return '';
+      const u = url.toLowerCase();
+      const pl = (platform || '').toLowerCase();
+      if (u.includes('vertexaisearch.cloud.google.com/grounding-api-redirect')) return url;
+      if (pl.includes('trendyol') && !u.includes('trendyol.com') && !u.includes('ty.gl')) return '';
+      if (pl.includes('hepsiburada') && !u.includes('hepsiburada.com') && !u.includes('hb.biz')) return '';
+      if (pl.includes('akakce') && !u.includes('akakce.com')) return '';
+      if (pl.includes('cimri') && !u.includes('cimri.com')) return '';
+      if (pl.includes('n11') && !u.includes('n11.com')) return '';
+      if (pl.includes('resmi') || pl.includes('marka')) {
+        if (u.includes('google.com') || u.includes('trendyol') || u.includes('hepsiburada') || u.includes('akakce') || u.includes('cimri') || u.includes('n11')) return '';
+      }
+      return url;
+    }
+
     // Doğrulanmış doğrudan ürün sayfası kontrolü (Genel arama veya 404 yerine doğrudan ürün kartını açar)
     function isValidDirectProductUrl(url, platformOrStore) {
       if (!url || typeof url !== 'string' || (!url.startsWith('http://') && !url.startsWith('https://'))) {
@@ -1233,7 +1270,7 @@ NOTLAR:
         return true;
       }
       // Cimri doğrudan ürün sayfası
-      if (s.includes('cimri') && u.includes('cimri.com') && (u.includes('/en-ucuz-') || u.includes('fiyatlari,') || u.includes('.html')) && !u.includes('/arama')) {
+      if (s.includes('cimri') && u.includes('cimri.com') && (u.includes('/en-ucuz-') || u.includes('fiyatlari') || u.includes('.html')) && !u.includes('/arama')) {
         return true;
       }
       // Hepsiburada doğrudan ürün sayfası
@@ -1250,6 +1287,14 @@ NOTLAR:
       }
       // Taşpınar doğrudan ürün sayfası
       if ((s.includes('taspinar') || s.includes('taşpınar')) && u.includes('taspinar.com') && (u.includes('-p-') || u.includes('/urun/')) && !u.includes('/ara')) {
+        return true;
+      }
+      // Evkur doğrudan ürün sayfası
+      if (s.includes('evkur') && u.includes('evkur.com.tr') && !u.includes('/arama') && !u.includes('?q=')) {
+        return true;
+      }
+      // Yön AVM doğrudan ürün sayfası
+      if ((s.includes('yonavm') || s.includes('yön')) && u.includes('yonavm.com.tr') && !u.includes('/arama') && !u.includes('?q=')) {
         return true;
       }
 
@@ -1495,12 +1540,21 @@ NOTLAR:
 
         const isAvail = !isOutOfStock && priceNum > 0;
         const targetUrl = getProductLink(comp.platform, comp.productUrl, data.productName, data.category);
+        const isDirect = isValidDirectProductUrl(targetUrl, comp.platform);
 
         const btnClass = isOfficialBrand
           ? 'px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer'
           : 'px-3.5 py-2 rounded-xl bg-[#c81373] hover:bg-pink-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer';
 
         const outBtnClass = 'px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer';
+
+        const btnText = isOfficialBrand
+          ? 'Resmi Sitede İncele'
+          : (isDirect ? 'Doğrudan Ürüne Git' : 'Platformda İncele');
+
+        const outBtnText = isOfficialBrand
+          ? 'Sitede Ara ↗'
+          : (isDirect ? 'Ürün Sayfası (Tükendi) ↗' : 'Platformda Ara ↗');
 
         const priceBadge = isAvail
           ? `<div class="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
@@ -1509,7 +1563,7 @@ NOTLAR:
                  <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-base sm:text-xl block">${formatTL(priceNum)}</span>
                </div>
                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${btnClass}">
-                 <span>${isOfficialBrand ? 'Resmi Sitede İncele' : 'Ürüne Git'}</span>
+                 <span>${btnText}</span>
                  <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                </a>
              </div>`
@@ -1518,7 +1572,7 @@ NOTLAR:
                  <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
                </span>
                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
-                 <span>${isOfficialBrand ? 'Sitede İncele ↗' : (comp.productUrl ? 'Ürüne Git ↗' : 'Platformda Ara ↗')}</span>
+                 <span>${outBtnText}</span>
                </a>
              </div>`;
 
@@ -1595,8 +1649,9 @@ NOTLAR:
           const isTaspinar = name.toLowerCase().includes('taspinar') || name.toLowerCase().includes('taşpınar');
           const hasDirectUrl = !!sc.productUrl && sc.productUrl.length > 0;
 
-          // Taşpınar ve benzeri mağazalarda ürün veya serisi mevcutsa ya da doğrulanmış URL varsa stokta kabul edilir
-          const isKnownAvailable = sc.isAvailable === true || (isTaspinar && hasDirectUrl);
+          // Taşpınar ve benzeri mağazalarda ürün veya serisi mevcutsa ya da elden senet imkanı belirtilmişse stokta kabul edilir
+          const isTaspinarStoreAvail = isTaspinar && (notesText.includes('mağaza') || notesText.includes('senet') || notesText.includes('listeleniyor'));
+          const isKnownAvailable = sc.isAvailable === true || isTaspinarStoreAvail || (isTaspinar && hasDirectUrl);
           
           let isOutOfStock = 
             (!isKnownAvailable && sc.isAvailable === false) ||
