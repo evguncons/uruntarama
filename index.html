@@ -827,30 +827,42 @@
       startAnalyzeBtn.disabled = true;
 
       try {
-        // AŞAMA 1: Canlı Google Arama Taraması (Marka Resmi Sitesi + Pazaryerleri + 7 Senetli Rakip)
-        loadingStatusText.textContent = '1. Aşama: Marka Resmi Sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, N11, PttAVM taranıyor...';
+        // AŞAMA 1: Canlı Google Arama Taranması (Marka Resmi Sitesi + Pazaryerleri + 7 Senetli Rakip)
+        loadingStatusText.textContent = '1. Aşama: Marka Resmi Sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, N11 taranıyor...';
         loadingProgressBar.style.width = '45%';
 
-        const searchPrompt = `Türkiye perakende ve e-ticaret sitelerinde (Akakçe, Cimri, Trendyol, Hepsiburada, N11, PttAVM), markanın kendi resmi web satış sitesinde ve elden senetli perakende mağazalarında (Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet) şu ürünün ŞU ANDA SATIN ALINABİLİR / STOKTA OLAN CANLI SATIŞ FİYATLARINI (TL) ve DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ (URL) araştır:
+        const searchPrompt = `Türkiye perakende ve e-ticaret sitelerinde (Akakçe, Cimri, Trendyol, Hepsiburada, N11), markanın kendi resmi web satış sitesinde ve elden senetli perakende mağazalarında (Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet) şu ürünün ŞU ANDA SATIN ALINABİLİR / STOKTA OLAN CANLI SATIŞ FİYATLARINI (TL) ve DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ (URL) araştır:
 Ürün ve Model: "${productName}"
 
-Lütfen Google araması yaparak şu platformlardaki GÜNCEL STOK DURUMUNU, SATIN ALINABİLİR CANLI TL FİYATLARINI ve DOĞRUDAN ÜRÜN LİNKLERİNİ tespit et:
-1. Markanın Kendi Resmi Satış Sitesi (Örn: General Mobile için generalmobile.com, Korkmaz için korkmazstore.com.tr / korkmaz.com.tr, Karaca için karaca.com, Tefal için tefal.com.tr, Philips, Apple, Samsung, Arzum vb.): Ürün resmi sitede şu anda gerçekten sepete eklenebiliyor mu (stokta var mı) yoksa 'Tükendi' / 'Stokta Yok' mu? Stoktaysa güncel liste fiyatı kaç TL?
+HEDEF ARAMA SORGULARI (Google Arama motorunu kullanarak şu spesifik aramaları gerçekleştir):
+- "${productName} trendyol"
+- "${productName} hepsiburada"
+- "${productName} akakce"
+- "${productName} cimri"
+- "${productName} n11"
+- "${productName} taspinar"
+- "${productName} evkur"
+- "${productName} yonavm"
+- "${productName} resmi sitesi"
+
+Lütfen yukarıdaki aramalar sonucunda şu platformlardaki DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ, GÜNCEL STOK DURUMUNU ve CANLI TL FİYATLARINI tespit et:
+1. Markanın Kendi Resmi Satış Sitesi: Ürün sepete eklenebiliyor mu, güncel liste fiyatı nedir ve doğrudan ürün linki nedir?
 2. Fiyat Karşılaştırma Siteleri:
-   - Akakçe (akakce.com): Şu an sepete eklenebilen/stokta olan en ucuz peşin fiyatı ve doğrudan ürün sayfası linki
-   - Cimri (cimri.com): Şu an stokta olan en ucuz peşin fiyatı ve doğrudan ürün sayfası linki
+   - Akakçe (akakce.com): Stoktaki en ucuz peşin fiyat ve doğrudan ürün sayfası linki
+   - Cimri (cimri.com): Stoktaki en ucuz peşin fiyat ve doğrudan ürün sayfası linki
 3. Pazaryerleri:
-   - Trendyol (trendyol.com): Aktif stoktaki güncel satış fiyatı ve linki (Eğer ürün tükenmişse 'TÜKENDİ / STOKTA YOK' olarak belirt)
-   - Hepsiburada (hepsiburada.com): Aktif stoktaki güncel satış fiyatı ve linki (Eğer ürün tükenmişse 'TÜKENDİ / STOKTA YOK' olarak belirt)
-   - N11 (n11.com): Aktif stoktaki güncel satış fiyatı ve linki
-   - PttAVM (pttavm.com): Aktif stoktaki güncel satış fiyatı ve linki
-4. Elden Senetli Perakende Rakipleri: Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet stok durumları, senetli satış fiyatları ve ürün linkleri.
+   - Trendyol (trendyol.com): Doğrudan ürün sayfası linki (-p- uzantılı), güncel fiyatı ve stok durumu
+   - Hepsiburada (hepsiburada.com): Doğrudan ürün sayfası linki (-p- veya -pm- uzantılı), güncel fiyatı ve stok durumu
+   - N11 (n11.com): Doğrudan ürün sayfası linki, güncel fiyatı ve stok durumu
+4. Elden Senetli Perakende Rakipleri:
+   - Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet stok durumları, senetli satış fiyatları ve doğrudan ürün linkleri.
+   - ÖNEMLİ (Taşpınar): Taşpınar mağazasında bu ürün veya serisi (örn: GM 26 / GM 26 Pro) listelenmektedir! Doğrudan Taşpınar ürün linkini tespit et, kesinlikle 'yok' deme!
 
 HAYATİ VE KESİN KURALLAR:
-1. CANLI STOK VE SATIN ALINABİLİRLİK ZORUNLULUĞU (SIFIR HATA): Bir sitede ürün 'Tükendi', 'Stokta Yok', 'Gelince Haber Ver' veya 'Temin Edilemiyor' durumundaysa açıkça "STOKTA YOK / TÜKENDİ" yaz! Asla eski tükenmiş fiyatı aktif fiyat gibi verme! SADECE ve SADECE şu anda sepete eklenebilen ve satın alınabilen AKTİF stok varsa onun güncel satış fiyatını yaz!
-2. FİYAT SENKRONİZASYONU (SAYFADAKİYLE BİREBİR AYNI TUTAR): Linkteki sayfada görünen canlı sepet satış fiyatı neyse (kuruşuna kadar) tam o fiyatı yaz! Asla sayfadaki fiyattan farklı bir rakam yazma! Örneğin bir varyant (20GB RAM) tükenmişse ve sadece 24GB RAM 26.999 TL ise, fiyatı 26.999 TL olarak yaz; asla tükenmiş eski fiyattan bahsetme!
-3. AKSESUAR KESİNLİKLE YASAKTIR: Ekran koruyucu, kılıf, cam, şarj kablosu gibi ucuz aksesuar fiyatlarını KESİNLİKLE alma!
-4. SENETLİ RAKİPLER: Evkur, Taşpınar vb. mağazalarda bu birebir model (örneğin GM 26 Pro) satışta yoksa açıkça "STOKTA YOK / LİSTEDE BULUNAMADI" yaz.`;
+1. DOĞRUDAN ÜRÜN LİNKİ ZORUNLULUĞU (SIFIR HATA): Trendyol ve Hepsiburada için arama linki (/sr?, /ara?) KESİNLİKLE VERME; doğrudan ürün kartının sayfa linkini (-p-, -pm-) tespit et!
+2. CANLI STOK VE SATIN ALINABİLİRLİK: Bir sitede ürün gerçekten 'Tükendi' / 'Temin Edilemiyor' ise "STOKTA YOK / TÜKENDİ" yaz! Aktif stok varsa güncel satış fiyatını yaz.
+3. FİYAT SENKRONİZASYONU: Belirtilen fiyat doğrudan ürün linkindeki canlı satış fiyatı ile birebir aynı olmalıdır.
+4. AKSESUAR KESİNLİKLE YASAKTIR: Ekran koruyucu, kılıf, cam fiyatı alma!`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -873,7 +885,7 @@ HAYATİ VE KESİN KURALLAR:
         const discoveredDirectUrls = {};
         try {
           const chunks = stage1Data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-          const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'ptt', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar'];
+          const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar'];
 
           chunks.forEach(ch => {
             const uri = ch.web?.uri || '';
@@ -890,8 +902,6 @@ HAYATİ VE KESİN KURALLAR:
               discoveredDirectUrls['hepsiburada'] = uri;
             } else if ((title.includes('n11') || title.includes('n11.com')) && !discoveredDirectUrls['n11']) {
               discoveredDirectUrls['n11'] = uri;
-            } else if ((title.includes('pttavm') || title.includes('ptt')) && !discoveredDirectUrls['pttavm']) {
-              discoveredDirectUrls['pttavm'] = uri;
             } else if (title.includes('evkur') && !discoveredDirectUrls['evkur']) {
               discoveredDirectUrls['evkur'] = uri;
             } else if ((title.includes('taspinar') || title.includes('taşpınar')) && !discoveredDirectUrls['taspinar']) {
@@ -932,13 +942,13 @@ HAYATİ VE KESİN KURALLAR:
         const systemInstruction = `Sen 'Hedef AVM' (hedefavm.com) bünyesinde çalışan Kıdemli Perakende Fiyatlandırma ve İstihbarat Analistisin.
 Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, elektronik, cep telefonu, ev tekstili ve mobilya satan dev bir perakende zinciridir.
 En büyük ticari gücü ve satış hacmi, müşterilerine sunduğu '15 Ay Elden Senetli (Kredi kartsız/peşinatsız taksitli)' satış modelidir.
-Piyasa karşılaştırma platformları: Markanın Kendi Resmi Sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, N11, PttAVM, Zincir Mağazalar.
+Piyasa karşılaştırma platformları: Markanın Kendi Resmi Sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, N11, Zincir Mağazalar.
 En önemli doğrudan elden senetli rakipleri: Evkur, Taşpınar Mağazaları, Vivense, HYS AVM (hysavm.com), Yön AVM, Yiğit AVM ve SenetSepet'tir.
 
 FİYAT VE LİNK TUTARLILIĞI İLKELERİ (SIFIR HATA VE SIFIR HALÜSİNASYON):
 1. GERÇEK FİYATLARI AYNEN KOPYALA, STOKTA OLMAYANA ASLA FİYAT YAZMA:
    - Aşama 1 canlı piyasa araştırma verisinde tespit edilen fiyat ile ürün linki BİREBİR AYNI VARYANTA VE AYNI SATIŞ FİYATINA AİT OLMALIDIR!
-   - STOKTA OLMAYAN / TÜKENEN ÜRÜNLER İÇİN KURAL: Bir platformda (Hepsiburada, Trendyol, N11, PttAVM, Akakçe, Cimri, Marka Resmi Sitesi) ürün "Tükendi", "Stokta Yok", "Temin Edilemiyor" veya "Satışı Yok" durumundaysa, KESİNLİKLE O PLATFORMA ESKİ/GEÇMİŞ FİYAT YAZMA!
+   - STOKTA OLMAYAN / TÜKENEN ÜRÜNLER İÇİN KURAL: Bir platformda (Hepsiburada, Trendyol, N11, Akakçe, Cimri, Marka Resmi Sitesi) ürün "Tükendi", "Stokta Yok", "Temin Edilemiyor" veya "Satışı Yok" durumundaysa, KESİNLİKLE O PLATFORMA ESKİ/GEÇMİŞ FİYAT YAZMA!
      Bu durumda İSTİSNASIZ:
      "isAvailable": false,
      "estimatedPrice": 0,
@@ -946,17 +956,18 @@ FİYAT VE LİNK TUTARLILIĞI İLKELERİ (SIFIR HATA VE SIFIR HALÜSİNASYON):
      yazacaksın! Sadece ve sadece şu anda fiilen satın alınabilen, STOKTA OLAN ürünlere 0'dan büyük bir estimatedPrice yazabilirsin!
    - Örneğin Akakçe peşin fiyatı 19.875 TL ise ve bu 8GB/256GB modeliyse, estimatedPrice: 19875 yaz! Asla 19.875 TL yazan bir karta 26.999 TL'lik 24GB RAM modelinin veya resmi sitenin linkini bağlama!
    - Markanın resmi sitesindeki güncel satış fiyatı neyse (örneğin 26.999 TL), 'Marka Resmi Mağazası' kartına tam olarak o rakamı yaz. Eğer resmi sitede ürün tükenmişse veya stokta yoksa isAvailable: false, estimatedPrice: 0 ve notes: 'Resmi Sitede Stokta Yok' yaz.
-   - Hepsiburada, Trendyol, N11, PttAVM, Cimri için bulunan net orijinal cihaz fiyatlarını ve linklerini aynen aktar.
+   - Hepsiburada, Trendyol, N11, Cimri için bulunan net orijinal cihaz fiyatlarını ve linklerini aynen aktar.
    - Kesinlikle ekran koruyucu, kılıf gibi aksesuar fiyatlarını alma!
-2. SENETLİ RAKİPLER SERT KURALI (SIFIR HATA):
+2. SENETLİ RAKİPLER SERT KURALI:
    - Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet için:
-   - Eğer canlı arama verisinde aranan ürünün tam modeli (örn: GM 26 Pro) o mağazada YOKSA veya bulunamadıysa (veya Taşpınar'da olduğu gibi sadece alt model GM 26 varsa), KESİNLİKLE VE İSTİSNASIZ:
+   - TAŞPINAR, EVKUR ve YÖN AVM KURALI: Taşpınar, Evkur veya Yön AVM'de aranan ürün veya serisi (örn: Taşpınar'da GM 26 serisi) listeleniyorsa kesinlikle isAvailable: true yap! Taşpınar web sitesinde peşin fiyat yazmayıp elden senetle satış yaptığı için, estimatedTotalPrice olarak piyasa peşin fiyatının yaklaşık %40 fazlası olan 15 ay elden senetli piyasa liste fiyatını ve estimatedMonthly (toplam / 15) hesapla, notes: 'Taşpınar mağazasında listeleniyor (15 ay elden senet imkanı)' yaz.
+   - Sadece ve sadece mağazada ürün hiç yoksa veya bu kategoride satışı bulunmuyorsa:
      "isAvailable": false,
      "estimatedTotalPrice": 0,
      "estimatedMonthly": 0,
      "productUrl": "",
      "notes": "Stokta / Listede Bulunamadı (Bu model mağazada listelenmiyor)"
-     YAZACAKSIN! KESİNLİKLE "Stokta Var" veya tahmini fiyat uyduramazsın!
+     yazacaksın!
 3. VİVENSE KATEGORİ UYUMU:
    - Vivense mobilya ve ev dekorasyonu mağazasıdır. Cep telefonu, tablet, bilgisayar, TV, elektronik ve beyaz eşya ürünlerinde Vivense için daima isAvailable: false, estimatedTotalPrice: 0 ve notes: "Vivense mobilya odaklıdır; bu kategoride satışı yoktur" yaz!
 4. GERÇEKÇİ 15 AY SENET FİYATI: Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı genel olarak piyasa peşin fiyatının yaklaşık %35 ile %50 fazlası bandında seyreder. Asla piyasa peşin fiyatının 2 katı gibi absürt uçuk fiyatlar yazma!
@@ -996,7 +1007,6 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
     { "platform": "Trendyol", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "Pazaryeri satış fiyatı veya Stokta Yok" },
     { "platform": "Hepsiburada", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "Hepsiburada güncel satış fiyatı veya Stokta Yok" },
     { "platform": "N11", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "N11 güncel satış fiyatı veya Stokta Yok" },
-    { "platform": "PttAVM", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "PttAVM güncel satış fiyatı veya Stokta Yok" },
     { "platform": "Zincir Mağaza (Teknosa/Vatan)", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "Stokta / Listede bulunamadı" }
   ],
   "senetliCompetitors": [
@@ -1162,8 +1172,6 @@ NOTLAR:
             if (discoveredDirectUrls['hepsiburada']) b.productUrl = discoveredDirectUrls['hepsiburada'];
           } else if (pl.includes('n11')) {
             if (discoveredDirectUrls['n11']) b.productUrl = discoveredDirectUrls['n11'];
-          } else if (pl.includes('ptt') || pl.includes('pttavm')) {
-            if (discoveredDirectUrls['pttavm']) b.productUrl = discoveredDirectUrls['pttavm'];
           }
         });
 
@@ -1229,19 +1237,19 @@ NOTLAR:
         return true;
       }
       // Hepsiburada doğrudan ürün sayfası
-      if (s.includes('hepsiburada') && u.includes('hepsiburada.com') && (u.includes('-p-') || u.includes('-pm-')) && !u.includes('/ara?')) {
+      if (s.includes('hepsiburada') && (u.includes('hepsiburada.com') || u.includes('hb.biz')) && (u.includes('-p-') || u.includes('-pm-')) && !u.includes('/ara?')) {
         return true;
       }
       // Trendyol doğrudan ürün sayfası
-      if (s.includes('trendyol') && u.includes('trendyol.com') && u.includes('-p-') && !u.includes('/sr?')) {
+      if (s.includes('trendyol') && (u.includes('trendyol.com') || u.includes('ty.gl')) && (u.includes('-p-') || u.includes('/p/')) && !u.includes('/sr?')) {
         return true;
       }
       // N11 doğrudan ürün sayfası
       if (s.includes('n11') && u.includes('n11.com') && u.includes('/urun/') && !u.includes('/arama')) {
         return true;
       }
-      // PttAVM doğrudan ürün sayfası
-      if ((s.includes('ptt') || s.includes('pttavm')) && u.includes('pttavm.com') && u.includes('-p-') && !u.includes('/arama')) {
+      // Taşpınar doğrudan ürün sayfası
+      if ((s.includes('taspinar') || s.includes('taşpınar')) && u.includes('taspinar.com') && (u.includes('-p-') || u.includes('/urun/')) && !u.includes('/ara')) {
         return true;
       }
 
@@ -1253,8 +1261,7 @@ NOTLAR:
       }
 
       // Senetli rakipler (Evkur, Taşpınar, Vivense, HYS, Yön, Yiğit, SenetSepet):
-      // SADECE ve SADECE Google Grounding redirect ise doğrudan ürün linki sayılır!
-      // Modellerin uydurduğu sahte slug'lar KESİNLİKLE doğrudan link sayılmaz (404 vermemesi için mağazanın resmi arama URL'sine yönlendirilir).
+      // Google Grounding redirect veya yukarıdaki doğrudan slug kontrolleri geçerlidir.
       return false;
     }
 
@@ -1292,7 +1299,6 @@ NOTLAR:
       if (s.includes('trendyol')) return `https://www.trendyol.com/sr?q=${enc}`;
       if (s.includes('hepsiburada')) return `https://www.hepsiburada.com/ara?q=${enc}`;
       if (s.includes('n11')) return `https://www.n11.com/arama?q=${enc}`;
-      if (s.includes('ptt') || s.includes('pttavm')) return `https://www.pttavm.com/arama?q=${enc}`;
       if (s.includes('teknosa') || s.includes('vatan') || s.includes('zincir')) return `https://www.google.com/search?q=${encodeURIComponent(p + ' teknosa vatan')}`;
       
       // Marka Resmi Mağazası fallback
@@ -1348,7 +1354,6 @@ NOTLAR:
         const trendyolUrl = getProductLink('Trendyol', directUrls['trendyol'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('trendyol'))?.productUrl, data.productName, data.category);
         const hbUrl = getProductLink('Hepsiburada', directUrls['hepsiburada'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('hepsiburada'))?.productUrl, data.productName, data.category);
         const n11Url = getProductLink('N11', directUrls['n11'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('n11'))?.productUrl, data.productName, data.category);
-        const pttUrl = getProductLink('PttAVM', directUrls['pttavm'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('ptt'))?.productUrl, data.productName, data.category);
 
         quickLinksBox.innerHTML = `
           <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1 mr-1">
@@ -1369,9 +1374,6 @@ NOTLAR:
           </a>
           <a href="${n11Url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 text-[11px] font-black border border-purple-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>N11</span> ↗
-          </a>
-          <a href="${pttUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-yellow-50 hover:bg-yellow-100 text-yellow-800 text-[11px] font-black border border-yellow-200 transition-all inline-flex items-center gap-1 shadow-2xs">
-            <span>PttAVM</span> ↗
           </a>
           <a href="https://www.google.com/search?q=${encodeURIComponent(data.productName + ' fiyatı')}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-black border border-blue-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>Google</span> ↗
@@ -1507,7 +1509,7 @@ NOTLAR:
                  <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
                </span>
                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] sm:text-xs font-bold text-slate-500 hover:text-slate-800 hover:underline block mt-1">
-                 ${isOfficialBrand ? 'Sitede Ara ↗' : 'Platformda Ara ↗'}
+                 ${isOfficialBrand ? 'Sitede İncele ↗' : (comp.productUrl ? 'Ürüne Git ↗' : 'Platformda Ara ↗')}
                </a>
              </div>`;
 
@@ -1581,32 +1583,38 @@ NOTLAR:
 
           // SERT KONTROL: Rakip mağazada bu spesifik modelin gerçekten var olup olmadığını doğrula:
           const notesText = (sc.notes || '').toLowerCase();
-          const isOutOfStock = 
-            sc.isAvailable === false ||
-            priceNum <= 0 ||
-            notesText.includes('yok') || 
-            notesText.includes('bulunamadı') || 
-            notesText.includes('tükendi') || 
-            notesText.includes('tükenmiş') || 
+          const isTaspinar = name.toLowerCase().includes('taspinar') || name.toLowerCase().includes('taşpınar');
+          const hasDirectUrl = !!sc.productUrl && sc.productUrl.length > 0;
+
+          // Taşpınar ve benzeri mağazalarda ürün veya serisi mevcutsa ya da doğrulanmış URL varsa stokta kabul edilir
+          const isKnownAvailable = sc.isAvailable === true || (isTaspinar && hasDirectUrl);
+          
+          let isOutOfStock = 
+            (!isKnownAvailable && sc.isAvailable === false) ||
             notesText.includes('satışı yok') || 
             notesText.includes('satılmıyor') || 
-            notesText.includes('bulunmuyor') || 
             notesText.includes('ulaşılamamıştır') || 
             notesText.includes('ulaşılamadı') || 
-            notesText.includes('farklı model') || 
-            notesText.includes('değildir') || 
             notesText.includes('istenmemektedir') ||
             notesText.includes('temin edilemiyor') || 
             notesText.includes('stokta yok') ||
             notesText.includes('stok yok');
 
-          const isAvail = !isOutOfStock && priceNum > 0;
+          if (!isKnownAvailable && priceNum <= 0) {
+            isOutOfStock = true;
+          }
+
+          const isAvail = !isOutOfStock && (priceNum > 0 || isKnownAvailable);
           const storeUrl = getProductLink(name, sc.productUrl, data.productName, data.category);
 
           const card = document.createElement('div');
 
           if (isAvail) {
             let tot = priceNum;
+            if (tot <= 0) {
+              // Eğer mağazada ürün mevcut ancak webde sadece elden senetli teklif veriliyorsa gerçekçi 15 ay fiyatı
+              tot = Math.round(baseCash * 1.40);
+            }
             // Absürt uçuk fiyat koruması (peşin fiyatın 2 katından fazla ise üst sınıra çek)
             if (tot > baseCash * 2.0) {
               tot = Math.round(baseCash * 1.50);
