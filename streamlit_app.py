@@ -87,8 +87,11 @@ st.markdown("""
 # =========================================================================
 def get_api_key():
     # 1. Streamlit Cloud Secrets (st.secrets["GEMINI_API_KEY"])
-    if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
-        return st.secrets["GEMINI_API_KEY"]
+    try:
+        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+            return st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        pass
 
     # 2. Ortam Değişkeni (os.environ["GEMINI_API_KEY"])
     if os.environ.get("GEMINI_API_KEY"):
@@ -96,29 +99,42 @@ def get_api_key():
 
     # 3. Yerel .env.local dosyası kontrolü (Local geliştirme için)
     if os.path.exists(".env.local"):
-        with open(".env.local", "r", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("GEMINI_API_KEY="):
-                    return line.strip().split("=", 1)[1].strip("\"' ")
+        try:
+            with open(".env.local", "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("GEMINI_API_KEY="):
+                        val = line.strip().split("=", 1)[1].strip("\"' ")
+                        if val:
+                            return val
+        except Exception:
+            pass
 
     return None
 
 api_key = get_api_key()
 
-# Eğer sistemde anahtar yoksa kenar çubuğunda güvenli parola girişi sağla
+# Kenar çubuğu ayarları ve API anahtarı kontrolü
 with st.sidebar:
     st.markdown("### ⚙️ Ayarlar & Güvenlik")
-    if not api_key:
-        user_key = st.text_input(
-            "Gemini API Key (Zorunlu)",
-            type="password",
-            help="API anahtarınız GitHub koduna yazılmaz, sadece bu oturumda şifreli tutulur."
-        )
-        if user_key:
-            api_key = user_key
-            st.success("API Anahtarı oturuma tanımlandı.")
+    
+    # Mevcut anahtarı al
+    default_key = get_api_key() or ""
+    
+    # Kullanıcının manuel girmesine / değiştirmesine her zaman izin ver
+    custom_key = st.text_input(
+        "🔑 Gemini API Anahtarı",
+        value=st.session_state.get("custom_api_key", default_key),
+        type="password",
+        help="Google AI Studio'dan (aistudio.google.com) aldığınız API anahtarı."
+    )
+    
+    if custom_key.strip():
+        api_key = custom_key.strip()
+        st.session_state["custom_api_key"] = api_key
+        st.success("✅ API Anahtarı Tanımlı")
     else:
-        st.success("🔒 Gemini API Anahtarı Aktif (Güvenli)")
+        api_key = None
+        st.warning("⚠️ Lütfen geçerli bir Gemini API anahtarı giriniz.")
 
     st.markdown("---")
     st.markdown("#### ℹ️ Hedef AVM Hakkında")
