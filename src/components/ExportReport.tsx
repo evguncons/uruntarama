@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, Share2, Copy, Check, MessageSquare } from 'lucide-react';
+import { Download, Copy, Check, MessageSquare } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ProductAnalysis } from '@/lib/types';
@@ -56,11 +56,11 @@ ${analysis.feasibility.risksAndWatchouts.map((r) => `• ${r}`).join('\n')}
         return;
       }
 
-      // html2canvas ile yüksek kaliteli ekran görüntüsü al
+      // html2canvas ile yüksek kaliteli açık renk ekran görüntüsü al
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#0f172a',
+        backgroundColor: '#faf5f8',
         logging: false
       });
 
@@ -117,16 +117,16 @@ ${analysis.feasibility.risksAndWatchouts.map((r) => `• ${r}`).join('\n')}
       <button
         onClick={handleDownloadPdf}
         disabled={isGeneratingPdf}
-        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-semibold border border-slate-700 transition active:scale-95 disabled:opacity-50 shadow-sm"
+        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-pink-50 text-slate-800 text-xs sm:text-sm font-bold border border-pink-200 shadow-xs transition active:scale-95 disabled:opacity-50"
       >
-        <Download className="w-4 h-4 text-rose-400" />
+        <Download className="w-4 h-4 text-fuchsia-600" />
         <span>{isGeneratingPdf ? 'PDF Hazırlanıyor...' : 'PDF Rapor İndir'}</span>
       </button>
 
       {/* WhatsApp Paylaş */}
       <button
         onClick={handleShareWhatsApp}
-        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold transition active:scale-95 shadow-sm"
+        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-600/20 transition active:scale-95"
       >
         <MessageSquare className="w-4 h-4" />
         <span>WhatsApp Paylaş</span>
@@ -135,16 +135,16 @@ ${analysis.feasibility.risksAndWatchouts.map((r) => `• ${r}`).join('\n')}
       {/* Panoya Kopyala */}
       <button
         onClick={handleCopyText}
-        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs sm:text-sm font-medium border border-slate-700 transition active:scale-95 shadow-sm"
+        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold border border-slate-200 shadow-xs transition active:scale-95"
       >
         {copied ? (
           <>
-            <Check className="w-4 h-4 text-emerald-400" />
-            <span className="text-emerald-400">Kopyalandı!</span>
+            <Check className="w-4 h-4 text-emerald-600" />
+            <span className="text-emerald-700">Kopyalandı!</span>
           </>
         ) : (
           <>
-            <Copy className="w-4 h-4" />
+            <Copy className="w-4 h-4 text-slate-500" />
             <span>Özeti Kopyala</span>
           </>
         )}
