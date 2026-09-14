@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 from io import BytesIO
 from PIL import Image
 import streamlit as st
@@ -7,7 +8,7 @@ from google import genai
 from google.genai import types
 
 # =========================================================================
-# SAYFA VE TEMA YAPILANDIRMASI (AÇIK TEMA & MAGENTA KURUMSAL)
+# SAYFA VE TEMA YAPILANDIRMASI
 # =========================================================================
 st.set_page_config(
     page_title="Hedef AVM | AI Ürün Piyasa Radarı",
@@ -16,161 +17,242 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Gelişmiş Kurumsal CSS (Next.js "Esas UI" Tasarımının Birebir Uyarlaması)
-st.markdown("""
+# Logo Base64 Çevirici (HTML içinde responsive ve hatasız render için)
+def get_logo_b64():
+    if os.path.exists("public/hedef-logo.png"):
+        with open("public/hedef-logo.png", "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+    return ""
+
+LOGO_B64 = get_logo_b64()
+
+# =========================================================================
+# TAM MOBİL VE MASAÜSTÜ RESPONSIVE GELİŞMİŞ CSS (ESAS UI)
+# =========================================================================
+st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    }
-    
-    .stApp {
-        background-color: #faf5f8;
-        color: #0f172a;
-    }
+    html, body, [class*="css"], .stApp {{
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+        background-color: #faf5f8 !important;
+        color: #0f172a !important;
+    }}
 
-    /* Üst Başlık Cam Barı */
-    .hedef-header-bar {
-        background: rgba(255, 255, 255, 0.95);
-        border-bottom: 1px solid #fce7f3;
-        padding: 0.85rem 1.5rem;
+    /* Streamlit varsayılan boşluklarını mobil için optimize et */
+    .block-container {{
+        padding-top: 1rem !important;
+        padding-bottom: 3rem !important;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+        max-width: 1050px !important;
+    }}
+
+    @media (max-width: 768px) {{
+        .block-container {{
+            padding-left: 0.65rem !important;
+            padding-right: 0.65rem !important;
+            padding-top: 0.5rem !important;
+        }}
+    }}
+
+    /* Üst Başlık Kartı */
+    .hedef-navbar {{
+        background: #ffffff;
+        border: 1px solid #fce7f3;
         border-radius: 1.25rem;
+        padding: 1rem 1.25rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 1rem;
+        box-shadow: 0 4px 20px -2px rgba(200, 19, 115, 0.05);
         margin-bottom: 1.5rem;
-        box-shadow: 0 4px 15px -3px rgba(200, 19, 115, 0.05);
-    }
+    }}
 
-    /* Kart Yapıları */
-    .hedef-card {
-        background: #ffffff;
-        border: 1px solid #fce7f3;
-        border-radius: 1.5rem;
-        padding: 1.75rem;
-        box-shadow: 0 10px 30px -5px rgba(200, 19, 115, 0.06);
-        margin-bottom: 1.5rem;
-    }
+    .hedef-navbar-left {{
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }}
+
+    .hedef-logo-img {{
+        height: 46px;
+        width: auto;
+        object-fit: contain;
+    }}
+
+    @media (max-width: 640px) {{
+        .hedef-navbar {{
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.85rem;
+            gap: 0.5rem;
+        }}
+        .hedef-logo-img {{
+            height: 38px;
+        }}
+    }}
 
     /* Rozetler */
-    .hedef-pill {
+    .hedef-pill {{
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
         background: #fdf2f8;
         color: #c81373;
         border: 1px solid #fbcfe8;
-        padding: 0.3rem 0.85rem;
+        padding: 0.25rem 0.75rem;
         border-radius: 9999px;
         font-weight: 800;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-    }
+    }}
 
-    .badge-success {
+    .badge-verdict {{
+        display: inline-block;
         background: #ecfdf5;
         color: #065f46;
         border: 1px solid #a7f3d0;
-        padding: 0.35rem 0.9rem;
+        padding: 0.35rem 0.85rem;
         border-radius: 9999px;
-        font-weight: 800;
+        font-weight: 900;
         font-size: 0.75rem;
         text-transform: uppercase;
-    }
+        letter-spacing: 0.04em;
+    }}
 
-    .badge-warning {
-        background: #fffbeb;
-        color: #92400e;
-        border: 1px solid #fde68a;
-        padding: 0.35rem 0.9rem;
-        border-radius: 9999px;
-        font-weight: 800;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-    }
+    /* Beyaz Kurumsal Kart */
+    .hedef-card {{
+        background: #ffffff;
+        border: 1px solid #fce7f3;
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        box-shadow: 0 8px 25px -4px rgba(200, 19, 115, 0.05);
+        margin-bottom: 1.25rem;
+    }}
 
-    /* Fiyat ve Taksit Kutuları */
-    .hedef-price-box {
+    @media (max-width: 640px) {{
+        .hedef-card {{
+            padding: 1rem !important;
+            border-radius: 1rem !important;
+        }}
+    }}
+
+    /* Fiyat Dağılım Grid */
+    .hedef-price-grid {{
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.65rem;
+        margin-bottom: 1rem;
+    }}
+
+    @media (max-width: 480px) {{
+        .hedef-price-grid {{
+            grid-template-columns: 1fr;
+        }}
+    }}
+
+    .hedef-price-item {{
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 1.25rem;
-        padding: 1.25rem;
+        border-radius: 1rem;
+        padding: 0.85rem 0.5rem;
         text-align: center;
-    }
+    }}
 
-    .hedef-avg-box {
+    .hedef-price-highlight {{
         background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
         border: 2px solid #f472b6;
-        border-radius: 1.25rem;
-        padding: 1.25rem;
+        border-radius: 1rem;
+        padding: 0.85rem 0.5rem;
         text-align: center;
-        box-shadow: 0 4px 15px -2px rgba(200, 19, 115, 0.1);
-    }
+        box-shadow: 0 4px 15px -2px rgba(200, 19, 115, 0.12);
+    }}
 
-    .hedef-senet-card {
+    /* Elden Senetli Satış Kartı */
+    .hedef-senet-banner {{
         background: linear-gradient(135deg, #c81373 0%, #e11d48 50%, #db2777 100%);
         color: #ffffff !important;
-        border-radius: 1.5rem;
-        padding: 1.75rem;
-        box-shadow: 0 15px 35px -5px rgba(200, 19, 115, 0.35);
-    }
+        border-radius: 1.25rem;
+        padding: 1.25rem;
+        box-shadow: 0 12px 30px -5px rgba(200, 19, 115, 0.35);
+        margin-bottom: 0.85rem;
+    }}
 
-    /* Butonlar */
-    .stButton>button {
+    /* Butonlar (Dokunmatik ekran için büyük ve canlı) */
+    .stButton>button {{
         background: linear-gradient(to right, #c81373, #e11d48, #db2777) !important;
         color: white !important;
         font-weight: 900 !important;
-        font-size: 1rem !important;
+        font-size: 1.05rem !important;
         border-radius: 1rem !important;
         border: none !important;
-        padding: 0.85rem 2rem !important;
+        padding: 0.9rem 2rem !important;
         box-shadow: 0 10px 25px -4px rgba(200, 19, 115, 0.4) !important;
         transition: all 0.2s ease !important;
-        letter-spacing: 0.02em;
-    }
-    .stButton>button:hover {
-        transform: scale(1.02);
+        width: 100% !important;
+    }}
+    .stButton>button:hover {{
+        transform: translateY(-2px);
         box-shadow: 0 15px 30px -4px rgba(200, 19, 115, 0.5) !important;
-    }
+    }}
 
-    /* Giriş Alanları */
-    .stTextInput input {
-        border-radius: 0.85rem !important;
+    /* Girdi Kutuları */
+    .stTextInput input {{
+        border-radius: 1rem !important;
         border: 2px solid #fbcfe8 !important;
-        padding: 0.65rem 1rem !important;
+        padding: 0.75rem 1rem !important;
         font-weight: 700 !important;
-        font-size: 0.95rem !important;
-    }
-    .stTextInput input:focus {
+        font-size: 1rem !important;
+        background: #ffffff !important;
+    }}
+    .stTextInput input:focus {{
         border-color: #c81373 !important;
-        box-shadow: 0 0 0 3px rgba(200, 19, 115, 0.15) !important;
-    }
+        box-shadow: 0 0 0 4px rgba(200, 19, 115, 0.15) !important;
+    }}
+
+    /* Tab Görünümü */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 0.5rem;
+        background-color: #fce7f3/40;
+        padding: 0.35rem;
+        border-radius: 0.85rem;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        border-radius: 0.75rem;
+        font-weight: 800;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        color: #64748b;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: #ffffff !important;
+        color: #c81373 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================================================
-# 🔒 GÜVENLİK: API ANAHTARININ ÇALINMASINI %100 ENGELLEME
+# 🔒 GÜVENLİK: API ANAHTARINI GİZLE VE KORU
 # =========================================================================
-# API anahtarı KESİNLİKLE ekranda gösterilmez veya ziyaretçiye açık tutulmaz.
-# Yalnızca sunucu tarafında şifreli kasadan (Streamlit Secrets / Env) çekilir.
-# Ziyaretçiler ne tarayıcıdan ne kaynak kodundan anahtarı göremez veya kopyalayamaz.
 def get_secure_api_key():
     # 1. Streamlit Secrets (share.streamlit.io için güvenli kasa)
     try:
         if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
-            key = st.secrets["GEMINI_API_KEY"].strip()
-            if key and len(key) > 10:
-                return key
+            k = st.secrets["GEMINI_API_KEY"].strip()
+            if len(k) > 10:
+                return k
     except Exception:
         pass
 
     # 2. Sunucu Ortam Değişkeni
     if os.environ.get("GEMINI_API_KEY"):
-        key = os.environ.get("GEMINI_API_KEY").strip()
-        if key and len(key) > 10:
-            return key
+        k = os.environ.get("GEMINI_API_KEY").strip()
+        if len(k) > 10:
+            return k
 
     # 3. Yerel .env.local dosyası
     if os.path.exists(".env.local"):
@@ -179,7 +261,7 @@ def get_secure_api_key():
                 for line in f:
                     if line.startswith("GEMINI_API_KEY="):
                         val = line.strip().split("=", 1)[1].strip("\"' ")
-                        if val and len(val) > 10:
+                        if len(val) > 10:
                             return val
         except Exception:
             pass
@@ -188,29 +270,35 @@ def get_secure_api_key():
 
 ACTIVE_API_KEY = get_secure_api_key()
 
-# Kenar Çubuğu (Sidebar) - Güvenlik Bilgilendirmesi (Anahtar Asla Gösterilmez)
+# Sidebar: Sadece Güvenlik Durumu Bildirilir (Anahtar Asla Ekrana Basılmaz)
 with st.sidebar:
     st.markdown("### 🛡️ Kurumsal Güvenlik")
-    st.markdown("""
-    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1rem; border-radius: 1rem; margin-bottom: 1rem;">
-        <span style="color: #065f46; font-weight: 800; font-size: 0.8rem;">🔒 GEMINI API BAĞLANTISI AKTİF</span>
-        <p style="color: #047857; font-size: 0.75rem; margin-top: 0.25rem; margin-bottom: 0;">
-            API anahtarınız sunucu tarafında kilitlenmiştir. Ziyaretçiler ve üçüncü kişiler tarafından görüntülenemez veya çalınamaz.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    if ACTIVE_API_KEY:
+        st.markdown("""
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.85rem; border-radius: 0.85rem;">
+            <span style="color: #065f46; font-weight: 800; font-size: 0.8rem;">🔒 GEMINI API AKTİF</span>
+            <p style="color: #047857; font-size: 0.72rem; margin-top: 0.25rem; margin-bottom: 0;">
+                API anahtarı sunucuda şifreli tutulmaktadır. Ziyaretçiler anahtarı görüntüleyemez veya çalamaz.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.error("⚠️ GEMINI_API_KEY Streamlit Secrets alanına eklenmelidir.")
 
     st.markdown("---")
-    st.markdown("#### 🏢 Hedef AVM Hakkında")
-    st.caption("Hedef Alışveriş Merkezleri - Evinizin Rengi. Züccaciye, küçük ev aletleri, beyaz eşya ve tüketici elektroniğinde elden senetli ve peşin satış fizibilite motoru.")
+    st.markdown("#### 🏢 Hedef AVM")
+    st.caption("Hedef Alışveriş Merkezleri - Evinizin Rengi. Züccaciye, küçük ev aletleri, beyaz eşya ve tüketici elektroniğinde elden senetli ve peşin satış istihbarat motoru.")
 
 # =========================================================================
 # 2 AŞAMALI CANLI GOOGLE SEARCH GROUNDING MOTORU
 # =========================================================================
 def analyze_product_2stage(product_name: str, pil_image: Image.Image, user_cost: float = None, extra_notes: str = None):
+    if not ACTIVE_API_KEY:
+        raise ValueError("Sistemde geçerli bir GEMINI_API_KEY bulunamadı. Lütfen Streamlit Secrets alanını kontrol ediniz.")
+
     client = genai.Client(api_key=ACTIVE_API_KEY)
 
-    # 1. AŞAMA: Canlı Google Search ile Gerçek Piyasa Fiyatları (Akakçe, Trendyol, Hepsiburada)
+    # 1. AŞAMA: Canlı Google Search ile Gerçek Piyasa Fiyatları
     search_prompt = f"""Sen Türkiye perakende pazarında uzman bir fiyat araştırmacısısın.
 Kullanıcı şu ürünü analiz ediyor: "{product_name}".
 
@@ -259,10 +347,10 @@ Cevabını SADECE geçerli bir JSON nesnesi olarak döndür."""
     json_schema_prompt = f"""Aşağıdaki JSON şemasına BİREBİR uygun yanıt ver:
 {{
   "productName": "{product_name}",
-  "brand": "Örn: Apple, Philips, Karaca...",
+  "brand": "Marka",
   "modelOrCode": "Model kodu",
   "barcode": "Varsa barkod veya null",
-  "category": "Örn: Akıllı Telefonlar, Küçük Ev Aletleri...",
+  "category": "Kategori",
   "keyFeatures": ["Özellik 1", "Özellik 2", "Özellik 3"],
   "marketPrices": {{
     "min": 0,
@@ -308,7 +396,6 @@ Cevabını SADECE geçerli bir JSON nesnesi olarak döndür."""
 {f'Kullanıcının Tedarik Alış Maliyeti: {user_cost} ₺.' if user_cost else ''}
 {f'Ek Not: {extra_notes}' if extra_notes else ''}"""
 
-    # Görseli optimize edilmiş baytlara çevir
     img_byte_arr = BytesIO()
     pil_image.save(img_byte_arr, format='JPEG', quality=85)
     img_bytes = img_byte_arr.getvalue()
@@ -329,56 +416,60 @@ Cevabını SADECE geçerli bir JSON nesnesi olarak döndür."""
     return json.loads(struct_response.text)
 
 # =========================================================================
-# ÜST BAŞLIK (HEADER) - RESMİ HEDEF AVM LOGOSU İLE
+# ÜST BAŞLIK (HEADER) - TAM MOBİL VE MASAÜSTÜ UYUMLU
 # =========================================================================
-col_h1, col_h2 = st.columns([1, 4])
-with col_h1:
-    if os.path.exists("public/hedef-logo.png"):
-        st.image("public/hedef-logo.png", width=190)
-with col_h2:
-    st.markdown("""
-    <div style="padding-top: 0.25rem;">
-        <span class="hedef-pill">AI PİYASA RADARI</span>
-        <h1 style="color: #0f172a; font-weight: 900; margin-top: 0.25rem; margin-bottom: 0.25rem; font-size: 2.2rem; letter-spacing: -0.03em;">
-            HEDEF AVM PİYASA İSTİHBARATI
-        </h1>
-        <p style="color: #c81373; font-weight: 700; font-size: 0.95rem; margin-bottom: 0;">
-            Evinizin Rengi • Google Gemini 2.5 Canlı Pazar Taraması & Senetli Taksit Motoru
-        </p>
+st.markdown(f"""
+<div class="hedef-navbar">
+    <div class="hedef-navbar-left">
+        <img src="{LOGO_B64}" class="hedef-logo-img" alt="Hedef AVM" />
+        <div style="border-left: 2px solid #fce7f3; padding-left: 0.75rem;">
+            <span class="hedef-pill">AI PİYASA RADARI</span>
+            <div style="color: #0f172a; font-weight: 900; font-size: 1.1rem; line-height: 1.2; margin-top: 0.15rem;">
+                HEDEF AVM PİYASA İSTİHBARATI
+            </div>
+            <div style="color: #c81373; font-size: 0.75rem; font-weight: 700;">
+                Evinizin Rengi • Google Gemini 2.5 Canlı Satılabilirlik Motoru
+            </div>
+        </div>
     </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 0.35rem 0.75rem; border-radius: 9999px; font-weight: 800; font-size: 0.72rem;">
+            ● Gemini 2.5 Aktif
+        </span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # =========================================================================
 # GİRİŞ KARTI (FORM)
 # =========================================================================
 with st.container():
     st.markdown("""
-    <div style="text-align: center; max-width: 650px; margin: 0 auto 1.5rem auto;">
-        <span class="hedef-pill">⚡ ANLIK PAZAR İSTİHBARATI</span>
-        <h2 style="font-weight: 900; color: #0f172a; margin-top: 0.5rem; letter-spacing: -0.02em;">
-            Ürün Bilgisini ve Fotoğrafını Ekleyin
-        </h2>
-        <p style="color: #64748b; font-size: 0.9rem; font-weight: 500;">
-            Model karışıklığını önlemek ve Trendyol, Hepsiburada ve Akakçe fiyatlarını <strong>canlı ve hatasız</strong> çekmek için ürün adını belirtiniz.
-        </p>
-    </div>
+    <div class="hedef-card">
+        <div style="text-align: center; max-width: 600px; margin: 0 auto 1.25rem auto;">
+            <span class="hedef-pill">⚡ ANLIK PAZAR İSTİHBARATI</span>
+            <h2 style="font-weight: 900; color: #0f172a; margin-top: 0.4rem; font-size: 1.6rem; letter-spacing: -0.02em;">
+                Ürün Bilgisini ve Fotoğrafını Ekleyin
+            </h2>
+            <p style="color: #64748b; font-size: 0.85rem; font-weight: 500; margin-bottom: 0;">
+                Model karışıklığını önlemek ve Trendyol, Hepsiburada ve Akakçe fiyatlarını <strong>canlı ve hatasız</strong> çekmek için ürün adını belirtiniz.
+            </p>
+        </div>
     """, unsafe_allow_html=True)
 
     # ZORUNLU ÜRÜN ADI GİRİŞİ
     product_name_input = st.text_input(
         "📦 Ürün Adı ve Modeli * (Zorunlu)",
         placeholder="Örn: gm 26 pro, iPhone 15 128GB, Philips HD9650 Airfryer, Karaca Çay Makinesi...",
-        help="Yapay zekanın doğru modeli eşleştirmesi ve Trendyol/Hepsiburada fiyatlarını hatasız çekmesi için model adını yazınız."
+        help="Model adını tam yazmak fiyatları canlı aramayla %100 doğrular."
     )
 
-    # Görsel Girişi (Kamera & Dosya Yükleme)
+    # Görsel Girişi
     tab_cam, tab_file = st.tabs(["📸 Kamerayla Çek", "📁 Galeriden / Dosyadan Yükle"])
     uploaded_image = None
 
     with tab_cam:
-        cam_file = st.camera_input("Ürünün veya kutusunun fotoğrafını çekin")
+        cam_file = st.camera_input("Ürünün veya ambalajının fotoğrafını çekin")
         if cam_file:
             uploaded_image = Image.open(cam_file)
 
@@ -395,15 +486,18 @@ with st.container():
         notes_input = st.text_input("Ekstra Not / Durum (Opsiyonel)", placeholder="Örn: Sıfır kutulu, 2 yıl Türkiye garantili")
 
     start_btn = st.button("🚀 Canlı Piyasa Analizini Başlat", use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================================
-# ANALİZ YÜRÜTME & GELİŞMİŞ SONUÇ DASHBOARD'U
+# ANALİZ YÜRÜTME & GELİŞMİŞ MOBİL UYUMLU SONUÇ DASHBOARD'U
 # =========================================================================
 if start_btn:
     if not product_name_input.strip():
         st.error("⚠️ Model karışıklığını önlemek için lütfen Ürün Adı ve Modelini giriniz (Örn: gm 26 pro, iPhone 15 128GB)!")
     elif uploaded_image is None:
         st.error("⚠️ Lütfen analiz edilecek ürünün fotoğrafını çekin veya galeriden seçin!")
+    elif not ACTIVE_API_KEY:
+        st.error("⚠️ Sistemde geçerli bir GEMINI_API_KEY bulunamadı. Lütfen Streamlit Secrets alanını kontrol edin.")
     else:
         with st.status("🔍 Canlı Piyasa Taraması ve Analiz Başlatılıyor...", expanded=True) as status:
             st.write("1. Aşama: Google üzerinden Akakçe, Trendyol ve Hepsiburada güncel fiyatları canlı taranıyor...")
@@ -422,86 +516,79 @@ if start_btn:
                 status.update(label="❌ Analiz Sırasında Hata Oluştu", state="error")
                 st.error(f"Hata detayı: {str(e)}")
 
-# Sonuç Ekranı (Esas UI Tasarımı)
+# Sonuç Ekranı
 if "last_analysis" in st.session_state and st.session_state["last_analysis"]:
     res = st.session_state["last_analysis"]
     feasibility = res.get("feasibility", {})
     score = feasibility.get("score", 50)
     verdict = feasibility.get("verdict", "SATAR")
 
-    st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+    # Ürün Başlık & Skor Kartı
     st.markdown(f"""
     <div class="hedef-card" style="border-top: 6px solid #c81373;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <span class="hedef-pill">ANALİZ RAPORU HAZIR</span>
-                <h2 style="color: #0f172a; font-weight: 900; margin-top: 0.5rem; margin-bottom: 0.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div style="flex: 1; min-width: 250px;">
+                <span class="hedef-pill">FİZİBİLİTE RAPORU</span>
+                <h2 style="color: #0f172a; font-weight: 900; font-size: 1.6rem; margin-top: 0.35rem; margin-bottom: 0.25rem;">
                     {res.get('productName')}
                 </h2>
-                <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 0;">
-                    Marka: <strong>{res.get('brand')}</strong> | Kategori: <strong>{res.get('category')}</strong> {f'| Model: {res.get("modelOrCode")}' if res.get("modelOrCode") else ''}
-                </p>
+                <div style="color: #64748b; font-size: 0.85rem; font-weight: 600;">
+                    Marka: <strong style="color: #0f172a;">{res.get('brand')}</strong> • Kategori: <strong style="color: #0f172a;">{res.get('category')}</strong> {f'• Model: {res.get("modelOrCode")}' if res.get("modelOrCode") else ''}
+                </div>
             </div>
-            <div style="text-align: right;">
-                <span class="{'badge-success' if score >= 75 else 'badge-warning'}">{verdict}</span>
-                <div style="font-size: 2.2rem; font-weight: 900; color: #c81373;">
-                    {score} <span style="font-size: 0.9rem; color: #64748b; font-weight: 700;">/ 100 PUAN</span>
+            <div style="text-align: right; background: #faf5f8; padding: 0.75rem 1.25rem; border-radius: 1rem; border: 1px solid #fce7f3;">
+                <span class="badge-verdict">{verdict}</span>
+                <div style="font-size: 2.2rem; font-weight: 900; color: #c81373; line-height: 1;">
+                    {score} <span style="font-size: 0.85rem; color: #64748b; font-weight: 700;">/ 100 PUAN</span>
                 </div>
             </div>
         </div>
-        <div style="margin-top: 1rem; padding: 1rem; background: #faf5f8; border-radius: 1rem; border: 1px solid #fce7f3;">
-            <strong style="color: #c81373;">💡 Yönetici Özeti:</strong> <span style="color: #334155; font-weight: 600;">{feasibility.get('headline')}</span>
+        <div style="margin-top: 1rem; padding: 0.85rem 1rem; background: #faf5f8; border-radius: 0.85rem; border: 1px solid #fce7f3;">
+            <strong style="color: #c81373;">💡 Yönetici Özeti:</strong> <span style="color: #334155; font-weight: 600; font-size: 0.9rem;">{feasibility.get('headline')}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # 1. Satır: Piyasa Fiyatları vs Hedef AVM Senetli Taksit Stratejisi
+    # 1. Bölüm: Piyasa Fiyatları vs Hedef AVM Senetli Taksit Stratejisi
     col_m1, col_m2 = st.columns(2)
     
     with col_m1:
-        st.markdown("""
+        mp = res.get("marketPrices", {})
+        st.markdown(f"""
         <div class="hedef-card">
             <h3 style="font-weight: 900; color: #0f172a; font-size: 1.15rem; margin-bottom: 0.25rem;">
-                🏪 Türkiye Canlı Piyasa Fiyat Dağılımı
+                🏪 Türkiye Canlı Piyasa Fiyat Skalası
             </h3>
             <p style="color: #64748b; font-size: 0.8rem; margin-bottom: 1rem;">
-                Trendyol, Hepsiburada ve perakende mağaza skalası
+                Akakçe, Trendyol, Hepsiburada ve perakende mağaza ortalamaları
             </p>
-        """, unsafe_allow_html=True)
+            
+            <div class="hedef-price-grid">
+                <div class="hedef-price-item">
+                    <span style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase;">En Düşük</span>
+                    <div style="font-size: 1.2rem; font-weight: 900; color: #0f172a;">{mp.get('min', 0):,} ₺</div>
+                </div>
+                <div class="hedef-price-highlight">
+                    <span style="font-size: 0.68rem; font-weight: 900; color: #c81373; text-transform: uppercase;">Piyasa Ortalaması</span>
+                    <div style="font-size: 1.3rem; font-weight: 900; color: #c81373;">{mp.get('average', 0):,} ₺</div>
+                </div>
+                <div class="hedef-price-item">
+                    <span style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase;">En Yüksek</span>
+                    <div style="font-size: 1.2rem; font-weight: 900; color: #0f172a;">{mp.get('max', 0):,} ₺</div>
+                </div>
+            </div>
 
-        mp = res.get("marketPrices", {})
-        c_min, c_avg, c_max = st.columns(3)
-        with c_min:
-            st.markdown(f"""
-            <div class="hedef-price-box">
-                <span style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">En Düşük</span>
-                <div style="font-size: 1.25rem; font-weight: 900; color: #0f172a;">{mp.get('min', 0):,} ₺</div>
-            </div>
-            """.replace(",", "."), unsafe_allow_html=True)
-        with c_avg:
-            st.markdown(f"""
-            <div class="hedef-avg-box">
-                <span style="font-size: 0.7rem; font-weight: 900; color: #c81373; text-transform: uppercase;">Piyasa Ortalaması</span>
-                <div style="font-size: 1.35rem; font-weight: 900; color: #c81373;">{mp.get('average', 0):,} ₺</div>
-            </div>
-            """.replace(",", "."), unsafe_allow_html=True)
-        with c_max:
-            st.markdown(f"""
-            <div class="hedef-price-box">
-                <span style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">En Yüksek</span>
-                <div style="font-size: 1.25rem; font-weight: 900; color: #0f172a;">{mp.get('max', 0):,} ₺</div>
-            </div>
-            """.replace(",", "."), unsafe_allow_html=True)
+            <div style="margin-top: 1rem;"><strong style="font-size: 0.78rem; color: #64748b; text-transform: uppercase;">Pazaryeri Örnekleri:</strong></div>
+        """.replace(",", "."), unsafe_allow_html=True)
 
-        st.markdown("<div style='margin-top: 1.25rem;'><strong style='font-size: 0.8rem; color: #64748b; text-transform: uppercase;'>Pazaryeri Örnekleri:</strong></div>", unsafe_allow_html=True)
         for comp in res.get("competitorBenchmarks", []):
             st.markdown(f"""
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1rem; background: #faf5f8; border-radius: 0.85rem; margin-top: 0.4rem; border: 1px solid #fce7f3; font-size: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #faf5f8; border-radius: 0.75rem; margin-top: 0.35rem; border: 1px solid #fce7f3; font-size: 0.82rem;">
                 <div>
                     <strong style="color: #0f172a;">{comp.get('platform')}</strong>
-                    <div style="color: #64748b; font-size: 0.75rem;">{comp.get('notes', '')}</div>
+                    <div style="color: #64748b; font-size: 0.72rem;">{comp.get('notes', '')}</div>
                 </div>
-                <div style="font-weight: 900; color: #0f172a; font-size: 1rem;">
+                <div style="font-weight: 900; color: #0f172a; font-size: 0.95rem;">
                     {comp.get('estimatedPrice', 0):,} ₺
                 </div>
             </div>
@@ -516,45 +603,43 @@ if "last_analysis" in st.session_state and st.session_state["last_analysis"]:
                 🎯 Hedef AVM Fiyat & Senet Kurgusu
             </h3>
             <p style="color: #c81373; font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem;">
-                Peşin ve 12 ay elden senetli taksit stratejisi
+                Peşin ve 12 ay elden senetli taksit kurgusu
             </p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1.25rem; padding: 1rem;">
-                    <span style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Peşin / Kredi Kartı</span>
-                    <div style="font-size: 1.6rem; font-weight: 900; color: #0f172a; margin-top: 0.25rem;">
-                        {hp.get('cashRecommendedPrice', 0):,} ₺
-                    </div>
-                    <span style="font-size: 0.75rem; color: #94a3b8;">Online rekabetçi liste fiyatı</span>
+            <div class="hedef-senet-banner">
+                <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #fce7f3;">Elden Senetli Toplam Satış</span>
+                <div style="font-size: 1.8rem; font-weight: 900; line-height: 1.1; margin-top: 0.25rem;">
+                    {hp.get('installmentRecommendedPrice', 0):,} ₺
                 </div>
-
-                <div class="hedef-senet-card">
-                    <span style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fce7f3;">Elden Senetli Toplam</span>
-                    <div style="font-size: 1.6rem; font-weight: 900; margin-top: 0.25rem;">
-                        {hp.get('installmentRecommendedPrice', 0):,} ₺
-                    </div>
-                    <span style="font-size: 0.8rem; font-weight: 700; color: #fdf2f8;">
-                        {hp.get('monthlyInstallmentPrice', 0):,} ₺ x {hp.get('installmentCount', 12)} Ay Taksit
-                    </span>
+                <div style="font-size: 0.9rem; font-weight: 800; color: #fdf2f8; margin-top: 0.35rem;">
+                    {hp.get('monthlyInstallmentPrice', 0):,} ₺ x {hp.get('installmentCount', 12)} Ay Taksit
                 </div>
             </div>
 
-            <div style="background: #fdf2f8; border-radius: 1rem; padding: 0.85rem; border: 1px solid #fce7f3; font-size: 0.82rem; color: #831843;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 0.85rem; margin-bottom: 0.75rem;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Peşin / Kredi Kartı Fiyatı</span>
+                <div style="font-size: 1.35rem; font-weight: 900; color: #0f172a; margin-top: 0.15rem;">
+                    {hp.get('cashRecommendedPrice', 0):,} ₺
+                </div>
+                <span style="font-size: 0.72rem; color: #94a3b8;">Online pazaryerleriyle rekabetçi mağaza peşin liste fiyatı</span>
+            </div>
+
+            <div style="background: #fdf2f8; border-radius: 0.85rem; padding: 0.75rem; border: 1px solid #fce7f3; font-size: 0.8rem; color: #831843;">
                 <strong>📌 Satın Alma Tavsiyesi:</strong> {hp.get('strategyNote', '')}
             </div>
         </div>
         """.replace(",", "."), unsafe_allow_html=True)
 
-    # 2. Satır: Neden Satar? (Fırsatlar) vs Riskler
+    # 2. Bölüm: Neden Satar? vs Riskler
     col_r1, col_r2 = st.columns(2)
     with col_r1:
         st.markdown("""
         <div class="hedef-card" style="border-left: 6px solid #10b981;">
-            <h4 style="font-weight: 900; color: #065f46; margin-bottom: 0.5rem;">✅ Neden Satar? (Satış Gücü & Fırsatlar)</h4>
+            <h4 style="font-weight: 900; color: #065f46; font-size: 1.05rem; margin-bottom: 0.5rem;">✅ Neden Satar? (Fırsatlar)</h4>
         """, unsafe_allow_html=True)
         for reason in feasibility.get("reasonsToSell", []):
             st.markdown(f"""
-            <div style="padding: 0.6rem 0.85rem; background: #ecfdf5; border-radius: 0.75rem; margin-top: 0.4rem; font-size: 0.85rem; color: #064e3b; font-weight: 600;">
+            <div style="padding: 0.5rem 0.75rem; background: #ecfdf5; border-radius: 0.65rem; margin-top: 0.35rem; font-size: 0.82rem; color: #064e3b; font-weight: 600;">
                 ✓ {reason}
             </div>
             """, unsafe_allow_html=True)
@@ -563,39 +648,38 @@ if "last_analysis" in st.session_state and st.session_state["last_analysis"]:
     with col_r2:
         st.markdown("""
         <div class="hedef-card" style="border-left: 6px solid #f59e0b;">
-            <h4 style="font-weight: 900; color: #92400e; margin-bottom: 0.5rem;">⚠️ Riskler ve Dikkat Edilmesi Gerekenler</h4>
+            <h4 style="font-weight: 900; color: #92400e; font-size: 1.05rem; margin-bottom: 0.5rem;">⚠️ Riskler ve Dikkat Edilmesi Gerekenler</h4>
         """, unsafe_allow_html=True)
         for risk in feasibility.get("risksAndWatchouts", []):
             st.markdown(f"""
-            <div style="padding: 0.6rem 0.85rem; background: #fffbeb; border-radius: 0.75rem; margin-top: 0.4rem; font-size: 0.85rem; color: #78350f; font-weight: 600;">
+            <div style="padding: 0.5rem 0.75rem; background: #fffbeb; border-radius: 0.65rem; margin-top: 0.35rem; font-size: 0.82rem; color: #78350f; font-weight: 600;">
                 ! {risk}
             </div>
             """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # 3. Satır: Kampanya & Vitrin Sloganları
+    # 3. Bölüm: Kampanya ve Vitrin Sloganları
     st.markdown("""
     <div class="hedef-card">
-        <h4 style="font-weight: 900; color: #0f172a; margin-bottom: 0.75rem;">📣 Hedef AVM Mağaza İçi Kampanya & Vitrin Kurguları</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <h4 style="font-weight: 900; color: #0f172a; font-size: 1.05rem; margin-bottom: 0.75rem;">📣 Hedef AVM Mağaza İçi Kampanya Kurguları</h4>
     """, unsafe_allow_html=True)
 
     for camp in res.get("campaigns", []):
         st.markdown(f"""
-        <div style="background: #faf5f8; border: 1px solid #fce7f3; border-radius: 1rem; padding: 1rem;">
+        <div style="background: #faf5f8; border: 1px solid #fce7f3; border-radius: 0.85rem; padding: 0.85rem; margin-bottom: 0.65rem;">
             <span class="hedef-pill">{camp.get('campaignType')}</span>
-            <h5 style="font-weight: 900; color: #0f172a; margin-top: 0.5rem; margin-bottom: 0.25rem;">{camp.get('title')}</h5>
-            <p style="font-size: 0.82rem; color: #475569; margin-bottom: 0.75rem;">{camp.get('description')}</p>
-            <div style="background: #ffffff; border: 1px solid #fbcfe8; padding: 0.6rem 0.85rem; border-radius: 0.75rem; font-size: 0.82rem; color: #c81373; font-weight: 800; font-style: italic;">
+            <div style="font-weight: 900; color: #0f172a; font-size: 0.95rem; margin-top: 0.35rem; margin-bottom: 0.2rem;">{camp.get('title')}</div>
+            <p style="font-size: 0.8rem; color: #475569; margin-bottom: 0.5rem;">{camp.get('description')}</p>
+            <div style="background: #ffffff; border: 1px solid #fbcfe8; padding: 0.5rem 0.75rem; border-radius: 0.65rem; font-size: 0.8rem; color: #c81373; font-weight: 800; font-style: italic;">
                 "{camp.get('bannerSlogan')}"
             </div>
         </div>
         """, unsafe_allow_html=True)
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Rapor İndirme Butonu
+    # İndirme Butonu
     st.download_button(
-        label="📥 Fizibilite Raporunu JSON Olarak İndir",
+        label="📥 Raporu JSON Olarak İndir",
         data=json.dumps(res, ensure_ascii=False, indent=2),
         file_name=f"Hedef_AVM_Rapor_{res.get('brand', 'Urun')}.json",
         mime="application/json"
@@ -604,7 +688,7 @@ if "last_analysis" in st.session_state and st.session_state["last_analysis"]:
 # Alt Bilgi (Footer)
 st.markdown("""
 <div style="text-align: center; padding: 2rem 0; color: #94a3b8; font-size: 0.75rem; border-top: 1px solid #fce7f3; margin-top: 2rem;">
-    <strong>HEDEF AVM</strong> • Özel Ürün Piyasa Araştırması AI Yazılımı<br>
-    Google Gemini 2.5 Vision & Canlı Arama İstihbarat Motoru ile korunmaktadır.
+    <strong>HEDEF ALIPVERİŞ MERKEZLERİ</strong> • Özel Ürün Piyasa Araştırması AI Yazılımı<br>
+    Google Gemini 2.5 Vision & Canlı Arama İstihbarat Motoru ile güçlendirilmiştir.
 </div>
 """, unsafe_allow_html=True)
