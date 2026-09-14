@@ -836,14 +836,14 @@ Lütfen şu sitelerdeki en güncel satış ve taksit fiyatlarını bul:
 2. Trendyol ve Hepsiburada: Pazaryeri peşin liste fiyatları kaç TL?
 3. Elden Senetli / Taksitli Perakende Rakipleri:
    - Evkur (evkur.com.tr): Taksitli ve peşin fiyatı kaç TL?
-   - Taşpınar Mağazaları (taspinar.com): Taşpınar'daki güncel fiyatı veya 15 ay senetli taksit tutarı nedir? (Lütfen gerçekçi piyasa fiyatını bul, hayali rakam yazma!)
+   - Taşpınar Mağazaları (taspinar.com): Taşpınar'daki güncel fiyatı veya 15 ay senetli taksit tutarı nedir?
    - HYS AVM (hysavm.com): HYS AVM'de taksitli satış fiyatı nedir?
    - Yön AVM (yonavm.com.tr): 15 ay elden senetli taksit durumu nedir?
    - Yiğit AVM (yigitavm.com.tr): Elden taksitli satış fiyatı nedir?
    - SenetSepet (senetsepet.com): Online senetli satış fiyatı nedir?
 
-ÖNEMLİ KURAL:
-Eğer bir senetli mağazada ürünün kendisi birebir listelenmemişse, kesinlikle hayali uçuk fiyatlar (örneğin 18 bin TL'lik ürüne 30 bin TL gibi) uydurma! Ürünün Akakçe peşin fiyatı üzerine o mağazanın ortalama %35-%50 vade farkı uygulandığını notta belirt ve gerçekçi rakamlar sun.`;
+ÖNEMLİ VE KESİN KURAL (STOK KONTROLÜ):
+Eğer bu mağazaların veya platformların birinde (özellikle Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet veya pazaryerlerinde) bu ürün satılmıyorsa, listelenmemişse veya stokta tükenmişse, KESİNLİKLE RASTGELE VEYA TAHMİNİ FİYAT UYDURMA! Açıkça "Stokta / Listede Yok" olduğunu belirt. Sadece gerçekten listelenmiş ve stokta olan fiyatları aktar.`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -878,11 +878,13 @@ Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, elektronik, cep telefo
 En büyük ticari gücü ve satış hacmi, müşterilerine sunduğu '15 Ay Elden Senetli (Kredi kartsız/peşinatsız taksitli)' satış modelidir.
 En önemli doğrudan rakipleri: Evkur, Taşpınar Mağazaları, HYS AVM (hysavm.com), Yön AVM, Yiğit AVM ve SenetSepet'tir.
 
-FİYAT DOĞRULUK VE GERÇEKÇİLİK İLKELERİ:
-1. Asla uçuk, tutarsız veya hayali fiyatlar üretme! Örneğin piyasada 15.000 - 20.000 TL olan bir telefona Taşpınar veya Evkur için 30.000 TL gibi absürt rakamlar yazma!
-2. Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı, genel olarak piyasa peşin fiyatının %35 ile %50 fazlası bandında seyreder (15 aylık vade farkı ve tahsilat maliyeti).
-3. Hedef AVM 15 Ay Elden Senetli Tavsiye Fiyatı: Piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı olmalı, aylık taksit tutarı müşteriye cazip gelecek şekilde yuvarlanmalıdır. (Aylık Taksit = Toplam Senet Fiyatı / 15).
-4. Senetli Rakipler Listesi: Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere tam 6 rakip içermelidir.`;
+FİYAT VE STOK DOĞRULUK İLKELERİ (ÇOK ÖNEMLİ - KESİN KURAL):
+1. STOK VE BULUNABİLİRLİK DOĞRULAMASI: Eğer ürün rakip mağazalarda (Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet) veya platformlarda (Akakçe, Trendyol, Hepsiburada, Zincir Mağaza) listelenmemişse, stokta yoksa veya satılmıyorsa KESİNLİKLE RASTGELE/HAYALİ FİYAT SALLAMA!
+   - İlgili rakip veya platform için "isAvailable": false ver, "estimatedTotalPrice": 0 (veya "estimatedPrice": 0), "estimatedMonthly": 0 yap ve "notes" alanına "Stokta / Listede Bulunamadı" yaz.
+   - Sadece gerçekten satışta ve stokta olduğu teyit edilen mağazalar için "isAvailable": true ve gerçekçi fiyat yaz.
+2. GERÇEKÇİ 15 AY SENET FİYATI: Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı genel olarak piyasa peşin fiyatının yaklaşık %35 ile %50 fazlası bandında seyreder. Asla piyasa peşin fiyatının 2 katı gibi absürt uçuk fiyatlar yazma!
+3. Hedef AVM 15 Ay Elden Senetli Tavsiye Fiyatı: Piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı olmalı, aylık taksit tutarı müşteriye cazip gelecek şekilde yuvarlanmalıdır (Aylık Taksit = Toplam Senet Fiyatı / 15).
+4. Senetli Rakipler Listesi: Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere tam 6 rakip incelenmelidir.`;
 
         const promptIntro = currentImageBase64
           ? 'Yukarıdaki canlı web araştırma sonuçlarını ve ekteki ürün görselini incele.'
@@ -911,59 +913,65 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
     "currency": "TRY"
   },
   "competitorBenchmarks": [
-    { "platform": "Akakçe (En Ucuz)", "estimatedPrice": 0, "notes": "Firma veya mağaza adı" },
-    { "platform": "Trendyol", "estimatedPrice": 0, "notes": "Kargo dahil ortalama" },
-    { "platform": "Hepsiburada", "estimatedPrice": 0, "notes": "Resmi veya pazaryeri satıcı" },
-    { "platform": "Zincir Mağaza (Teknosa/Vatan)", "estimatedPrice": 0, "notes": "Fiziki mağaza fiyatı" }
+    { "platform": "Akakçe (En Ucuz)", "isAvailable": true, "estimatedPrice": 0, "notes": "Firma veya mağaza adı" },
+    { "platform": "Trendyol", "isAvailable": true, "estimatedPrice": 0, "notes": "Kargo dahil ortalama veya Stokta Yok" },
+    { "platform": "Hepsiburada", "isAvailable": true, "estimatedPrice": 0, "notes": "Resmi veya pazaryeri satıcı veya Stokta Yok" },
+    { "platform": "Zincir Mağaza (Teknosa/Vatan)", "isAvailable": false, "estimatedPrice": 0, "notes": "Stokta / Listede bulunamadı" }
   ],
   "senetliCompetitors": [
     {
       "name": "Evkur",
       "website": "evkur.com.tr",
+      "isAvailable": true,
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "Evkur 15 ay taksitli liste tahmini"
+      "notes": "Evkur 15 ay taksitli liste veya Stokta / Listede Yok"
     },
     {
       "name": "Taşpınar",
       "website": "taspinar.com",
+      "isAvailable": false,
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "Taşpınar 15 ay senetli liste tahmini"
+      "notes": "Taşpınar 15 ay senetli liste veya Stokta / Listede Yok"
     },
     {
       "name": "HYS AVM",
       "website": "hysavm.com",
+      "isAvailable": false,
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "HYS AVM 15 ay taksit tahmini"
+      "notes": "HYS AVM 15 ay taksitli liste veya Stokta / Listede Yok"
     },
     {
       "name": "Yön AVM",
       "website": "yonavm.com.tr",
+      "isAvailable": false,
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "Yön AVM 15 ay elden senet tahmini"
+      "notes": "Yön AVM 15 ay elden senet veya Stokta / Listede Yok"
     },
     {
       "name": "Yiğit AVM",
       "website": "yigitavm.com.tr",
+      "isAvailable": false,
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "Yiğit AVM elden taksit tahmini"
+      "notes": "Yiğit AVM elden taksit veya Stokta / Listede Yok"
     },
     {
       "name": "SenetSepet",
       "website": "senetsepet.com",
+      "isAvailable": false,
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "SenetSepet online senetli taksit tahmini"
+      "notes": "SenetSepet online senetli taksit veya Stokta / Listede Yok"
     }
   ],
   "hedefPricing": {
@@ -1014,7 +1022,7 @@ NOTLAR:
 - score 0 ile 100 arasında bir tamsayı olmalıdır.
 - Hedef AVM 15 Ay senetli satış fiyatı piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı civarındadır.
 - monthlyInstallmentPrice = installmentRecommendedPrice / 15 olarak hesaplanır.
-- senetliCompetitors alanında Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere 6 rakibin 15 ay taksitli fiyatlandırmalarını gerçekçi piyasa oranlarına göre hesapla.`;
+- senetliCompetitors alanında Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere 6 rakip incelenmelidir. Ürün ilgili mağazada yoksa veya stokta tükenmişse ASLA rastgele fiyat yazma; isAvailable: false, estimatedTotalPrice: 0 ve notes: "Stokta / Listede Yok" olarak belirt!`;
 
         const partsContent = [{ text: jsonSchemaPrompt }];
         if (currentImageBase64) {
@@ -1148,12 +1156,22 @@ NOTLAR:
       (data.competitorBenchmarks || []).forEach(comp => {
         const item = document.createElement('div');
         item.className = 'flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-base gap-3';
+        
+        const priceNum = Number(comp.estimatedPrice) || 0;
+        const notesStr = (comp.notes || '').toLowerCase();
+        const explicitlyOutOfStock = notesStr.includes('stok') && (notesStr.includes('yok') || notesStr.includes('bulunamadı') || notesStr.includes('tükendi'));
+        const isAvail = comp.isAvailable !== false && priceNum > 0 && !explicitlyOutOfStock;
+
+        const priceBadge = isAvail
+          ? `<span class="font-black text-slate-900 text-sm sm:text-xl shrink-0">${formatTL(priceNum)}</span>`
+          : `<span class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl shrink-0"><i class="fa-solid fa-circle-xmark text-amber-500"></i> Stokta / Listede Yok</span>`;
+
         item.innerHTML = `
           <div class="min-w-0 mr-2">
             <strong class="text-slate-900 block font-black truncate">${comp.platform}</strong>
-            <span class="text-xs text-slate-500 font-semibold block truncate">${comp.notes || ''}</span>
+            <span class="text-xs text-slate-500 font-semibold block truncate">${comp.notes || (isAvail ? '' : 'Bu platformda ürün listelenmiyor veya stokta yok')}</span>
           </div>
-          <span class="font-black text-slate-900 text-sm sm:text-xl shrink-0">${formatTL(comp.estimatedPrice)}</span>
+          ${priceBadge}
         `;
         compList.appendChild(item);
       });
@@ -1163,54 +1181,105 @@ NOTLAR:
       if (senetliGrid) {
         senetliGrid.innerHTML = '';
         
-        // Gerçekçi Piyasa Referans Oranları (Uçuk veya gerçek dışı fiyatları filtreler)
-        const defaultSenetli = [
-          { name: 'Evkur', estimatedTotalPrice: Math.round(baseCash * 1.45), estimatedMonthly: Math.round((baseCash * 1.45) / 15), notes: 'Evkur 15 ay taksitli liste tahmini' },
-          { name: 'Taşpınar', estimatedTotalPrice: Math.round(baseCash * 1.42), estimatedMonthly: Math.round((baseCash * 1.42) / 15), notes: 'Taşpınar 15 ay elden senet tahmini' },
-          { name: 'HYS AVM', estimatedTotalPrice: Math.round(baseCash * 1.44), estimatedMonthly: Math.round((baseCash * 1.44) / 15), notes: 'hysavm.com 15 ay taksitli liste' },
-          { name: 'Yön AVM', estimatedTotalPrice: Math.round(baseCash * 1.40), estimatedMonthly: Math.round((baseCash * 1.40) / 15), notes: 'Yön AVM 15 ay senetli taksit tahmini' },
-          { name: 'Yiğit AVM', estimatedTotalPrice: Math.round(baseCash * 1.43), estimatedMonthly: Math.round((baseCash * 1.43) / 15), notes: 'Yiğit AVM elden taksit tahmini' },
-          { name: 'SenetSepet', estimatedTotalPrice: Math.round(baseCash * 1.39), estimatedMonthly: Math.round((baseCash * 1.39) / 15), notes: 'SenetSepet online senetli tahmini' }
+        const requiredCompetitors = [
+          { name: 'Evkur', website: 'evkur.com.tr' },
+          { name: 'Taşpınar', website: 'taspinar.com' },
+          { name: 'HYS AVM', website: 'hysavm.com' },
+          { name: 'Yön AVM', website: 'yonavm.com.tr' },
+          { name: 'Yiğit AVM', website: 'yigitavm.com.tr' },
+          { name: 'SenetSepet', website: 'senetsepet.com' }
         ];
 
-        let competitors = data.senetliCompetitors;
-        if (!competitors || !Array.isArray(competitors) || competitors.length < 4) {
-          competitors = defaultSenetli;
-        }
+        let competitors = Array.isArray(data.senetliCompetitors) ? [...data.senetliCompetitors] : [];
+
+        // Eksik kalan mağazaları "Stokta / Listede Yok" olarak ekle (Asla rastgele fiyat uydurma)
+        requiredCompetitors.forEach(rc => {
+          const exists = competitors.some(c => 
+            (c.name || '').toLowerCase().includes(rc.name.toLowerCase()) || 
+            (c.website || '').toLowerCase().includes(rc.website.toLowerCase())
+          );
+          if (!exists) {
+            competitors.push({
+              name: rc.name,
+              website: rc.website,
+              isAvailable: false,
+              estimatedTotalPrice: 0,
+              estimatedMonthly: 0,
+              notes: 'Stokta / Listede bulunamadı'
+            });
+          }
+        });
 
         competitors.forEach(sc => {
-          let tot = sc.estimatedTotalPrice || 0;
-          
-          // Gerçekçilik Filtresi: Eğer model absürt/uçuk bir rakam (örn: peşinin 2 katından fazla) döndürdüyse gerçekçi orana normalize et
-          if (tot <= 0 || tot > baseCash * 1.9 || tot < baseCash * 1.1) {
-            tot = Math.round(baseCash * 1.42);
-          }
-
-          const mon = sc.estimatedMonthly && sc.estimatedMonthly > 0 ? sc.estimatedMonthly : Math.round(tot / 15);
           const name = sc.name || sc.competitor || 'Rakip Mağaza';
+          const priceNum = Number(sc.estimatedTotalPrice) || 0;
+          
+          // Eğer isAvailable false ise veya fiyat 0 ise veya notlarda stokta yok deniyorsa -> Kesinlikle Stokta Yok!
+          const notesText = (sc.notes || '').toLowerCase();
+          const explicitlyOutOfStock = notesText.includes('stok') && (notesText.includes('yok') || notesText.includes('bulunamadı') || notesText.includes('tükendi'));
+          const isAvail = sc.isAvailable !== false && priceNum > 0 && !explicitlyOutOfStock;
           
           const card = document.createElement('div');
-          card.className = 'p-4 sm:p-5 rounded-2xl bg-slate-50/90 border-2 border-slate-200 hover:border-pink-300 transition-all space-y-3';
-          card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5">
-                <i class="fa-solid fa-building text-[#c81373] text-xs"></i>
-                ${name}
-              </span>
-              <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
-                15 Ay Taksit
-              </span>
-            </div>
-            <div>
-              <span class="text-[11px] text-slate-500 font-bold block uppercase tracking-wide">Tahmini Senet Toplamı</span>
-              <div class="text-lg sm:text-2xl font-black text-slate-900 mt-0.5">${formatTL(tot)}</div>
-            </div>
-            <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
-              <span class="text-xs text-slate-600 font-semibold">Aylık Taksit:</span>
-              <span class="text-sm sm:text-base font-black text-[#c81373]">${formatTL(mon)} /ay</span>
-            </div>
-            <p class="text-[11px] text-slate-500 font-medium leading-tight">${sc.notes || '15 ay elden senetli piyasa tahmini'}</p>
-          `;
+
+          if (isAvail) {
+            let tot = priceNum;
+            // Absürt uçuk fiyat koruması (peşin fiyatın 2 katından fazla ise üst sınıra çek)
+            if (tot > baseCash * 2.0) {
+              tot = Math.round(baseCash * 1.50);
+            }
+            const mon = sc.estimatedMonthly && Number(sc.estimatedMonthly) > 0 
+              ? Number(sc.estimatedMonthly) 
+              : Math.round(tot / 15);
+
+            card.className = 'p-4 sm:p-5 rounded-2xl bg-slate-50/90 border-2 border-slate-200 hover:border-pink-300 transition-all space-y-3';
+            card.innerHTML = `
+              <div class="flex items-center justify-between">
+                <span class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5">
+                  <i class="fa-solid fa-building text-[#c81373] text-xs"></i>
+                  ${name}
+                </span>
+                <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  Stokta Var ✓
+                </span>
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-500 font-bold block uppercase tracking-wide">15 Ay Senetli Liste</span>
+                <div class="text-lg sm:text-2xl font-black text-slate-900 mt-0.5">${formatTL(tot)}</div>
+              </div>
+              <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                <span class="text-xs text-slate-600 font-semibold">Aylık Taksit (15 Ay):</span>
+                <span class="text-sm sm:text-base font-black text-[#c81373]">${formatTL(mon)} /ay</span>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium leading-tight">${sc.notes || '15 ay elden senetli taksit'}</p>
+            `;
+          } else {
+            // Stokta / Listede Yok Kartı - Kesinlikle uydurma fiyat yazılmaz!
+            card.className = 'p-4 sm:p-5 rounded-2xl bg-slate-50/70 border-2 border-dashed border-slate-300 transition-all space-y-3';
+            card.innerHTML = `
+              <div class="flex items-center justify-between">
+                <span class="text-sm sm:text-base font-black text-slate-700 flex items-center gap-1.5">
+                  <i class="fa-solid fa-store-slash text-slate-400 text-xs"></i>
+                  ${name}
+                </span>
+                <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                  Stokta / Listede Yok
+                </span>
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-400 font-bold block uppercase tracking-wide">15 Ay Senetli Liste</span>
+                <div class="mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
+                  <i class="fa-solid fa-circle-xmark text-amber-500"></i> Fiyat Bilgisi Yok
+                </div>
+              </div>
+              <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between">
+                <span class="text-xs text-slate-400 font-medium">Aylık Taksit:</span>
+                <span class="text-xs sm:text-sm font-bold text-slate-400">-</span>
+              </div>
+              <p class="text-[11px] text-amber-800/90 bg-amber-50/80 p-2 rounded-xl font-medium leading-tight border border-amber-100">
+                <i class="fa-solid fa-circle-info mr-1"></i>${sc.notes || 'Bu ürün rakip mağazada şu anda listelenmiyor veya stokta bulunmuyor.'}
+              </p>
+            `;
+          }
           senetliGrid.appendChild(card);
         });
 
@@ -1300,13 +1369,29 @@ NOTLAR:
       const totalInst = hp.installmentRecommendedPrice || Math.round(baseCash * 1.38);
       const monthlyInst = hp.monthlyInstallmentPrice || Math.round(totalInst / 15);
 
+      let senetliDetails = '';
+      if (Array.isArray(d.senetliCompetitors) && d.senetliCompetitors.length > 0) {
+        senetliDetails = d.senetliCompetitors.map(c => {
+          const isAv = c.isAvailable !== false && Number(c.estimatedTotalPrice) > 0;
+          if (isAv) {
+            const tot = Number(c.estimatedTotalPrice);
+            const mon = c.estimatedMonthly && Number(c.estimatedMonthly) > 0 ? Number(c.estimatedMonthly) : Math.round(tot / 15);
+            return `• ${c.name}: ${formatTL(tot)} (Aylık ${formatTL(mon)} x 15 Ay)`;
+          } else {
+            return `• ${c.name}: Stokta / Listede Yok (${c.notes || 'Mağazada bulunamadı'})`;
+          }
+        }).join('\n');
+      } else {
+        senetliDetails = '• Evkur, Taşpınar, HYS AVM, Yön, Yiğit, SenetSepet incelendi.';
+      }
+
       return `🎯 HEDEF AVM | ÜRÜN & 15 AY SENET RADARI RAPORU
 ---------------------------------------------
 📦 Ürün: ${d.productName || 'Bilinmeyen Ürün'}
 🏢 Marka/Kategori: ${d.brand || '-'} / ${d.category || '-'}
 📊 Karar: ${f.verdict || 'SATAR'} (${f.score || 0}/100 Puan)
 
-💰 PİYASA FİYATLARI:
+💰 PİYASA PEŞİN FİYATLARI:
 - En Düşük: ${formatTL(mp.min)}
 - Ortalama: ${formatTL(mp.average)}
 - En Yüksek: ${formatTL(mp.max)}
@@ -1315,8 +1400,8 @@ NOTLAR:
 - Peşin Satış: ${formatTL(baseCash)}
 - 15 Ay Senetli: ${formatTL(totalInst)} (Aylık ${formatTL(monthlyInst)} x 15 Ay)
 
-🏬 SENETLİ RAKİP KARŞILAŞTIRMASI:
-- Evkur, Taşpınar, HYS AVM (hysavm.com), Yön, Yiğit, SenetSepet 15 ay piyasa taksitleri incelendi.
+🏬 SENETLİ RAKİPLERİN 15 AY DURUMU:
+${senetliDetails}
 - Avantaj: ${hp.advantageNote || '15 ay vadede rekabetçi taksit avantajı.'}
 
 💡 Yönetici Özeti:
