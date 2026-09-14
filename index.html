@@ -834,41 +834,34 @@
         // Model adından arama optimizasyonu için temiz kısa isim üret (aksesuar tuzağını önler, doğrudan ürünü bulur)
         const shortName = productName.replace(/\s+(5g|128gb|256gb|512gb|1tb|\d+gb|\d+\s*gb|ram|siyah|beyaz|gold|altın|gri|mavi|yeşil).*$/i, '').trim() || productName;
 
-        const searchPrompt = `Sen Türkiye e-ticaret ve perakende piyasasında uzman bir Kıdemli Fiyat Araştırmacısısın.
-GÖREV: Aşağıdaki ürün için canlı Google Aramaları gerçekleştirerek her platformdaki DOĞRUDAN ÜRÜN SAYFASI LİNKİNİ ve NET SATIŞ FİYATINI (TL) bul.
-KESİNLİKLE İŞLEMCİ, EKRAN, KAMERA GİBİ TEKNİK ÖZELLİK YAZMA! SADECE FİYAT, STOK VE DOĞRUDAN ÜRÜN LİNKİ YAZ!
+        const searchPrompt = `Türkiye e-ticaret ve perakende piyasasında canlı fiyat araştırması yap.
+Aranan Ürün: "${productName}" (Model: "${shortName}")
 
-Aranan Ürün: "${productName}" (Kısa model: "${shortName}")
+Google Search aracıyla şu platformların doğrudan ürün sayfalarını ve satış fiyatlarını ara:
+- ${shortName} akakce fiyatı
+- ${shortName} cimri fiyatı
+- ${shortName} trendyol satın al
+- ${shortName} hepsiburada satın al
+- ${shortName} n11 satın al
+- ${shortName} vatan bilgisayar teknosa
+- ${shortName} taspinar yonavm evkur
+- ${shortName} resmi sitesi online satış
 
-AŞAĞIDAKİ HER BİR PLATFORM İÇİN ÖNCE DOĞRUDAN ÜRÜN SAYFASINI BUL, SONRA O SAYFADAN FİYATI OKU:
-1. MARKA RESMİ SİTESİ: "${shortName} resmi site satın al" veya "site:[marka resmi domain] ${shortName}" ile arama yap, doğrudan ürün sayfasını bul
-2. AKAKÇE: "site:akakce.com ${productName}" veya "akakce.com ${shortName} fiyati" ile arama yap, /fiyati, veya /fiyatlari, içeren doğrudan ürün karşılaştırma sayfasını bul
-3. CİMRİ: "site:cimri.com ${productName}" veya "cimri.com ${shortName} fiyatlari" ile arama yap, /fiyatlari, veya /en-ucuz- içeren doğrudan sayfayı bul
-4. TRENDYOL: "site:trendyol.com ${shortName}" ile arama yap; URL'de -p- içermeli ve /sr? içermemeli
-5. HEPSİBURADA: "site:hepsiburada.com ${shortName}" ile arama yap; URL'de -p- veya -pm- içermeli
-6. N11: "site:n11.com ${productName}" ile arama yap; URL'de /urun/ içermeli
-7. TAŞPINAR: "${shortName} taspinar.com" ile arama yap; Taşpınar mağazalarında bu ürün/marka kategorisi fiziki mağazalarda 15 ay elden senetle satılmaktadır
-8. EVKUR: "site:evkur.com.tr ${shortName}" ile arama yap, doğrudan ürün sayfasını bul
-9. YÖN AVM: "site:yonavm.com.tr ${shortName}" ile arama yap, doğrudan ürün sayfasını bul
-10. VATAN/TEKNOSAZİNCİR: "site:vatanbilgisayar.com ${productName}" VEYA "site:teknosa.com ${shortName}" ile arama yap, doğrudan ürün sayfasını bul
+ZORUNLU RAPOR FORMATI:
+- MARKA RESMİ SİTESİ: [Net TL Satış Fiyatı veya Resmi Sitede Stokta Yok]
+- AKAKÇE: [En ucuz peşin TL Fiyatı veya Stokta Yok]
+- CİMRİ: [En ucuz peşin TL Fiyatı veya Stokta Yok]
+- TRENDYOL: [Net Satış Fiyatı veya Stokta Yok]
+- HEPSİBURADA: [Net Satış Fiyatı veya Stokta Yok]
+- N11: [Net Satış Fiyatı veya Stokta Yok]
+- TAŞPINAR: [Taşpınar mağazasında listeleniyor (15 ay elden senet imkanı)]
+- EVKUR: [Net Fiyat / Taksit veya Listede Yok]
+- YÖN AVM: [Net Fiyat / Taksit veya Listede Yok]
+- VATAN/TEKNOSA: [Net Satış Fiyatı veya Listede Yok]
 
-ZORUNLU FORMAT (Her satırı eksiksiz doldur. FİYATI GOOGLE SNIPPET'INDEN DEĞİL, BULDUĞUN DOĞRUDAN ÜRÜN SAYFASINDAN OKU!):
-- MARKA RESMİ SİTESİ: [Sayfadaki Güncel TL Fiyatı veya Resmi Sitede Stokta Yok] | URL: [Doğrudan ürün sayfası URL'si veya Bulunamadı]
-- AKAKÇE: [En ucuz peşin TL veya Stokta Yok] | URL: [Doğrudan ürün sayfası URL'si veya Bulunamadı]
-- CİMRİ: [En ucuz peşin TL veya Stokta Yok] | URL: [Doğrudan fiyat sayfası URL'si veya Bulunamadı]
-- TRENDYOL: [Sayfadaki Güncel TL veya Stokta Yok/Tükendi] | URL: [Doğrudan ürün sayfası -p- URL'si veya Bulunamadı]
-- HEPSİBURADA: [Sayfadaki Güncel TL veya Stokta Yok/Tükendi] | URL: [Doğrudan ürün sayfası -p- veya -pm- URL'si veya Bulunamadı]
-- N11: [Sayfadaki Güncel TL veya Stokta Yok/Tükendi] | URL: [Doğrudan ürün sayfası /urun/ URL'si veya Bulunamadı]
-- TAŞPINAR: [Listeleniyor - 15 ay elden senet imkanı veya Listede Yok] | URL: [Bulunan URL veya Bulunamadı]
-- EVKUR: [Sayfadaki Güncel TL/Taksit veya Listede Yok] | URL: [Doğrudan ürün URL'si veya Bulunamadı]
-- YÖN AVM: [Sayfadaki Güncel TL/Taksit veya Listede Yok] | URL: [Doğrudan ürün URL'si veya Bulunamadı]
-- VATAN/TEKNOSAZİNCİR: [Sayfadaki Güncel TL veya Listede Yok] | URL: [Doğrudan ürün URL'si veya Bulunamadı]
-
-KESİN KURALLAR:
-1. Aksesuar (kılıf, ekran koruyucu, şarj aleti) fiyatlarını KESİNLİKLE ALMA!
-2. Arama/kategori sayfasını URL olarak VERME; sadece doğrudan ürün kartı URL'si ver.
-3. Stokta yoksa URL'yi yine de yaz (varsa), sadece fiyat yerine "Stokta Yok" yaz.
-4. FİYATI GOOGLE ARAMA ÖNBELLEĞİNDEN ASLA TAHMİN ETME; ürün sayfasını ziyaret ederek orada yazan fiyatı oku.`;
+KURALLAR:
+1. Aksesuarları (kılıf, ekran koruyucu, cam, şarj) kesinlikle hariç tut! Sadece cihazın kendisini raporla.
+2. Her platformun doğrudan ürün sayfasına bakarak canlı satış fiyatını bildir.`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -887,35 +880,18 @@ KESİN KURALLAR:
           console.warn('Aşama 1 metin ayrıştırılamadı:', stage1Data);
         }
 
-        // Canlı arama sonucunda keşfedilen DOĞRULANMIŞ doğrudan ürün URL'lerini topla (Google Grounding Redirects + Model Metin İçi Linkler)
+        // Canlı arama sonucunda keşfedilen DOĞRULANMIŞ doğrudan ürün URL'lerini topla (Google Grounding Redirects MUTLAK ÖNCELİKLİDİR)
+        // NOT: Modelin serbest metne yazdığı URL'ler (p-123456789, 404 veren linkler) LLM halüsinasyonudur! Sadece Google'ın bizzat getirdiği Grounding Chunks kullanılır!
         const discoveredDirectUrls = {};
         try {
-          // 1. Modelin arama metnine açıkça yazdığı doğrudan linkleri yakala
-          const searchLines = (searchText || '').split('\n');
-          searchLines.forEach(line => {
-            const l = line.toLowerCase();
-            const m = line.match(/(https?:\/\/[^\s\)\>\]\"\']+)/);
-            if (!m) return;
-            const u = m[1].replace(/[.,;]+$/, ''); // trailing noktalama temizle
-            const ul = u.toLowerCase();
-            // Arama/kategori sayfalarını reddet
-            const isCategoryOrSearch = ul.includes('/arama') || ul.includes('/search') || ul.includes('?q=') || ul.includes('/ara?') || ul.includes('/sr?') || ul.includes('google.com') || ul.includes('bulunamadi');
-            if (isCategoryOrSearch) return;
-            if ((l.includes('akakce') || l.includes('akakçe')) && ul.includes('akakce.com') && !discoveredDirectUrls['akakce']) discoveredDirectUrls['akakce'] = u;
-            else if (l.includes('cimri') && ul.includes('cimri.com') && !discoveredDirectUrls['cimri']) discoveredDirectUrls['cimri'] = u;
-            else if (l.includes('trendyol') && ul.includes('trendyol.com') && !discoveredDirectUrls['trendyol']) discoveredDirectUrls['trendyol'] = u;
-            else if (l.includes('hepsiburada') && ul.includes('hepsiburada.com') && !discoveredDirectUrls['hepsiburada']) discoveredDirectUrls['hepsiburada'] = u;
-            else if (l.includes('n11') && ul.includes('n11.com') && !discoveredDirectUrls['n11']) discoveredDirectUrls['n11'] = u;
-            else if (l.includes('evkur') && ul.includes('evkur.com.tr') && !discoveredDirectUrls['evkur']) discoveredDirectUrls['evkur'] = u;
-            else if ((l.includes('taspinar') || l.includes('taşpınar')) && ul.includes('taspinar.com') && !discoveredDirectUrls['taspinar']) discoveredDirectUrls['taspinar'] = u;
-            else if ((l.includes('yonavm') || (l.includes('yön') && l.includes('avm'))) && ul.includes('yonavm.com.tr') && !discoveredDirectUrls['yonavm']) discoveredDirectUrls['yonavm'] = u;
-            else if ((l.includes('vatan') || l.includes('teknosa') || l.includes('zincir')) && (ul.includes('vatanbilgisayar.com') || ul.includes('teknosa.com')) && !discoveredDirectUrls['zincir']) discoveredDirectUrls['zincir'] = u;
-            else if (l.includes('resmi') && !ul.includes('akakce') && !ul.includes('cimri') && !ul.includes('trendyol') && !ul.includes('hepsiburada') && !ul.includes('n11.com') && !ul.includes('evkur') && !ul.includes('yonavm') && !ul.includes('vatan') && !ul.includes('teknosa') && !discoveredDirectUrls['official']) discoveredDirectUrls['official'] = u;
-          });
-
-          // 2. Google Grounding Chunks ile gelen 302 doğrulanmış yönlendirme URL'lerini öncelikli olarak ata
           const chunks = stage1Data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-          const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar', 'iletkom', 'gsmborsasi'];
+          const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar', 'iletkom', 'gsmborsasi', 'neoteo'];
+
+          // Ürünün aranacak temel kelimeleri (aksesuarlardan ayırmak için)
+          const searchTokens = shortName.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+
+          // Platform bazında en iyi chunk'ları seçmek için puanlama sistemi
+          const platformCandidates = {};
 
           chunks.forEach(ch => {
             const uri = ch.web?.uri || '';
@@ -923,42 +899,60 @@ KESİN KURALLAR:
             const uriLower = uri.toLowerCase();
             if (!uri) return;
 
-            if ((title.includes('akakce') || title.includes('akakçe') || uriLower.includes('akakce.com')) && !discoveredDirectUrls['akakce']) {
-              discoveredDirectUrls['akakce'] = uri;
-            } else if ((title.includes('cimri') || uriLower.includes('cimri.com')) && !discoveredDirectUrls['cimri']) {
-              discoveredDirectUrls['cimri'] = uri;
-            } else if ((title.includes('trendyol') || uriLower.includes('trendyol.com')) && !discoveredDirectUrls['trendyol']) {
-              discoveredDirectUrls['trendyol'] = uri;
-            } else if ((title.includes('hepsiburada') || uriLower.includes('hepsiburada.com')) && !discoveredDirectUrls['hepsiburada']) {
-              discoveredDirectUrls['hepsiburada'] = uri;
-            } else if ((title.includes('n11') || title.includes('n11.com') || uriLower.includes('n11.com')) && !discoveredDirectUrls['n11']) {
-              discoveredDirectUrls['n11'] = uri;
-            } else if ((title.includes('evkur') || uriLower.includes('evkur.com.tr')) && !discoveredDirectUrls['evkur']) {
-              discoveredDirectUrls['evkur'] = uri;
-            } else if ((title.includes('taspinar') || title.includes('taşpınar') || uriLower.includes('taspinar.com')) && !discoveredDirectUrls['taspinar']) {
-              discoveredDirectUrls['taspinar'] = uri;
-            } else if (title.includes('vivense') && !discoveredDirectUrls['vivense']) {
-              discoveredDirectUrls['vivense'] = uri;
-            } else if ((title.includes('hys') || title.includes('hysavm') || uriLower.includes('hysavm.com')) && !discoveredDirectUrls['hysavm']) {
-              discoveredDirectUrls['hysavm'] = uri;
-            } else if ((title.includes('yonavm') || uriLower.includes('yonavm.com.tr')) && !discoveredDirectUrls['yonavm']) {
-              discoveredDirectUrls['yonavm'] = uri;
-            } else if ((title.includes('yigit') || title.includes('yiğit')) && !discoveredDirectUrls['yigitavm']) {
-              discoveredDirectUrls['yigitavm'] = uri;
-            } else if (title.includes('senetsepet') && !discoveredDirectUrls['senetsepet']) {
-              discoveredDirectUrls['senetsepet'] = uri;
-            } else if ((title.includes('vatan bilgisayar') || title.includes('vatanbilgisayar') || uriLower.includes('vatanbilgisayar.com')) && !discoveredDirectUrls['zincir']) {
-              discoveredDirectUrls['zincir'] = uri;
-            } else if ((title.includes('teknosa') || uriLower.includes('teknosa.com')) && !discoveredDirectUrls['zincir']) {
-              discoveredDirectUrls['zincir'] = uri;
-            } else {
-              // Eğer bilinen pazaryeri veya senetli mağaza değilse, markanın kendi resmi sitesidir:
-              if (!knownNonBrand.some(k => title.includes(k)) && !discoveredDirectUrls['official']) {
-                discoveredDirectUrls['official'] = uri;
-                discoveredDirectUrls['official_title'] = ch.web?.title || '';
+            // 1. Platform tespiti
+            let platKey = null;
+            if (title.includes('akakce') || title.includes('akakçe') || uriLower.includes('akakce.com')) platKey = 'akakce';
+            else if (title.includes('cimri') || uriLower.includes('cimri.com')) platKey = 'cimri';
+            else if (title.includes('trendyol') || uriLower.includes('trendyol.com')) platKey = 'trendyol';
+            else if (title.includes('hepsiburada') || uriLower.includes('hepsiburada.com')) platKey = 'hepsiburada';
+            else if (title.includes('n11') || uriLower.includes('n11.com')) platKey = 'n11';
+            else if (title.includes('vatan bilgisayar') || title.includes('vatanbilgisayar') || uriLower.includes('vatanbilgisayar.com')) platKey = 'zincir';
+            else if (title.includes('teknosa') || uriLower.includes('teknosa.com')) platKey = 'zincir';
+            else if (title.includes('taspinar') || title.includes('taşpınar') || uriLower.includes('taspinar.com')) platKey = 'taspinar';
+            else if (title.includes('evkur') || uriLower.includes('evkur.com.tr')) platKey = 'evkur';
+            else if (title.includes('yonavm') || title.includes('yön') || uriLower.includes('yonavm.com.tr')) platKey = 'yonavm';
+            else if (title.includes('vivense') || uriLower.includes('vivense.com')) platKey = 'vivense';
+            else if (title.includes('hys') || title.includes('hysavm') || uriLower.includes('hysavm.com')) platKey = 'hysavm';
+            else if (title.includes('yigit') || title.includes('yiğit')) platKey = 'yigitavm';
+            else if (title.includes('senetsepet') || uriLower.includes('senetsepet.com')) platKey = 'senetsepet';
+            else {
+              if (!knownNonBrand.some(k => title.includes(k) || uriLower.includes(k))) {
+                platKey = 'official';
               }
             }
+
+            if (!platKey) return;
+
+            // 2. Aksesuar tespiti (kılıf, ekran koruyucu, cam, şarj aleti KESİNLİKLE doğrudan ürün DEĞİLDİR)
+            const isAccessory = /kılıf|kilif|ekran koruyucu|nano cam|lens koruma|kamera koruma|şarj aleti|type-c kablo|kapak|kulaklık kılıfı/i.test(title);
+            if (isAccessory) return; // Aksesuarları doğrudan çöpe at
+
+            // 3. İlgililik puanı
+            let score = 5; // Taban puan
+
+            // Ürün başlıkta ne kadar geçiyor?
+            const matchedTokens = searchTokens.filter(tok => title.includes(tok));
+            score += matchedTokens.length * 5;
+
+            // Doğrudan ürün sayfası sinyalleri
+            if (title.includes('fiyat') || title.includes('özellik') || title.includes('yorum')) score += 3;
+            if (platKey === 'trendyol' && (title.includes('-p-') || !title.includes('arama'))) score += 5;
+            if (platKey === 'hepsiburada' && !title.includes('kategori')) score += 5;
+            if (platKey === 'akakce' && (title.includes('fiyat') || title.includes('en ucuz'))) score += 10;
+            if (platKey === 'cimri' && (title.includes('fiyat') || title.includes('en ucuz'))) score += 10;
+            if (platKey === 'n11' && (title.includes('fiyat') || matchedTokens.length >= 2)) score += 8;
+            if (platKey === 'zincir' && (title.includes('akıllı telefon') || title.includes('vatan') || title.includes('teknosa'))) score += 8;
+
+            if (!platformCandidates[platKey] || score > platformCandidates[platKey].score) {
+              platformCandidates[platKey] = { uri: uri, score: score, title: title };
+            }
           });
+
+          // En yüksek puanlı Google Grounding linklerini ata
+          Object.keys(platformCandidates).forEach(k => {
+            discoveredDirectUrls[k] = platformCandidates[k].uri;
+          });
+
         } catch(e) {
           console.warn('Grounding link ayıklama hatası:', e);
         }
@@ -1375,14 +1369,10 @@ NOTLAR:
       const s = (platformOrStore || '').toLowerCase();
       const cat = (category || '').toLowerCase();
 
-      // Arama terimini optimize et: Cep telefonu ise aksesuar tuzağına düşmemesi için kategori ekle
-      let searchKeyword = p;
-      const isPhone = cat.includes('telefon') || /telefon|iphone|galaxy|gm |redmi|xiaomi|poco/i.test(p);
-      if (isPhone && !searchKeyword.toLowerCase().includes('telefon')) {
-        searchKeyword += ' cep telefonu';
-      }
-      const enc = encodeURIComponent(searchKeyword);
-      const rawEnc = encodeURIComponent(p);
+      // Arama terimini optimize et: Gereksiz renk, GB, RAM takılarını temizleyerek doğrudan ana model adını arat (aksesuar tuzağını önler)
+      const cleanModelName = p.replace(/\s+(5g|128gb|256gb|512gb|1tb|\d+gb|\d+\s*gb|ram|siyah|beyaz|gold|altın|gri|mavi|yeşil).*$/i, '').trim() || p;
+      const enc = encodeURIComponent(cleanModelName);
+      const rawEnc = encodeURIComponent(cleanModelName);
       
       // 404 HATASINI KESİN ÖNLEYEN VE HER MAĞAZADA %100 ÇALIŞAN RESMİ ARAMA ENDPOINT'LERİ:
       if (s.includes('vivense')) return `https://www.vivense.com/arama?q=${rawEnc}`;
