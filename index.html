@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Hedef AVM | AI Ürün Piyasa & Senet Radarı</title>
+  <title>Hedef AVM | AI Ürün Piyasa & 15 Ay Senet Radarı</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons CDN -->
@@ -69,7 +69,7 @@
 
     @keyframes pulse-subtle {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.88; transform: scale(1.008); }
+      50% { opacity: 0.92; transform: scale(1.006); }
     }
     .animate-pulse-subtle {
       animation: pulse-subtle 2s infinite ease-in-out;
@@ -88,7 +88,7 @@
             Hedef AVM İstihbarat
           </span>
           <span class="text-xs sm:text-base font-black text-slate-900 tracking-tight block truncate">
-            AI Piyasa & Senet Radarı
+            AI Piyasa & 15 Ay Senet Radarı
           </span>
         </div>
       </div>
@@ -109,16 +109,16 @@
     <div class="text-center space-y-2.5">
       <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-100/90 border border-pink-200 text-[#c81373] text-xs sm:text-sm font-black uppercase tracking-wider shadow-2xs max-w-full truncate">
         <i class="fa-solid fa-bolt text-sm shrink-0"></i> 
-        <span class="truncate">Google Gemini 2.5 Vision & Canlı Piyasa Arama Radarı</span>
+        <span class="truncate">Google Gemini 2.5 Vision & Canlı Piyasa ve Senet Radarı</span>
       </span>
       <h1 class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
         Ürün Piyasa Değeri ve <br class="hidden sm:inline" />
         <span class="bg-gradient-to-r from-[#c81373] to-pink-600 bg-clip-text text-transparent">
-          12 Ay Elden Senet
+          15 Ay Elden Senet
         </span> Stratejisi
       </h1>
       <p class="text-xs sm:text-base text-slate-600 font-semibold max-w-2xl mx-auto leading-relaxed">
-        Sadece ürün adını yazarak veya isteğe bağlı fotoğraf ekleyerek canlı piyasa taraması yapın; yapay zeka Türkiye e-ticaret sitelerinden (Akakçe, Trendyol, Hepsiburada) güncel fiyatları çıkarsın ve Hedef AVM senetli satış planını hesaplasın.
+        Sadece ürün adını yazarak (veya isteğe bağlı fotoğraf ekleyerek) tarama yapın; yapay zeka Akakçe, Trendyol, Hepsiburada ile senetli rakipleri (Taşpınar, EYS AVM, SenetSepet) canlı tarasın ve Hedef AVM 15 ay elden senetli kâr planını saniyeler içinde hesaplasın.
       </p>
     </div>
 
@@ -260,7 +260,7 @@
         class="w-full py-4 sm:py-4.5 bg-gradient-to-r from-[#c81373] via-rose-600 to-pink-600 hover:from-[#b01065] hover:to-rose-700 text-white font-black rounded-2xl shadow-lg shadow-fuchsia-600/30 hover:shadow-xl hover:shadow-fuchsia-600/40 active:scale-[0.99] transition-all flex items-center justify-center gap-3 text-base sm:text-lg tracking-wide min-h-[54px]"
       >
         <i class="fa-solid fa-wand-magic-sparkles text-lg sm:text-xl"></i>
-        <span>Canlı Piyasa ve Senet Analizini Başlat</span>
+        <span>Canlı Piyasa ve 15 Ay Senet Analizini Başlat</span>
       </button>
 
       <!-- HATA BİLDİRİMİ -->
@@ -271,21 +271,27 @@
 
     </div>
 
-    <!-- 2. ANALİZ DURUMU (YÜKLENİYOR) -->
-    <div id="loadingBox" class="hidden bg-white border border-pink-100 rounded-3xl p-6 sm:p-10 text-center shadow-xl shadow-fuchsia-950/5 space-y-4 animate-pulse-subtle overflow-hidden">
-      <div class="w-16 sm:w-20 h-16 sm:h-20 mx-auto rounded-3xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center text-[#c81373] text-2xl sm:text-3xl shadow-inner">
-        <i class="fa-solid fa-radar fa-spin"></i>
-      </div>
-      <div>
-        <h3 class="text-base sm:text-xl font-black text-slate-900 mb-1.5">
-          Canlı Piyasa Radarı Taraması Yapılıyor...
-        </h3>
-        <p id="loadingStatusText" class="text-xs sm:text-base text-slate-600 font-semibold max-w-md mx-auto leading-relaxed">
-          1. Aşama: Akakçe, Trendyol ve Hepsiburada fiyatları Google üzerinden canlı taranıyor...
-        </p>
-      </div>
-      <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden max-w-sm mx-auto">
-        <div id="loadingProgressBar" class="bg-gradient-to-r from-[#c81373] to-pink-500 h-3 rounded-full w-1/3 transition-all duration-500"></div>
+    <!-- 2. YÜKLENİYOR POP-UP MODAL (EKRAN ORTASINDA ŞIK POPUP OVERLAY) -->
+    <div id="loadingBox" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div class="bg-white rounded-3xl p-6 sm:p-9 max-w-md w-full text-center shadow-2xl border-2 border-pink-200 space-y-5 animate-pulse-subtle">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-pink-50 border-2 border-pink-300 flex items-center justify-center text-[#c81373] text-3xl shadow-inner">
+          <i class="fa-solid fa-radar fa-spin"></i>
+        </div>
+        <div class="space-y-2">
+          <h3 class="text-lg sm:text-xl font-black text-slate-900">
+            Canlı Piyasa Radarı Taraması Yapılıyor...
+          </h3>
+          <p id="loadingStatusText" class="text-xs sm:text-sm text-slate-600 font-semibold leading-relaxed">
+            1. Aşama: Akakçe, Trendyol, Hepsiburada ve senetli rakipler (Taşpınar, EYS AVM, SenetSepet) taranıyor...
+          </p>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+          <div id="loadingProgressBar" class="bg-gradient-to-r from-[#c81373] via-rose-500 to-pink-500 h-3 rounded-full w-1/3 transition-all duration-500"></div>
+        </div>
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-50 text-[#c81373] text-xs font-bold border border-pink-200">
+          <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+          <span>Yapay zeka piyasayı canlı analiz ediyor...</span>
+        </div>
       </div>
     </div>
 
@@ -386,7 +392,7 @@
 
       </div>
 
-      <!-- KART 2: HEDEF AVM ÖZEL 12 AY ELDEN SENETLİ VE PEŞİN SATIŞ KURGUSU (SIFIR TAŞMA) -->
+      <!-- KART 2: HEDEF AVM ÖZEL 15 AY ELDEN SENETLİ VE PEŞİN SATIŞ KURGUSU (SIFIR TAŞMA) -->
       <div class="bg-gradient-to-br from-[#c81373] via-rose-600 to-pink-600 text-white rounded-3xl p-5 sm:p-9 shadow-2xl shadow-fuchsia-900/35 space-y-5 overflow-hidden">
         
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
@@ -394,14 +400,14 @@
             <span class="inline-block text-xs sm:text-sm font-black uppercase tracking-wider bg-white/20 px-3.5 py-1.5 rounded-full text-pink-50">
               🎯 Hedef AVM Senetli Satış Stratejisi
             </span>
-            <span class="text-xs sm:text-base text-pink-100 block font-bold">12 Ay Elden Senetli Satış Fiyatı</span>
+            <span class="text-xs sm:text-base text-pink-100 block font-bold">15 Ay Elden Senetli Satış Fiyatı</span>
             <div id="resInstallmentTotal" class="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-none break-words">
               0 ₺
             </div>
             <div class="inline-flex flex-wrap items-center gap-2 bg-white/20 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-base sm:text-2xl font-black text-white mt-2 border border-white/25 max-w-full">
               <span>💳 Aylık Taksit:</span>
               <span id="resMonthlyInstallment">0 ₺</span>
-              <span class="text-xs sm:text-base font-bold text-pink-100">x <span id="resInstallmentCount">12</span> Ay</span>
+              <span class="text-xs sm:text-base font-bold text-pink-100">x <span id="resInstallmentCount">15</span> Ay</span>
             </div>
           </div>
 
@@ -416,7 +422,7 @@
         </div>
 
         <div id="resStrategyNoteBox" class="pt-4 border-t border-white/25 text-xs sm:text-base text-pink-50 leading-relaxed font-medium break-words">
-          <strong class="text-white font-black">📌 Tedarik & Satış Stratejisi:</strong> <span id="resStrategyNote">-</span>
+          <strong class="text-white font-black">📌 Tedarik & 15 Ay Satış Stratejisi:</strong> <span id="resStrategyNote">-</span>
         </div>
 
       </div>
@@ -428,7 +434,7 @@
             🏪 Canlı Piyasa Fiyat Skalası
           </h3>
           <p class="text-xs sm:text-sm text-slate-500 font-semibold">
-            Akakçe, Trendyol, Hepsiburada ve zincir mağaza canlı fiyat taraması
+            Akakçe, Trendyol, Hepsiburada ve zincir mağaza canlı peşin fiyat taraması
           </p>
         </div>
 
@@ -459,14 +465,49 @@
         </div>
       </div>
 
-      <!-- KART 4: İNTERAKTİF TEDARİK MALİYETİ & KÂR SİMÜLATÖRÜ -->
+      <!-- KART 3.5: SENETLİ RAKİPLER RADARI (TAŞPINAR, EYS AVM, SENETSEPET) -->
+      <div class="bg-white border border-pink-100 rounded-3xl p-5 sm:p-8 shadow-xl shadow-fuchsia-950/5 space-y-5 overflow-hidden">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <div class="inline-flex items-center gap-1.5 text-[#c81373] text-xs sm:text-sm font-black uppercase tracking-wider mb-1">
+              <i class="fa-solid fa-store"></i>
+              <span>Elden Senetli Perakende Radarı</span>
+            </div>
+            <h3 class="text-base sm:text-xl font-black text-slate-900">
+              🏬 Senetli Rakip Mağazalar (Taşpınar, EYS AVM, SenetSepet)
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-500 font-semibold">
+              Elden senetle ve taksitli satış yapan doğrudan rakiplerin fiyat ve taksit skalası
+            </p>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-[#c81373] text-xs font-black shrink-0">
+            15 Ay Senet Karşılaştırması
+          </span>
+        </div>
+
+        <!-- 3 Senetli Rakip Kartları Grid -->
+        <div id="resSenetliCompetitorsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+          <!-- Dinamik doldurulur: Taşpınar, EYS AVM, SenetSepet -->
+        </div>
+
+        <!-- Hedef AVM Rekabet Avantajı Kutusu -->
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-pink-50 via-rose-50 to-pink-50 border border-pink-200 flex items-start gap-3">
+          <i class="fa-solid fa-crown text-[#c81373] text-lg mt-0.5 shrink-0"></i>
+          <div class="text-xs sm:text-sm text-slate-800 leading-relaxed">
+            <strong class="text-[#c81373] font-black block sm:inline">Hedef AVM Senet Avantajı:</strong>
+            <span id="resHedefAdvantageNote">Taşpınar, EYS AVM ve SenetSepet'e kıyasla 15 ay vadede taksit tutarı ve esnek elden senet onayı avantajı bulunmaktadır.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KART 4: İNTERAKTİF TEDARİK MALİYETİ & 15 AY KÂR SİMÜLATÖRÜ -->
       <div class="bg-white border border-pink-100 rounded-3xl p-5 sm:p-8 shadow-xl shadow-fuchsia-950/5 space-y-5 overflow-hidden">
         <div>
           <h3 class="text-base sm:text-xl font-black text-slate-900">
             📊 Alış Maliyeti & Kâr Simülatörü
           </h3>
           <p class="text-xs sm:text-sm text-slate-500 font-semibold">
-            Tedarik maliyetinizi değiştirerek peşin ve senetli satış kâr marjınızı anında hesaplayın.
+            Tedarik maliyetinizi değiştirerek peşin ve 15 ay senetli satış kâr marjınızı anında hesaplayın.
           </p>
         </div>
 
@@ -494,7 +535,7 @@
           </div>
 
           <div class="bg-pink-50/80 border-2 border-pink-200 rounded-2xl p-4 sm:p-5 text-center">
-            <span class="text-xs sm:text-sm font-black uppercase tracking-wide text-[#c81373] block">12 Ay Senetli Brüt Kâr</span>
+            <span class="text-xs sm:text-sm font-black uppercase tracking-wide text-[#c81373] block">15 Ay Senetli Brüt Kâr</span>
             <div id="simInstallmentProfit" class="text-xl sm:text-3xl font-black text-[#c81373] mt-1 break-words">0 ₺</div>
             <span id="simInstallmentMargin" class="inline-block mt-2 px-3 py-1 rounded-full bg-pink-100 text-[#c81373] text-xs sm:text-sm font-black">%0 Marj</span>
           </div>
@@ -531,7 +572,7 @@
         <div class="flex items-center gap-2.5">
           <i class="fa-solid fa-bullhorn text-[#c81373] text-lg sm:text-xl shrink-0"></i>
           <h3 class="text-base sm:text-xl font-black text-slate-900">
-            Hedef AVM Mağaza İçi Kampanya ve Vitrin Sloganları
+            Hedef AVM Mağaza İçi 15 Ay Taksit Kampanya ve Vitrin Sloganları
           </h3>
         </div>
         <div id="resCampaignsList" class="space-y-3.5">
@@ -783,19 +824,20 @@
       startAnalyzeBtn.disabled = true;
 
       try {
-        // AŞAMA 1: Canlı Google Arama Taraması
-        loadingStatusText.textContent = '1. Aşama: Akakçe, Trendyol ve Hepsiburada fiyatları Google üzerinden taranıyor...';
+        // AŞAMA 1: Canlı Google Arama Taraması (Pazaryerleri + Senetli Rakipler)
+        loadingStatusText.textContent = '1. Aşama: Akakçe, Trendyol, Hepsiburada ile Taşpınar, EYS AVM, SenetSepet fiyatları taranıyor...';
         loadingProgressBar.style.width = '45%';
 
-        const searchPrompt = `Türkiye e-ticaret ve perakende pazarında şu ürünün GÜNCEL fiyatlarını araştır:
+        const searchPrompt = `Türkiye e-ticaret ve perakende pazarında şu ürünün GÜNCEL fiyatlarını ve senetli taksit seçeneklerini araştır:
 Ürün / Model: ${productName}
 
-Aşağıdaki sitelerdeki en güncel satış fiyatlarını bul:
-1. Akakçe ve Cimri (En ucuz ve piyasa ortalaması)
-2. Trendyol ve Hepsiburada (Pazaryeri liste fiyatları)
-3. Teknosa / Vatan Bilgisayar / MediaMarkt (Varsa zincir mağaza fiyatları)
+Aşağıdaki sitelerdeki en güncel satış ve taksit fiyatlarını bul:
+1. Akakçe ve Cimri (En ucuz peşin ve piyasa ortalaması)
+2. Trendyol ve Hepsiburada (Pazaryeri peşin liste fiyatları)
+3. Elden Senetli Rakipler: Taşpınar Mağazaları (taspinar.com), EYS AVM / Evkur, SenetSepet (senetsepet.com) gibi elden senetli / taksitli mağazaların fiyatları ve taksit koşulları.
+4. Zincir Mağazalar: Teknosa / Vatan Bilgisayar / MediaMarkt
 
-Lütfen ürünün piyasadaki en düşük, ortalama ve en yüksek TL fiyatlarını ve hangi sitede kaç TL olduğunu net olarak listele.`;
+Lütfen ürünün piyasadaki peşin fiyatlarını VE Taşpınar, EYS AVM, SenetSepet gibi senetli rakiplerin taksitli fiyatlandırmalarını net olarak listele.`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -816,9 +858,9 @@ Lütfen ürünün piyasadaki en düşük, ortalama ve en yüksek TL fiyatların�
 
         // AŞAMA 2: Görsel (Varsa) + Canlı Veri ile Yapılandırılmış JSON Sentezi
         if (currentImageBase64) {
-          loadingStatusText.textContent = '2. Aşama: Görsel ve piyasa verileri inceleniyor, Hedef AVM senet planı oluşturuluyor...';
+          loadingStatusText.textContent = '2. Aşama: Görsel ve piyasa verileri inceleniyor, Hedef AVM 15 ay senet planı oluşturuluyor...';
         } else {
-          loadingStatusText.textContent = '2. Aşama: Canlı piyasa verileri sentezleniyor, Hedef AVM senet planı oluşturuluyor...';
+          loadingStatusText.textContent = '2. Aşama: Canlı piyasa verileri sentezleniyor, Hedef AVM 15 ay senet planı oluşturuluyor...';
         }
         loadingProgressBar.style.width = '85%';
 
@@ -827,12 +869,14 @@ Lütfen ürünün piyasadaki en düşük, ortalama ve en yüksek TL fiyatların�
 
         const systemInstruction = `Sen 'Hedef AVM' (hedefavm.com) bünyesinde çalışan Uzman Perakende Satın Alma ve Fiyatlandırma Stratejistisin.
 Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, elektronik, cep telefonu, ev tekstili ve mobilya satan dev bir perakende zinciridir.
-En büyük ticari gücü ve satış hacmi, müşterilerine sunduğu '12 Ay Elden Senetli (Kredi kartsız/peşinatsız taksitli)' satış modelidir.
+En büyük ticari gücü ve satış hacmi, müşterilerine sunduğu '15 Ay Elden Senetli (Kredi kartsız/peşinatsız taksitli)' satış modelidir.
+En önemli rakipleri: Taşpınar Mağazaları, EYS AVM, SenetSepet ve Evkur gibi elden senetle satış yapan zincirlerdir.
 
 Görevin:
-1. Kullanıcının belirttiği ürün ve model için Türkiye pazarını (Akakçe, Cimri, Trendyol, Hepsiburada, Vatan, Teknosa) tarayarak gerçek piyasa fiyatlarını çıkar.
-2. Hedef AVM'nin karlı satış yapabilmesi için Peşin ve 12 Ay Elden Senetli taksitli fiyatlandırma stratejisini oluştur.
-3. Ürünün Hedef AVM mağazalarında satılabilirlik fizibilitesini (0-100 puan), talep/rekabet/iade dinamiklerini ve vitrin kampanya sloganlarını üret.`;
+1. Kullanıcının belirttiği ürün ve model için Türkiye pazarını (Akakçe, Cimri, Trendyol, Hepsiburada) ve senetli rakipleri (Taşpınar, EYS AVM, SenetSepet) tarayarak gerçek piyasa ve senet fiyatlarını çıkar.
+2. Hedef AVM'nin karlı satış yapabilmesi için Peşin ve 15 Ay Elden Senetli taksitli fiyatlandırma stratejisini oluştur.
+3. Senetli rakipler (Taşpınar, EYS AVM, SenetSepet) için tahmini senetli toplam satış fiyatı, aylık taksit tutarı ve karşılaştırma notlarını üret.
+4. Ürünün Hedef AVM mağazalarında satılabilirlik fizibilitesini (0-100 puan), talep/rekabet dinamiklerini ve vitrin kampanya sloganlarını üret.`;
 
         const promptIntro = currentImageBase64
           ? 'Yukarıdaki canlı web araştırma sonuçlarını ve ekteki ürün görselini incele.'
@@ -866,25 +910,49 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
     { "platform": "Hepsiburada", "estimatedPrice": 0, "notes": "Resmi veya pazaryeri satıcı" },
     { "platform": "Zincir Mağaza (Teknosa/Vatan)", "estimatedPrice": 0, "notes": "Fiziki mağaza fiyatı" }
   ],
+  "senetliCompetitors": [
+    {
+      "name": "Taşpınar",
+      "estimatedTotalPrice": 0,
+      "estimatedMonthly": 0,
+      "installmentCount": 15,
+      "notes": "Taşpınar 15 ay senetli satış ve vade tahmini"
+    },
+    {
+      "name": "EYS AVM",
+      "estimatedTotalPrice": 0,
+      "estimatedMonthly": 0,
+      "installmentCount": 15,
+      "notes": "EYS AVM elden taksitli liste tahmini"
+    },
+    {
+      "name": "SenetSepet",
+      "estimatedTotalPrice": 0,
+      "estimatedMonthly": 0,
+      "installmentCount": 15,
+      "notes": "SenetSepet online senetli taksit tahmini"
+    }
+  ],
   "hedefPricing": {
     "cashRecommendedPrice": 0,
     "installmentRecommendedPrice": 0,
     "monthlyInstallmentPrice": 0,
-    "installmentCount": 12,
-    "strategyNote": "Hedef AVM için peşin ve 12 ay senetli fiyat belirleme gerekçesi ve kâr hedefi"
+    "installmentCount": 15,
+    "strategyNote": "Hedef AVM için peşin ve 15 ay senetli fiyat belirleme gerekçesi, Taşpınar/EYS/SenetSepet'e kıyasla avantajı ve kâr hedefi",
+    "advantageNote": "Hedef AVM'nin Taşpınar, EYS AVM ve SenetSepet'e kıyasla aylık taksit ve senet onayı üstünlüğü özeti"
   },
   "feasibility": {
     "score": 85,
     "verdict": "SATAR",
-    "headline": "Hedef AVM mağazalarında ve senetli satışta bu ürün çok yüksek hacim yapar çünkü...",
+    "headline": "Hedef AVM mağazalarında ve 15 ay senetli satışta bu ürün çok yüksek hacim yapar çünkü...",
     "reasonsToSell": [
-      "12 ay senetli satışta taksit tutarı müşteri psikolojisine çok uygun",
-      "Piyasa bilinirliği ve marka güveni çok yüksek",
-      "Marj potansiyeli yüksek"
+      "15 ay senetli satışta aylık taksit tutarı müşteriye çok cazip ve ödenebilir gelmektedir",
+      "Taşpınar ve EYS AVM'ye göre daha esnek taksit imkanı",
+      "Piyasa bilinirliği ve marka güveni yüksek"
     ],
     "risksAndWatchouts": [
-      "Fiyat istikrarsızlığı ve hızlı kasa kırılması riski",
-      "Garanti/servis ağı takibi"
+      "Vade 15 ay olduğu için düzenli istihbarat ve müşteri skorlaması gerektirir",
+      "Fiyat istikrarsızlığı ve hızlı kasa kırılması riski"
     ],
     "demandLevel": "Yüksek",
     "competitionLevel": "Orta",
@@ -893,10 +961,10 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
   },
   "campaigns": [
     {
-      "campaignType": "12 Ay Elden Senet",
-      "title": "Kredi Kartsız Elden Taksit Kampanyası",
-      "description": "Hedef AVM müşterisine özel kefilsiz, kartsız 12 eşit taksit kurgusu.",
-      "bannerSlogan": "Ayda sadece X TL taksitle sahip olun!"
+      "campaignType": "15 Ay Elden Senet",
+      "title": "Kredi Kartsız 15 Ay Elden Taksit Kampanyası",
+      "description": "Hedef AVM müşterisine özel peşinatsız, kartsız 15 eşit taksit kurgusu.",
+      "bannerSlogan": "Peşinatsız, Kartsız 15 Ay Taksitle Hemen Alın!"
     },
     {
       "campaignType": "Peşin İndirim",
@@ -911,7 +979,9 @@ NOTLAR:
 - Sayısal değerleri sadece tamsayı veya ondalık sayı yaz (TL, ₺ gibi harf koyma).
 - verdict sadece "SATAR", "ŞARTLI SATAR" veya "SATMAZ" olabilir.
 - score 0 ile 100 arasında bir tamsayı olmalıdır.
-- Hedef AVM 12 Ay senetli satış fiyatı genel kural olarak peşin fiyatın yaklaşık 1.30 - 1.45 katı civarındadır (vade farkı ve tahsilat riski).`;
+- Hedef AVM 15 Ay senetli satış fiyatı genel kural olarak peşin liste fiyatının yaklaşık 1.35 - 1.55 katı civarındadır (15 aylık vade farkı ve tahsilat maliyeti).
+- monthlyInstallmentPrice = installmentRecommendedPrice / 15 olarak hesaplanır.
+- senetliCompetitors alanında Taşpınar, EYS AVM ve SenetSepet'in 15 ay taksitli fiyatlandırmalarını gerçekçi piyasa oranlarına göre hesapla.`;
 
         const partsContent = [{ text: jsonSchemaPrompt }];
         if (currentImageBase64) {
@@ -1012,10 +1082,12 @@ NOTLAR:
       document.getElementById('resReturnRisk').textContent = f.returnRisk || 'Düşük';
       document.getElementById('resSeasonal').textContent = f.seasonalTrend || 'Düzenli';
 
-      // Hedef AVM Fiyatları
-      document.getElementById('resInstallmentTotal').textContent = formatTL(hp.installmentRecommendedPrice);
-      document.getElementById('resMonthlyInstallment').textContent = formatTL(hp.monthlyInstallmentPrice);
-      document.getElementById('resInstallmentCount').textContent = hp.installmentCount || 12;
+      // Hedef AVM 15 Ay Senet Fiyatları
+      const totalInst = hp.installmentRecommendedPrice || Math.round((hp.cashRecommendedPrice || 1000) * 1.42);
+      const monthlyInst = hp.monthlyInstallmentPrice || Math.round(totalInst / 15);
+      document.getElementById('resInstallmentTotal').textContent = formatTL(totalInst);
+      document.getElementById('resMonthlyInstallment').textContent = formatTL(monthlyInst);
+      document.getElementById('resInstallmentCount').textContent = hp.installmentCount || 15;
       document.getElementById('resCashPrice').textContent = formatTL(hp.cashRecommendedPrice);
 
       const stratBox = document.getElementById('resStrategyNoteBox');
@@ -1046,6 +1118,54 @@ NOTLAR:
         `;
         compList.appendChild(item);
       });
+
+      // 3.5 SENETLİ RAKİPLER RADARI (Taşpınar, EYS AVM, SenetSepet)
+      const senetliGrid = document.getElementById('resSenetliCompetitorsGrid');
+      if (senetliGrid) {
+        senetliGrid.innerHTML = '';
+        const defaultSenetli = [
+          { name: 'Taşpınar', estimatedTotalPrice: Math.round(totalInst * 1.06), estimatedMonthly: Math.round((totalInst * 1.06) / 15), notes: 'Taşpınar 15 ay elden senetli tahmini' },
+          { name: 'EYS AVM', estimatedTotalPrice: Math.round(totalInst * 1.09), estimatedMonthly: Math.round((totalInst * 1.09) / 15), notes: 'EYS AVM taksitli liste tahmini' },
+          { name: 'SenetSepet', estimatedTotalPrice: Math.round(totalInst * 1.04), estimatedMonthly: Math.round((totalInst * 1.04) / 15), notes: 'SenetSepet online senetli tahmini' }
+        ];
+
+        let competitors = data.senetliCompetitors;
+        if (!competitors || !Array.isArray(competitors) || competitors.length === 0) {
+          competitors = defaultSenetli;
+        }
+
+        competitors.forEach(sc => {
+          const tot = sc.estimatedTotalPrice || Math.round(totalInst * 1.05);
+          const mon = sc.estimatedMonthly || Math.round(tot / 15);
+          const name = sc.name || sc.competitor || 'Rakip Mağaza';
+          const card = document.createElement('div');
+          card.className = 'p-4 sm:p-5 rounded-2xl bg-slate-50/90 border-2 border-slate-200 hover:border-pink-300 transition-all space-y-3';
+          card.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-building text-[#c81373] text-xs"></i>
+                ${name}
+              </span>
+              <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                15 Ay Taksit
+              </span>
+            </div>
+            <div>
+              <span class="text-[11px] text-slate-500 font-bold block uppercase tracking-wide">Tahmini Senet Toplamı</span>
+              <div class="text-lg sm:text-2xl font-black text-slate-900 mt-0.5">${formatTL(tot)}</div>
+            </div>
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+              <span class="text-xs text-slate-600 font-semibold">Aylık Taksit:</span>
+              <span class="text-sm sm:text-base font-black text-[#c81373]">${formatTL(mon)} /ay</span>
+            </div>
+            <p class="text-[11px] text-slate-500 font-medium leading-tight">${sc.notes || 'Elden senetli piyasa tahmini'}</p>
+          `;
+          senetliGrid.appendChild(card);
+        });
+
+        const advNote = hp.advantageNote || `Hedef AVM'de 15 ay vadede aylık ${formatTL(monthlyInst)} taksit ile Taşpınar ve EYS AVM'ye kıyasla daha rekabetçi elden senet imkanı sunulmaktadır.`;
+        document.getElementById('resHedefAdvantageNote').textContent = advNote;
+      }
 
       // Simülatör Başlangıç Değeri
       const defaultCost = data._userCost > 0 ? data._userCost : Math.round((mp.min || 1000) * 0.7);
@@ -1094,11 +1214,11 @@ NOTLAR:
       });
     }
 
-    // 4. Kâr Simülatörü Güncelleme
+    // 4. Kâr Simülatörü Güncelleme (15 Ay)
     function updateSimulator(cost, hp) {
       cost = parseFloat(cost) || 0;
       const cashP = hp.cashRecommendedPrice || 0;
-      const instP = hp.installmentRecommendedPrice || 0;
+      const instP = hp.installmentRecommendedPrice || Math.round(cashP * 1.42);
 
       const cashProfit = cost > 0 ? cashP - cost : 0;
       const instProfit = cost > 0 ? instP - cost : 0;
@@ -1125,8 +1245,10 @@ NOTLAR:
       const f = d.feasibility || {};
       const hp = d.hedefPricing || {};
       const mp = d.marketPrices || {};
+      const totalInst = hp.installmentRecommendedPrice || Math.round((hp.cashRecommendedPrice || 1000) * 1.42);
+      const monthlyInst = hp.monthlyInstallmentPrice || Math.round(totalInst / 15);
 
-      return `🎯 HEDEF AVM | ÜRÜN & SENET RADARI RAPORU
+      return `🎯 HEDEF AVM | ÜRÜN & 15 AY SENET RADARI RAPORU
 ---------------------------------------------
 📦 Ürün: ${d.productName || 'Bilinmeyen Ürün'}
 🏢 Marka/Kategori: ${d.brand || '-'} / ${d.category || '-'}
@@ -1137,9 +1259,13 @@ NOTLAR:
 - Ortalama: ${formatTL(mp.average)}
 - En Yüksek: ${formatTL(mp.max)}
 
-🎯 HEDEF AVM SATIŞ PLANI:
+🎯 HEDEF AVM 15 AY SATIŞ PLANI:
 - Peşin Satış: ${formatTL(hp.cashRecommendedPrice)}
-- 12 Ay Senetli: ${formatTL(hp.installmentRecommendedPrice)} (Aylık ${formatTL(hp.monthlyInstallmentPrice)})
+- 15 Ay Senetli: ${formatTL(totalInst)} (Aylık ${formatTL(monthlyInst)} x 15 Ay)
+
+🏬 SENETLİ RAKİP KARŞILAŞTIRMASI:
+- Taşpınar / EYS AVM / SenetSepet 15 ay piyasa taksitleri incelendi.
+- Avantaj: ${hp.advantageNote || '15 ay vadede rekabetçi taksit avantajı.'}
 
 💡 Yönetici Özeti:
 ${f.headline || '-'}
