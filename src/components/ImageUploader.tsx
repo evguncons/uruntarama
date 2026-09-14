@@ -12,12 +12,14 @@ import {
   X,
   RefreshCw,
   Zap,
-  Layers
+  Tag,
+  AlertCircle
 } from 'lucide-react';
 import { optimizeImageFile } from '@/lib/imageUtils';
 
 interface ImageUploaderProps {
   onAnalyze: (data: {
+    productName: string;
     base64: string;
     mimeType: string;
     userCost?: number;
@@ -30,6 +32,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   onAnalyze,
   isLoading
 }) => {
+  const [productName, setProductName] = useState<string>('');
   const [preview, setPreview] = useState<string | null>(null);
   const [base64Data, setBase64Data] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string>('image/jpeg');
@@ -37,6 +40,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const productNameInputRef = useRef<HTMLInputElement | null>(null);
 
   // Canlı kamera vizörü durumu
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
@@ -48,13 +53,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Analiz adımları animasyon metni
+  // Analiz adımları animasyon metni (2 Aşamalı Canlı Piyasa Taraması)
   const [loadingStep, setLoadingStep] = useState<number>(0);
   const loadingMessages = [
-    'Ürün görseli ve ambalaj detayları taranıyor...',
-    'Trendyol, Hepsiburada ve Amazon pazar fiyatları araştırılıyor...',
-    'Hedef AVM elden senetli taksit kurgusu hesaplanıyor...',
-    'Piyasa satılabilirlik puanı ve kampanya önerileri derleniyor...'
+    '1. Aşama: Google üzerinden Akakçe, Trendyol ve Hepsiburada fiyatları canlı taranıyor...',
+    '2. Aşama: Yüklenen görseldeki ürün detayları ve ambalajı inceleniyor...',
+    '3. Aşama: Hedef AVM 12 ay elden senetli taksit planı hesaplanıyor...',
+    '4. Aşama: Satılabilirlik puanı ve vitrin afiş sloganları oluşturuluyor...'
   ];
 
   useEffect(() => {
@@ -179,15 +184,25 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
-  // Analizi Gönder
+  // Analizi Gönder (Zorunlu Ürün Adı Kontrolü)
   const handleStartAnalysis = () => {
+    const trimmedName = productName.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setErrorMessage(
+        '⚠️ Model karışıklığını önlemek ve Trendyol/Hepsiburada fiyatlarını hatasız çekebilmek için lütfen ÜRÜN ADI VE MODELİNİ giriniz (Örn: iPhone 15 128GB, Philips HD9650 Airfryer vb.).'
+      );
+      productNameInputRef.current?.focus();
+      return;
+    }
+
     if (!base64Data) {
-      setErrorMessage('Lütfen önce bir ürün fotoğrafı çekin veya yükleyin.');
+      setErrorMessage('Lütfen önce analiz edilecek ürün fotoğrafını çekin veya galeriden seçin.');
       return;
     }
 
     const costNum = userCost.trim() !== '' ? Number(userCost) : undefined;
     onAnalyze({
+      productName: trimmedName,
       base64: base64Data,
       mimeType: mimeType,
       userCost: costNum,
@@ -222,21 +237,57 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       {/* Başlık ve Açıklama */}
       <div className="text-center max-w-2xl mx-auto mb-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-fuchsia-50 border border-fuchsia-200 text-fuchsia-700 text-xs font-bold mb-2.5 shadow-xs">
-          <Zap className="w-3.5 h-3.5 text-fuchsia-600" />
-          <span>Yapay Zeka Destekli Anlık Piyasa İstihbaratı</span>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-pink-50 border border-pink-200 text-[#c81373] text-xs font-black mb-2 shadow-2xs">
+          <Zap className="w-3.5 h-3.5 text-[#c81373]" />
+          <span>Canlı Google & Pazaryeri Taramalı Yapay Zeka Radarı</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Ürün Fotoğrafını Çekin veya Yükleyin
+          Ürün Bilgisini ve Fotoğrafını Ekleyin
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1.5 leading-relaxed">
-          Ürünün kutusunu, etiketini veya kendisini çekin; Gemini AI piyasa fiyatlarını, rekabeti ve Hedef AVM taksitli satış potansiyelini anında incelesin.
+        <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+          Model karışıklığını önlemek ve Trendyol, Hepsiburada ve Akakçe fiyatlarını <strong>canlı ve doğru</strong> çekebilmek için lütfen ürün adını ve modelini belirtin.
+        </p>
+      </div>
+
+      {/* ZORUNLU ÜRÜN ADI / MODELİ GİRİŞİ */}
+      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-pink-50/70 via-fuchsia-50/40 to-white border-2 border-[#c81373]/30 shadow-sm">
+        <label className="block text-xs sm:text-sm font-black text-slate-900 mb-2 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Tag className="w-4 h-4 text-[#c81373]" />
+            <span>Ürün Adı ve Modeli</span>
+            <span className="text-rose-600 font-black text-base">* (Zorunlu)</span>
+          </span>
+          <span className="text-[11px] text-[#c81373] font-bold bg-pink-100/80 px-2 py-0.5 rounded-md">
+            Doğru Model & Canlı Fiyat İçin Şart
+          </span>
+        </label>
+        <div className="relative">
+          <input
+            ref={productNameInputRef}
+            type="text"
+            required
+            placeholder="Örn: iPhone 15 128GB, Philips HD9650 Airfryer, Karaca Hatır Hüps..."
+            value={productName}
+            onChange={(e) => {
+              setProductName(e.target.value);
+              if (errorMessage) setErrorMessage(null);
+            }}
+            className="w-full pl-4 pr-10 py-3 bg-white border-2 border-pink-200 focus:border-[#c81373] focus:ring-4 focus:ring-[#c81373]/15 rounded-xl text-slate-900 font-bold text-sm sm:text-base outline-none transition placeholder:text-slate-400 shadow-2xs"
+          />
+          {productName.trim().length > 0 && (
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-600 text-xs font-black bg-emerald-50 px-2 py-0.5 rounded">
+              ✓ Hazır
+            </span>
+          )}
+        </div>
+        <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
+          💡 <strong>İpucu:</strong> Telefon veya elektroniklerde kapasite (128GB/256GB), model numarası ve rengi yazmak Akakçe/Trendyol fiyatlarını %100 doğrular.
         </p>
       </div>
 
       {/* Canlı Kamera Modu Açıkken */}
       {isCameraActive ? (
-        <div className="relative rounded-3xl overflow-hidden bg-black aspect-video max-h-[480px] w-full flex items-center justify-center border-2 border-fuchsia-500 shadow-2xl">
+        <div className="relative rounded-3xl overflow-hidden bg-black aspect-video max-h-[480px] w-full flex items-center justify-center border-2 border-[#c81373] shadow-2xl mb-6">
           <video
             ref={videoRef}
             autoPlay
@@ -247,8 +298,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
           {/* Kamera Vizör Kılavuz Çizgileri */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8">
-            <div className="w-full max-w-md h-4/5 border-2 border-dashed border-fuchsia-400/80 rounded-2xl relative">
-              <div className="absolute top-2 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-md text-[11px] text-fuchsia-800 font-bold shadow-sm">
+            <div className="w-full max-w-md h-4/5 border-2 border-dashed border-[#c81373]/80 rounded-2xl relative">
+              <div className="absolute top-2 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-md text-[11px] text-[#c81373] font-bold shadow-sm">
                 Ürünü veya barkodu bu alana hizalayın
               </div>
             </div>
@@ -262,13 +313,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               className="p-3.5 rounded-full bg-white/90 text-slate-800 backdrop-blur hover:bg-white shadow-lg transition"
               title="Kamerayı Değiştir"
             >
-              <RefreshCw className="w-5 h-5 text-fuchsia-600" />
+              <RefreshCw className="w-5 h-5 text-[#c81373]" />
             </button>
 
             <button
               onClick={capturePhotoFromLiveStream}
               type="button"
-              className="w-16 h-16 rounded-full bg-gradient-to-tr from-fuchsia-600 to-pink-500 hover:from-fuchsia-500 hover:to-pink-400 border-4 border-white flex items-center justify-center shadow-xl transition active:scale-90"
+              className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#c81373] to-pink-500 hover:from-[#b01065] hover:to-pink-400 border-4 border-white flex items-center justify-center shadow-xl transition active:scale-90"
               title="Fotoğraf Çek"
             >
               <Camera className="w-8 h-8 text-white" />
@@ -286,11 +337,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         </div>
       ) : preview ? (
         /* Seçilen Görselin Önizlemesi */
-        <div className="relative rounded-3xl overflow-hidden bg-slate-50 border border-pink-100 max-h-[420px] w-full flex items-center justify-center p-4">
+        <div className="relative rounded-3xl overflow-hidden bg-slate-50 border border-pink-100 max-h-[400px] w-full flex items-center justify-center p-4 mb-6">
           <img
             src={preview}
             alt="Yüklenen Ürün"
-            className="w-full h-full max-h-[380px] object-contain rounded-2xl"
+            className="w-full h-full max-h-[360px] object-contain rounded-2xl"
           />
 
           <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -303,29 +354,29 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             </button>
           </div>
 
-          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-fuchsia-200 text-xs text-fuchsia-700 font-bold flex items-center gap-1.5 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-fuchsia-600" />
-            <span>Görsel Hazır</span>
+          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-pink-200 text-xs text-[#c81373] font-bold flex items-center gap-1.5 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-[#c81373]" />
+            <span>Fotoğraf Hazır</span>
           </div>
         </div>
       ) : (
-        /* Yükleme & Kamera Seçim Alanı (Açık Magenta Tema) */
+        /* Yükleme & Kamera Seçim Alanı */
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-3xl p-8 sm:p-12 transition text-center flex flex-col items-center justify-center cursor-pointer ${
+          className={`border-2 border-dashed rounded-3xl p-7 sm:p-10 transition text-center flex flex-col items-center justify-center cursor-pointer mb-6 ${
             isDragging
-              ? 'border-fuchsia-500 bg-fuchsia-50/60'
-              : 'border-pink-200/90 hover:border-fuchsia-400 bg-gradient-to-b from-pink-50/30 via-white to-fuchsia-50/20 hover:bg-pink-50/40'
+              ? 'border-[#c81373] bg-pink-50/60'
+              : 'border-pink-200/90 hover:border-[#c81373] bg-gradient-to-b from-pink-50/30 via-white to-fuchsia-50/20 hover:bg-pink-50/40'
           }`}
           onClick={() => galleryInputRef.current?.click()}
         >
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-fuchsia-500/15 via-rose-500/10 to-pink-500/15 border border-fuchsia-200 flex items-center justify-center text-fuchsia-600 mb-4 shadow-sm">
+          <div className="w-16 h-16 rounded-3xl bg-pink-50 border border-pink-200 flex items-center justify-center text-[#c81373] mb-3.5 shadow-xs">
             <UploadCloud className="w-8 h-8" />
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-2.5">
             {/* Canlı Kamera Butonu */}
             <button
               type="button"
@@ -333,7 +384,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 e.stopPropagation();
                 startLiveCamera();
               }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-rose-600 hover:from-fuchsia-500 hover:to-rose-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-fuchsia-600/25 transition active:scale-95"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#c81373] to-rose-600 hover:from-[#b01065] hover:to-rose-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-[#c81373]/25 transition active:scale-95"
             >
               <Camera className="w-4 h-4" />
               <span>Fotoğraf Çek (Kamera)</span>
@@ -348,29 +399,30 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm border border-slate-200 shadow-xs transition active:scale-95"
             >
-              <ImageIcon className="w-4 h-4 text-fuchsia-600" />
+              <ImageIcon className="w-4 h-4 text-[#c81373]" />
               <span>Galeriden Seç</span>
             </button>
           </div>
 
           <p className="text-xs text-slate-400 font-medium">
-            veya fotoğrafı buraya sürükleyin (JPG, PNG, WEBP, Maks. 10MB)
+            veya fotoğrafı bu alana sürükleyip bırakın (JPG, PNG, WEBP)
           </p>
         </div>
       )}
 
       {/* Hata Bildirimi */}
       {errorMessage && (
-        <div className="mt-4 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold text-center">
-          {errorMessage}
+        <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-bold flex items-start gap-2.5 shadow-xs">
+          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          <div className="flex-1">{errorMessage}</div>
         </div>
       )}
 
       {/* Ek Bilgiler: Alış Fiyatı & Not */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-5 border-t border-pink-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-5 border-t border-pink-100">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-            <DollarSign className="w-3.5 h-3.5 text-fuchsia-600" />
+            <DollarSign className="w-3.5 h-3.5 text-[#c81373]" />
             <span>Tedarikçi Alış Fiyatı (Opsiyonel)</span>
           </label>
           <div className="relative">
@@ -380,9 +432,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               placeholder="Örn: 2450 (Kârlılık simülasyonu için)"
               value={userCost}
               onChange={(e) => setUserCost(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 focus:border-fuchsia-500 focus:bg-white focus:ring-2 focus:ring-fuchsia-500/20 rounded-2xl px-3.5 py-2.5 text-slate-900 font-semibold text-xs sm:text-sm outline-none transition"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-[#c81373] focus:bg-white focus:ring-2 focus:ring-[#c81373]/20 rounded-2xl px-3.5 py-2.5 text-slate-900 font-semibold text-xs sm:text-sm outline-none transition"
             />
-            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-fuchsia-600 text-xs font-black">
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#c81373] text-xs font-black">
               ₺
             </span>
           </div>
@@ -390,15 +442,15 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-fuchsia-600" />
-            <span>Ekstra Not / Model Kodu (Opsiyonel)</span>
+            <FileText className="w-3.5 h-3.5 text-[#c81373]" />
+            <span>Ekstra Not / Renk / Durum (Opsiyonel)</span>
           </label>
           <input
             type="text"
-            placeholder="Örn: Sıfır kutulu, 2 yıl garantili, 3 parça set"
+            placeholder="Örn: Sıfır kutulu, Yıldız Işığı rengi, 2 yıl Türkiye garantili"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 focus:border-fuchsia-500 focus:bg-white focus:ring-2 focus:ring-fuchsia-500/20 rounded-2xl px-3.5 py-2.5 text-slate-900 font-semibold text-xs sm:text-sm outline-none transition"
+            className="w-full bg-slate-50 border border-slate-200 focus:border-[#c81373] focus:bg-white focus:ring-2 focus:ring-[#c81373]/20 rounded-2xl px-3.5 py-2.5 text-slate-900 font-semibold text-xs sm:text-sm outline-none transition"
           />
         </div>
       </div>
@@ -407,17 +459,17 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       <div className="mt-7 flex flex-col items-center">
         <button
           onClick={handleStartAnalysis}
-          disabled={!preview || isLoading}
-          className={`w-full sm:w-auto min-w-[280px] flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl font-black text-sm sm:text-base text-white transition-all ${
-            !preview || isLoading
+          disabled={isLoading}
+          className={`w-full sm:w-auto min-w-[300px] flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-black text-sm sm:text-base text-white transition-all ${
+            isLoading
               ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-fuchsia-600 via-rose-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 active:scale-95 shadow-xl shadow-fuchsia-600/30'
+              : 'bg-gradient-to-r from-[#c81373] via-rose-600 to-pink-600 hover:from-[#b01065] hover:to-rose-500 active:scale-95 shadow-xl shadow-[#c81373]/30'
           }`}
         >
           {isLoading ? (
             <>
               <RefreshCw className="w-5 h-5 animate-spin text-white" />
-              <span>Piyasa Analiz Ediliyor...</span>
+              <span>Canlı Piyasa Taranıyor...</span>
             </>
           ) : (
             <>
@@ -429,8 +481,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
         {/* Dinamik Yükleniyor Adımları */}
         {isLoading && (
-          <div className="mt-4 flex items-center gap-2 text-xs text-fuchsia-700 animate-pulse font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-600"></span>
+          <div className="mt-4 flex items-center gap-2 text-xs text-[#c81373] animate-pulse font-bold text-center px-4">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#c81373] shrink-0"></span>
             <span>{loadingMessages[loadingStep]}</span>
           </div>
         )}

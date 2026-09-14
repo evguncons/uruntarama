@@ -61,6 +61,7 @@ export interface ProductAnalysis {
 }
 
 export interface AnalyzeApiRequest {
+  productName: string; // Zorunlu ürün adı ve modeli
   imageBase64: string;
   mimeType: string;
   additionalNotes?: string;

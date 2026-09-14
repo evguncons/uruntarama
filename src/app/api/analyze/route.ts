@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { analyzeProductImage } from '@/lib/gemini';
 import { AnalyzeApiRequest } from '@/lib/types';
 
-export const maxDuration = 60; // 60s timeout for vision model analysis
+export const maxDuration = 60;
 
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -13,7 +13,7 @@ const ALLOWED_MIME_TYPES = [
   'image/jpg'
 ];
 
-const MAX_BASE64_LENGTH = 15 * 1024 * 1024; // ~11MB file limit
+const MAX_BASE64_LENGTH = 15 * 1024 * 1024; // ~11MB
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +27,18 @@ export async function POST(req: NextRequest) {
 
     const body: AnalyzeApiRequest = await req.json();
 
+    // Zorunlu Ürün Adı / Modeli Doğrulaması
+    const productName = body.productName?.trim();
+    if (!productName || productName.length < 2) {
+      return NextResponse.json(
+        {
+          error:
+            'Model ve fiyat karışıklığını önlemek için ürün adı ve modelini girmek zorunludur (Örn: iPhone 15 128GB, Philips HD9650 Airfryer, Karaca Çay Makinesi vb.).'
+        },
+        { status: 400 }
+      );
+    }
+
     if (!body.imageBase64 || typeof body.imageBase64 !== 'string') {
       return NextResponse.json(
         { error: 'Lütfen analiz edilecek bir ürün fotoğrafı sağlayın.' },
@@ -36,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (body.imageBase64.length > MAX_BASE64_LENGTH) {
       return NextResponse.json(
-        { error: 'Görsel boyutu çok büyük (Maksimum 10MB olmalıdır). Lütfen görseli küçültüp tekrar deneyin.' },
+        { error: 'Görsel boyutu çok büyük (Maksimum 10MB olmalıdır).' },
         { status: 413 }
       );
     }
@@ -55,10 +67,11 @@ export async function POST(req: NextRequest) {
       userCost = Math.max(0, Number(body.userCost));
     }
 
-    const notes = body.additionalNotes?.slice(0, 500); // 500 karakter sınır
+    const notes = body.additionalNotes?.slice(0, 500);
 
-    // Gemini analizi çalıştır
+    // 2 Aşamalı Canlı İnternet Taramalı Gemini Analizi
     const analysis = await analyzeProductImage(
+      productName,
       body.imageBase64,
       mimeType,
       userCost,
@@ -77,7 +90,6 @@ export async function POST(req: NextRequest) {
 
     const errorMessage = error?.message || 'Bilinmeyen bir hata oluştu.';
 
-    // Gemini API spesifik hata mesajları
     if (errorMessage.includes('API_KEY')) {
       return NextResponse.json(
         { error: 'Sistemde geçerli bir GEMINI_API_KEY bulunamadı. Lütfen yöneticinize başvurun.' },

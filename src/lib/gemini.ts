@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { ProductAnalysis } from './types';
 
 export async function analyzeProductImage(
+  productName: string,
   imageBase64: string,
   mimeType: string,
   userCost?: number,
@@ -17,114 +18,148 @@ export async function analyzeProductImage(
   // Temizlenmiş base64 string
   const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+]+;base64,/, '');
 
-  const systemInstruction = `Sen Türkiye perakende pazarında uzmanlaşmış, "Hedef AVM" için çalışan kıdemli bir Satın Alma Direktörü, Piyasa İstihbarat Uzmanı ve Fiyatlandırma Stratejistisin.
-Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, ev tekstili, mobilya, kişisel bakım ve tüketici elektroniği alanında hem peşin hem de Türkiye'ye özgü "elden senetli / taksitli" satış modeliyle faaliyet gösteren güçlü bir mağazalar zinciridir.
+  // =========================================================================
+  // AŞAMA 1: CANLI GOOGLE SEARCH GROUNDING İLE GÜNCEL PİYASA FİYATLARI
+  // (Trendyol, Hepsiburada, Amazon TR, Akakçe, Cimri ve Teknosa/MediaMarkt taranır)
+  // =========================================================================
+  let liveMarketData = '';
+  try {
+    const searchResponse = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Sen Türkiye perakende pazarında uzman bir fiyat araştırmacısısın.
+Kullanıcı şu ürünü analiz ediyor: "${productName}".
 
-Görevin:
-Kullanıcının yüklediği veya kamerasından çektiği ürün fotoğrafını derinlemesine incelemek, piyasa araştırmasını yapmak ve Hedef AVM yönetiminin hızlı ve karlı satın alma kararı vermesi için kapsamlı bir fizibilite raporu hazırlamaktır.
+GÖREVİN:
+Google Arama aracını kullanarak Türkiye'deki Akakçe, Cimri, Trendyol, Hepsiburada, Amazon Türkiye, Teknosa ve MediaMarkt sitelerindeki ŞU ANKİ EN GÜNCEL satış fiyatlarını araştır.
+1. En ucuz fiyat (TL) ve hangi sitede satıldığı
+2. Ortalama piyasa fiyatı (TL)
+3. En yüksek yetkili satıcı / mağaza liste fiyatı (TL)
+4. Trendyol ve Hepsiburada'daki güncel fiyatlar ve satıcı durumu
+5. Ürünün güncel stok/satış durumu (tükenmiş mi, yaygın mı?)
 
-Analiz Kriterleri:
-1. Ürünü tespit et: Marka, model, seri, varsa kutu üzerindeki model kodu/barkod, temel teknik özellikleri.
-2. Türkiye Pazar Fiyatları (TRY): Trendyol, Hepsiburada, Amazon TR, N11 ve zincir mağazalardaki güncel piyasa ortalamalarını, en düşük ve en yüksek fiyat aralığını belirle.
-3. Hedef AVM Fiyat & Taksit Stratejisi:
-   - Peşin/kredi kartı tavsiye satış fiyatı.
-   - Elden senetli / 12-15 taksitli tavsiye toplam satış fiyatı (taksitli vadeli fiyat genellikle peşine göre %20-%35 bandında finansman payı içerir).
-   - Aylık taksit tutarı ve peşinat önerisi.
-4. "Bu Ürün Satar mı / Satmaz mı?" Değerlendirmesi:
-   - 0-100 arasında net bir Satılabilirlik Puanı belirle.
-   - Net karar: 'GÜÇLÜ SATAR' (80-100), 'SATAR (DENGELİ)' (65-79), 'DİKKATLİ YAKLAŞILMALI' (45-64), 'RİSKLİ / SATMAZ' (0-44).
-   - Neden satar? (Somut gerekçeler).
-   - Hangi riskler var? (İade riski, rekabet baskısı, servis/yedek parça durumu vb.).
-   - Talep düzeyi, rekabet düzeyi, hedef kitle ve mevsimsellik analizi.
-5. Kampanya Önerileri: Hedef AVM mağaza içi veya online kanalları için dikkat çekici kampanya başlıkları ve mağaza içi afiş sloganları.
+Lütfen gerçek ve güncel rakamları net olarak belirt.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        temperature: 0.1
+      }
+    });
 
-ÖNEMLİ: Cevabını SADECE ve SADECE geçerli bir JSON nesnesi olarak döndür. Markdown tırnakları (\`\`\`json) veya fazladan metin ekleme.`;
+    liveMarketData = searchResponse.text || '';
+  } catch (searchError) {
+    console.warn('Google Search Grounding hatası (fallback mekanizması devreye giriyor):', searchError);
+    liveMarketData = `"${productName}" için canlı arama sorgulandı ancak veri anlık olarak doğrudan model tahminine bırakıldı.`;
+  }
 
-  const promptText = `Lütfen fotoğraftaki ürünü analiz et ve aşağıdaki JSON şemasına BİREBİR uygun şekilde yanıt üret:
+  // =========================================================================
+  // AŞAMA 2: GÖRSEL İNCELEME + GERÇEK PİYASA VERİSİ İLE HEDEF AVM STRATEJİSİ
+  // (Yapılandırılmış JSON Raporu)
+  // =========================================================================
+  const systemInstruction = `Sen Türkiye perakende pazarında uzmanlaşmış, "Hedef AVM" için çalışan kıdemli bir Satın Alma Direktörü ve Fiyatlandırma Stratejistisin.
+Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, tüketici elektroniği ve mobilya alanında hem peşin hem de Türkiye'ye özgü "elden senetli / taksitli" satış modeliyle çalışan güçlü bir mağazalar zinciridir.
+
+Kullanıcı ürünün tam adını ve modelini belirtmiştir: "${productName}".
+Ayrıca ürünün fotoğrafını yüklemiştir.
+
+Aşağıda canlı internet aramasından (Akakçe, Trendyol, Hepsiburada vb.) toplanan en güncel piyasa araştırması verileri yer almaktadır:
+--- CANLI PİYASA İSTİHBARATI ---
+${liveMarketData}
+-------------------------------
+
+GÖREVİN:
+Yukarıdaki GERÇEK internet pazar verilerini ve yüklenen fotoğrafı harmanlayarak Hedef AVM için doğrulanmış, gerçekçi bir piyasa fizibilite raporu hazırla.
+
+Fiyatlandırma Kuralları:
+1. Pazar fiyatları (min, average, max) yukarıdaki canlı arama sonuçlarındaki gerçek TL rakamlarına dayanmalıdır. Hayali veya eski yıllara ait fiyatlar VERME.
+2. Hedef AVM Peşin Satış Fiyatı: Pazaryerleriyle rekabet edebilecek akılcı bir peşin/kredi kartı fiyatı olmalıdır.
+3. Hedef AVM Elden Senetli Satış Fiyatı: Elden senetli satışta risk ve vade farkı nedeniyle peşine göre ortalama %20-%35 daha yüksek vadeli toplam fiyat belirlenir. 12 taksite bölünerek aylık taksit tutarı net hesaplanır.
+4. "Bu Ürün Satar mı / Satmaz mı?" Karar Motoru: 0-100 arasında net satılabilirlik puanı, somut gerekçeler, pazar riskleri ve mağaza vitrini için vurucu afiş sloganları üret.
+
+ÖNEMLİ: Cevabını SADECE geçerli bir JSON nesnesi olarak döndür. Markdown tırnakları (\`\`\`json) ekleme.`;
+
+  const promptText = `Lütfen "${productName}" ürünü ve görseli için aşağıdaki JSON şemasına BİREBİR uygun yanıt ver:
 
 {
-  "productName": "Örn: Philips HD9252/90 Airfryer Fritöz",
-  "brand": "Örn: Philips",
-  "modelOrCode": "Örn: HD9252/90",
-  "barcode": "Varsa barkod veya EAN kodu, yoksa null",
-  "category": "Örn: Küçük Ev Aletleri",
+  "productName": "${productName}",
+  "brand": "Örn: Apple, Philips, Samsung, Karaca vb.",
+  "modelOrCode": "Örn: Model veya seri kodu",
+  "barcode": "Varsa barkod veya EAN, yoksa null",
+  "category": "Örn: Akıllı Telefonlar, Küçük Ev Aletleri, Züccaciye vb.",
   "keyFeatures": [
-    "4.1 Litre hazne kapasitesi",
-    "Rapid Air sıcak hava teknolojisi",
-    "Dijital dokunmatik ekran",
-    "Otomatik kapanma ve sıcak tutma"
+    "1. Önemli teknik veya tasarım özelliği",
+    "2. Kapasite / Renk / Donanım detayı",
+    "3. Öne çıkan müşteri faydası"
   ],
   "marketPrices": {
-    "min": 2850,
-    "average": 3450,
-    "max": 4200,
+    "min": (canlı verideki en ucuz TL fiyatı, sayı olarak),
+    "average": (canlı verideki ortalama piyasa TL fiyatı, sayı olarak),
+    "max": (canlı verideki en yüksek liste TL fiyatı, sayı olarak),
     "currency": "₺"
   },
   "competitorBenchmarks": [
     {
       "platform": "Trendyol",
-      "estimatedPrice": 3299,
+      "estimatedPrice": (Trendyol güncel TL fiyatı),
       "currency": "₺",
-      "notes": "Çok satanlarda 1. sırada, yüksek rekabet"
+      "notes": "Pazaryeri satıcı durumu ve kargo avantajı"
     },
     {
       "platform": "Hepsiburada",
-      "estimatedPrice": 3390,
+      "estimatedPrice": (Hepsiburada güncel TL fiyatı),
       "currency": "₺",
-      "notes": "Hızlı kargo avantajlı satıcılar aktif"
+      "notes": "Yetkili satıcı / satıcı rekabeti"
     },
     {
-      "platform": "Zincir Teknoloji Mağazaları (Teknosa/MediaMarkt)",
-      "estimatedPrice": 3899,
+      "platform": "Zincir Teknoloji / Perakende Mağazaları",
+      "estimatedPrice": (Teknosa/MediaMarkt/AVM mağaza liste fiyatı),
       "currency": "₺",
-      "notes": "Mağaza liste fiyatı daha yüksek"
+      "notes": "Fiziki mağaza vitrin fiyatı"
     }
   ],
   "hedefPricing": {
-    "cashRecommendedPrice": 3290,
-    "installmentRecommendedPrice": 4250,
-    "monthlyInstallmentPrice": 354,
+    "cashRecommendedPrice": (Hedef AVM peşin tavsiye satış fiyatı),
+    "installmentRecommendedPrice": (Hedef AVM 12 ay elden senetli toplam fiyatı),
+    "monthlyInstallmentPrice": (Aylık taksit tutarı: installmentRecommendedPrice / 12),
     "installmentCount": 12,
     "suggestedDownPayment": 0,
-    "strategyNote": "Peşin fiyatı e-ticaret siteleriyle rekabetçi tutulup, asıl kârlılık elden senetli 12 taksit seçeneğiyle yakalanabilir."
+    "strategyNote": "Hedef AVM için peşin ve senetli taksitli fiyatlandırma stratejisi notu."
   },
   "feasibility": {
-    "score": 88,
-    "verdict": "GÜÇLÜ SATAR",
-    "summaryBadge": "success",
-    "headline": "Yüksek popülarite, çeyiz ve günlük kullanımda güçlü talep.",
+    "score": (0-100 arası satılabilirlik puanı),
+    "verdict": "GÜÇLÜ SATAR" | "SATAR (DENGELİ)" | "DİKKATLİ YAKLAŞILMALI" | "RİSKLİ / SATMAZ",
+    "summaryBadge": "success" | "warning" | "danger",
+    "headline": "Kısa ve net yönetici karar özeti",
     "reasonsToSell": [
-      "Marka bilinirliği ve güvenilirliği çok yüksek",
-      "Hedef AVM müşteri profilinin en çok talep ettiği çeyiz listesi ürünlerinden biri",
-      "Senetli taksit imkanı sunulduğunda hızlı devir hızına ulaşır"
+      "1. Neden satar somut gerekçe",
+      "2. Müşteri talebi ve marka algısı",
+      "3. Hedef AVM müşteri profiline uyum"
     ],
     "risksAndWatchouts": [
-      "Online pazaryerlerinde fiyat kırma rekabeti yoğun",
-      "Müşteriler internet fiyatını mağazada gösterip indirim isteyebilir"
+      "1. Fiyat rekabeti veya stok riski",
+      "2. İade veya servis uyarısı"
     ],
-    "demandLevel": "Çok Yüksek",
-    "competitionLevel": "Yüksek",
-    "targetAudience": "Genç çiftler, ev hanımları, çeyiz hazırlığı yapan aileler",
-    "returnRisk": "Düşük",
-    "seasonalTrend": "Tüm yıl boyunca düzenli talep, Black Friday ve Anneler Günü'nde pik yapar"
+    "demandLevel": "Çok Yüksek" | "Yüksek" | "Orta" | "Düşük",
+    "competitionLevel": "Çok Yüksek" | "Yüksek" | "Orta" | "Düşük",
+    "targetAudience": "Detaylı hedef kitle profili",
+    "returnRisk": "Düşük" | "Orta" | "Yüksek",
+    "seasonalTrend": "Mevsimsellik ve talep dönemi açıklaması"
   },
   "campaigns": [
     {
-      "title": "Muhteşem Çeyiz Fırsatı",
-      "campaignType": "Çeyiz Paketi",
-      "description": "Tost makinesi ve çay makinesi alanlara bu ürün senetli alımda ekstra %15 indirimle sunulabilir.",
-      "bannerSlogan": "Hedef AVM ile Mutfağınızda Şef Sizsiniz! Peşinatsız, Kredi Kartsız Elden Taksitle!"
+      "title": "Kampanya Başlığı",
+      "campaignType": "Çeyiz Paketi" | "Günün Fırsatı" | "Elden Senet Kampanyası" | "Özel Fırsat",
+      "description": "Kampanya kurgusu ve satış taktiği",
+      "bannerSlogan": "Hedef AVM mağaza afişi veya vitrin sloganı"
     },
     {
-      "title": "Haftanın Yıldız Ürünü",
+      "title": "İkinci Kampanya Başlığı",
       "campaignType": "Günün Fırsatı",
-      "description": "Sınırlı stokla peşin fiyatına elden 6 taksit avantajı.",
-      "bannerSlogan": "Bu Fiyata Kaçmaz! Hedef AVM'de Günde Sadece Bir Kahve Fiyatına!"
+      "description": "Alternatif kampanya kurgusu",
+      "bannerSlogan": "Sosyal medya veya el ilanı sloganı"
     }
   ]
 }
 
-${userCost ? `Kullanıcının belirttiği Alış / Tedarik Maliyeti: ${userCost} ₺. Lütfen Hedef AVM kârlılık önerilerini bu maliyeti dikkate alarak yap.` : ''}
+${userCost ? `Kullanıcının belirttiği Alış / Tedarik Maliyeti: ${userCost} ₺. Lütfen Hedef AVM kârlılık ve taksit önerilerini bu maliyeti dikkate alarak oluştur.` : ''}
 ${additionalNotes ? `Kullanıcıdan Ek Not: "${additionalNotes}"` : ''}`;
 
   const response = await ai.models.generateContent({
@@ -146,13 +181,13 @@ ${additionalNotes ? `Kullanıcıdan Ek Not: "${additionalNotes}"` : ''}`;
     ],
     config: {
       responseMimeType: 'application/json',
-      temperature: 0.2
+      temperature: 0.1
     }
   });
 
   const responseText = response.text || '';
   if (!responseText) {
-    throw new Error('Gemini API yanıtı boş döndü. Lütfen fotoğrafı tekrar çekip deneyiniz.');
+    throw new Error('Gemini API analiz yanıtı boş döndü. Lütfen tekrar deneyiniz.');
   }
 
   try {
@@ -161,7 +196,7 @@ ${additionalNotes ? `Kullanıcıdan Ek Not: "${additionalNotes}"` : ''}`;
     const result: ProductAnalysis = {
       id: 'scan_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       createdAt: new Date().toISOString(),
-      productName: parsed.productName || 'Bilinmeyen Ürün',
+      productName: parsed.productName || productName,
       brand: parsed.brand || 'Belirtilmemiş',
       modelOrCode: parsed.modelOrCode || undefined,
       barcode: parsed.barcode || undefined,

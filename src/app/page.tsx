@@ -55,6 +55,7 @@ export default function Home() {
 
   // Yeni ürün analizi isteği
   const handleAnalyze = async (params: {
+    productName: string;
     base64: string;
     mimeType: string;
     userCost?: number;
@@ -70,6 +71,7 @@ export default function Home() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          productName: params.productName,
           imageBase64: params.base64,
           mimeType: params.mimeType,
           userCost: params.userCost,
