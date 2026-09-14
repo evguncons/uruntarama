@@ -118,7 +118,7 @@
         </span> Stratejisi
       </h1>
       <p class="text-xs sm:text-base text-slate-600 font-semibold max-w-2xl mx-auto leading-relaxed">
-        Fotoğrafını yükleyin ve modelini yazın; yapay zeka Türkiye e-ticaret pazaryerlerini (Akakçe, Trendyol, Hepsiburada) canlı tarasın, Hedef AVM senetli satış ve kâr planını saniyeler içinde çıkarsın.
+        Sadece ürün adını yazarak veya isteğe bağlı fotoğraf ekleyerek canlı piyasa taraması yapın; yapay zeka Türkiye e-ticaret sitelerinden (Akakçe, Trendyol, Hepsiburada) güncel fiyatları çıkarsın ve Hedef AVM senetli satış planını hesaplasın.
       </p>
     </div>
 
@@ -142,13 +142,14 @@
         </div>
       </div>
 
-      <!-- Görsel Girişi (Kamera, Galeri, Sürükle-Bırak, Yapıştır) -->
+      <!-- Görsel Girişi (İsteğe Bağlı: Kamera, Galeri, Sürükle-Bırak, Yapıştır) -->
       <div id="dropZone" class="space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-1">
-          <label class="block text-xs sm:text-base font-black uppercase tracking-wider text-slate-800">
-            📸 Ürün Fotoğrafı <span class="text-rose-600 font-black">* (Zorunlu)</span>
+          <label class="block text-xs sm:text-base font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+            <span>📸 Ürün Fotoğrafı</span>
+            <span class="text-slate-500 font-bold text-[11px] sm:text-xs lowercase bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">isteğe bağlı</span>
           </label>
-          <span class="text-[11px] sm:text-xs font-bold text-slate-400">Kamera, galeri, sürükle-bırak veya Ctrl+V</span>
+          <span class="text-[11px] sm:text-xs font-bold text-slate-400">Fotoğrafsız da arama yapabilirsiniz</span>
         </div>
         
         <!-- Gizli Dosya Inputları (Görünmez ama DOM'da aktif ve her browser uyumlu) -->
@@ -204,8 +205,8 @@
           <div class="flex items-center gap-3.5 min-w-0">
             <img id="imagePreview" src="" alt="Önizleme" class="w-16 h-16 object-cover rounded-xl border border-pink-200 shadow-xs shrink-0 bg-white" />
             <div class="min-w-0">
-              <span class="text-sm sm:text-base font-black text-slate-900 block truncate">Görsel Seçildi</span>
-              <span id="imageMeta" class="text-xs text-[#c81373] font-bold block truncate">Analize hazır ✓</span>
+              <span class="text-sm sm:text-base font-black text-slate-900 block truncate">Görsel Eklendi</span>
+              <span id="imageMeta" class="text-xs text-[#c81373] font-bold block truncate">Analize dahil edilecek ✓</span>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
@@ -313,9 +314,13 @@
       <div class="bg-white border border-pink-100 rounded-3xl p-5 sm:p-8 shadow-xl shadow-fuchsia-950/5 space-y-6 overflow-hidden">
         
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6">
-          <!-- Ürün Görseli -->
+          <!-- Ürün Görseli (Görsel varsa resim, yoksa şık kurumsal kutu ikonu) -->
           <div class="w-28 h-28 sm:w-40 sm:h-40 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-100 shrink-0 flex items-center justify-center p-2 shadow-inner mx-auto sm:mx-0">
-            <img id="resProductImage" src="" alt="Ürün" class="w-full h-full object-contain" />
+            <img id="resProductImage" src="" alt="Ürün" class="w-full h-full object-contain hidden" />
+            <div id="resNoImagePlaceholder" class="flex flex-col items-center justify-center text-center p-2 text-[#c81373]">
+              <i class="fa-solid fa-box-open text-3xl sm:text-4xl"></i>
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 mt-1">Görselsiz Analiz</span>
+            </div>
           </div>
 
           <!-- Başlık ve Rozetler -->
@@ -767,12 +772,8 @@
     startAnalyzeBtn.addEventListener('click', async () => {
       const productName = productNameInput.value.trim();
       if (!productName) {
-        showError('Model karışıklığını önlemek için lütfen Ürün Adı ve Modelini giriniz (Örn: GM 26 Pro)!');
+        showError('Lütfen araştırmak istediğiniz Ürün Adı ve Modelini giriniz (Örn: GM 26 Pro 128GB)!');
         productNameInput.focus();
-        return;
-      }
-      if (!currentImageBase64) {
-        showError('Lütfen ürünün fotoğrafını çekin veya galeriden seçin!');
         return;
       }
 
@@ -813,13 +814,16 @@ Lütfen ürünün piyasadaki en düşük, ortalama ve en yüksek TL fiyatların�
           console.warn('Aşama 1 metin ayrıştırılamadı:', stage1Data);
         }
 
-        // AŞAMA 2: Görsel + Canlı Veri ile Yapılandırılmış JSON Sentezi
-        loadingStatusText.textContent = '2. Aşama: Görsel inceleniyor ve Hedef AVM senet planı oluşturuluyor...';
+        // AŞAMA 2: Görsel (Varsa) + Canlı Veri ile Yapılandırılmış JSON Sentezi
+        if (currentImageBase64) {
+          loadingStatusText.textContent = '2. Aşama: Görsel ve piyasa verileri inceleniyor, Hedef AVM senet planı oluşturuluyor...';
+        } else {
+          loadingStatusText.textContent = '2. Aşama: Canlı piyasa verileri sentezleniyor, Hedef AVM senet planı oluşturuluyor...';
+        }
         loadingProgressBar.style.width = '85%';
 
         const userCost = parseFloat(costInput.value) || 0;
         const extraNotes = notesInput.value.trim();
-        const base64DataOnly = currentImageBase64.split(',')[1];
 
         const systemInstruction = `Sen 'Hedef AVM' (hedefavm.com) bünyesinde çalışan Uzman Perakende Satın Alma ve Fiyatlandırma Stratejistisin.
 Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, elektronik, cep telefonu, ev tekstili ve mobilya satan dev bir perakende zinciridir.
@@ -830,7 +834,11 @@ Görevin:
 2. Hedef AVM'nin karlı satış yapabilmesi için Peşin ve 12 Ay Elden Senetli taksitli fiyatlandırma stratejisini oluştur.
 3. Ürünün Hedef AVM mağazalarında satılabilirlik fizibilitesini (0-100 puan), talep/rekabet/iade dinamiklerini ve vitrin kampanya sloganlarını üret.`;
 
-        const jsonSchemaPrompt = `Yukarıdaki canlı web araştırma sonuçlarını ve ekteki ürün görselini incele.
+        const promptIntro = currentImageBase64
+          ? 'Yukarıdaki canlı web araştırma sonuçlarını ve ekteki ürün görselini incele.'
+          : 'Yukarıdaki canlı web araştırma sonuçlarını incele.';
+
+        const jsonSchemaPrompt = `${promptIntro}
 
 CANLI PİYASA ARAŞTIRMA VERİSİ:
 ${searchText}
@@ -905,15 +913,18 @@ NOTLAR:
 - score 0 ile 100 arasında bir tamsayı olmalıdır.
 - Hedef AVM 12 Ay senetli satış fiyatı genel kural olarak peşin fiyatın yaklaşık 1.30 - 1.45 katı civarındadır (vade farkı ve tahsilat riski).`;
 
+        const partsContent = [{ text: jsonSchemaPrompt }];
+        if (currentImageBase64) {
+          const base64DataOnly = currentImageBase64.split(',')[1];
+          partsContent.push({ inline_data: { mime_type: 'image/jpeg', data: base64DataOnly } });
+        }
+
         const stage2Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{
-              parts: [
-                { text: jsonSchemaPrompt },
-                { inline_data: { mime_type: 'image/jpeg', data: base64DataOnly } }
-              ]
+              parts: partsContent
             }],
             system_instruction: { parts: [{ text: systemInstruction }] },
             generationConfig: {
@@ -927,7 +938,7 @@ NOTLAR:
         const rawJsonText = stage2Data.candidates[0].content.parts[0].text;
         const analysisData = JSON.parse(rawJsonText);
 
-        analysisData._image = currentImageBase64;
+        analysisData._image = currentImageBase64 || null;
         analysisData._userCost = userCost;
         analysisData._userNotes = extraNotes;
         analysisData._timestamp = new Date().toLocaleString('tr-TR');
@@ -960,7 +971,19 @@ NOTLAR:
       const mp = data.marketPrices || {};
 
       document.getElementById('reportTimestamp').textContent = 'Tarih: ' + (data._timestamp || 'Şimdi');
-      document.getElementById('resProductImage').src = data._image || currentImageBase64;
+      
+      const imgElem = document.getElementById('resProductImage');
+      const noImgElem = document.getElementById('resNoImagePlaceholder');
+      if (data._image) {
+        imgElem.src = data._image;
+        imgElem.classList.remove('hidden');
+        if (noImgElem) noImgElem.classList.add('hidden');
+      } else {
+        imgElem.src = '';
+        imgElem.classList.add('hidden');
+        if (noImgElem) noImgElem.classList.remove('hidden');
+      }
+
       document.getElementById('resBrandBadge').textContent = '🏢 ' + (data.brand || 'Marka');
       document.getElementById('resCategoryBadge').textContent = '📁 ' + (data.category || 'Genel');
       document.getElementById('resModelBadge').textContent = 'Model: ' + (data.modelOrCode || '-');
