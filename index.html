@@ -882,14 +882,15 @@ Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, elektronik, cep telefo
 En büyük ticari gücü ve satış hacmi, müşterilerine sunduğu '15 Ay Elden Senetli (Kredi kartsız/peşinatsız taksitli)' satış modelidir.
 En önemli doğrudan rakipleri: Evkur, Taşpınar Mağazaları, Vivense, HYS AVM (hysavm.com), Yön AVM, Yiğit AVM ve SenetSepet'tir.
 
-FİYAT VE STOK DOĞRULUK İLKELERİ (ÇOK ÖNEMLİ - KESİN KURAL):
-1. STOK VE BULUNABİLİRLİK DOĞRULAMASI: Eğer ürün rakip mağazalarda (Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet) veya platformlarda (Akakçe, Trendyol, Hepsiburada, Zincir Mağaza) listelenmemişse, stokta yoksa veya satılmıyorsa KESİNLİKLE RASTGELE/HAYALİ FİYAT SALLAMA!
-   - İlgili rakip veya platform için "isAvailable": false ver, "estimatedTotalPrice": 0 (veya "estimatedPrice": 0), "estimatedMonthly": 0 yap, "productUrl": "" bırak ve "notes" alanına "Stokta / Listede Bulunamadı" yaz.
-   - Sadece gerçekten satışta ve stokta olduğu teyit edilen mağazalar için "isAvailable": true, gerçekçi fiyat ve varsa bulunan doğrudan ürün web sayfasının linkini ("productUrl") yaz.
-2. DOĞRUDAN ÜRÜN LİNKLERİ: Bulunan ürünlerin doğrudan web linkini "productUrl" alanına ekle. Link net değilse boş bırak.
-3. GERÇEKÇİ 15 AY SENET FİYATI: Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı genel olarak piyasa peşin fiyatının yaklaşık %35 ile %50 fazlası bandında seyreder. Asla piyasa peşin fiyatının 2 katı gibi absürt uçuk fiyatlar yazma!
-4. Hedef AVM 15 Ay Elden Senetli Tavsiye Fiyatı: Piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı olmalı, aylık taksit tutarı müşteriye cazip gelecek şekilde yuvarlanmalıdır (Aylık Taksit = Toplam Senet Fiyatı / 15).
-5. Senetli Rakipler Listesi: Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere tam 7 rakip incelenmelidir.`;
+FİYAT VE STOK DOĞRULUK İLKELERİ (SIFIR HALÜSİNASYON - KESİN KURAL):
+1. STOK VE BULUNABİLİRLİK DOĞRULAMASI (ÇOK ÖNEMLİ):
+   - KESİNLİKLE TAHMİNİ VEYA RASTGELE "STOKTA VAR" DEME!
+   - Canlı Google Arama Verisinde (Aşama 1 arama metninde) ilgili mağazanın adı (Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet) ve aranan ürünün o mağazadaki fiyatı AÇIK VE NET OLARAK GEÇMİYORSA, o mağaza için KESİNLİKLE "isAvailable": false, "estimatedTotalPrice": 0, "estimatedMonthly": 0 ver ve "notes" kısmına "Stokta / Listede Bulunamadı" yaz!
+   - KATEGORİ UYUMU KURALI: Vivense sadece mobilya, aydınlatma, halı ve ev dekorasyonu satar. Cep telefonu, tablet, bilgisayar, TV, elektronik ve beyaz eşya gibi ürünlerde Vivense'de bu ürün ASLA OLAMAZ! Bu durumda Vivense için doğrudan "isAvailable": false, "notes": "Vivense mobilya odaklıdır; bu ürün kategorisinde satışı yoktur" yaz.
+   - Sadece arama sonucunda o sitede gerçekten listelendiği ve stokta olduğu ispatlanan mağazalar için "isAvailable": true ver.
+2. GERÇEKÇİ 15 AY SENET FİYATI: Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı genel olarak piyasa peşin fiyatının yaklaşık %35 ile %50 fazlası bandında seyreder. Asla piyasa peşin fiyatının 2 katı gibi absürt uçuk fiyatlar yazma!
+3. Hedef AVM 15 Ay Elden Senetli Tavsiye Fiyatı: Piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı olmalı, aylık taksit tutarı müşteriye cazip gelecek şekilde yuvarlanmalıdır (Aylık Taksit = Toplam Senet Fiyatı / 15).
+4. Senetli Rakipler Listesi: Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere tam 7 rakip incelenmelidir.`;
 
         const promptIntro = currentImageBase64
           ? 'Yukarıdaki canlı web araştırma sonuçlarını ve ekteki ürün görselini incele.'
@@ -918,16 +919,16 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
     "currency": "TRY"
   },
   "competitorBenchmarks": [
-    { "platform": "Akakçe (En Ucuz)", "isAvailable": true, "estimatedPrice": 0, "productUrl": "", "notes": "Firma veya mağaza adı" },
-    { "platform": "Trendyol", "isAvailable": true, "estimatedPrice": 0, "productUrl": "", "notes": "Kargo dahil ortalama veya Stokta Yok" },
-    { "platform": "Hepsiburada", "isAvailable": true, "estimatedPrice": 0, "productUrl": "", "notes": "Resmi veya pazaryeri satıcı veya Stokta Yok" },
+    { "platform": "Akakçe (En Ucuz)", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "Firma veya mağaza adı" },
+    { "platform": "Trendyol", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "Kargo dahil ortalama veya Stokta Yok" },
+    { "platform": "Hepsiburada", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "Resmi veya pazaryeri satıcı veya Stokta Yok" },
     { "platform": "Zincir Mağaza (Teknosa/Vatan)", "isAvailable": false, "estimatedPrice": 0, "productUrl": "", "notes": "Stokta / Listede bulunamadı" }
   ],
   "senetliCompetitors": [
     {
       "name": "Evkur",
       "website": "evkur.com.tr",
-      "isAvailable": true,
+      "isAvailable": false,
       "productUrl": "",
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
@@ -1098,20 +1099,20 @@ NOTLAR:
     }
 
     function getProductLink(platformOrStore, rawUrl, productName) {
-      if (rawUrl && typeof rawUrl === 'string' && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
-        return rawUrl;
-      }
       const p = (productName || '').trim();
       const enc = encodeURIComponent(p);
       const s = (platformOrStore || '').toLowerCase();
       
+      // 404 HATASINI KESİN ÖNLEYEN VE HER MAĞAZADA %100 ÇALIŞAN RESMİ ARAMA ENDPOINT'LERİ:
       if (s.includes('vivense')) return `https://www.vivense.com/arama?q=${enc}`;
       if (s.includes('evkur')) return `https://www.evkur.com.tr/arama?q=${enc}`;
-      if (s.includes('taspinar') || s.includes('taşpınar')) return `https://www.taspinar.com/arama?q=${enc}`;
-      if (s.includes('hys')) return `https://hysavm.com/arama?q=${enc}`;
-      if (s.includes('yonavm') || s.includes('yön')) return `https://yonavm.com.tr/arama?q=${enc}`;
-      if (s.includes('yigit') || s.includes('yiğit')) return `https://yigitavm.com.tr/arama?q=${enc}`;
+      if (s.includes('taspinar') || s.includes('taşpınar')) return `https://taspinar.com/ara?q=${enc}`;
+      if (s.includes('hys')) return `https://hysavm.com/search?q=${enc}`;
+      if (s.includes('yonavm') || s.includes('yön')) return `https://yonavm.com.tr/Arama?q=${enc}`;
+      if (s.includes('yigit') || s.includes('yiğit')) return `https://www.google.com/search?q=${encodeURIComponent('site:yigitavm.com.tr ' + p)}`;
       if (s.includes('senetsepet')) return `https://senetsepet.com/arama?q=${enc}`;
+      
+      // Pazaryerleri ve Zincir Mağazalar
       if (s.includes('akakce') || s.includes('akakçe')) return `https://www.akakce.com/arama/?q=${enc}`;
       if (s.includes('trendyol')) return `https://www.trendyol.com/sr?q=${enc}`;
       if (s.includes('hepsiburada')) return `https://www.hepsiburada.com/ara?q=${enc}`;
@@ -1226,9 +1227,9 @@ NOTLAR:
         
         const priceNum = Number(comp.estimatedPrice) || 0;
         const notesStr = (comp.notes || '').toLowerCase();
-        const explicitlyOutOfStock = notesStr.includes('stok') && (notesStr.includes('yok') || notesStr.includes('bulunamadı') || notesStr.includes('tükendi'));
-        const isAvail = comp.isAvailable !== false && priceNum > 0 && !explicitlyOutOfStock;
-        const targetUrl = getProductLink(comp.platform, comp.productUrl, data.productName);
+        const explicitlyOutOfStock = notesStr.includes('stok') && (notesStr.includes('yok') || notesStr.includes('bulunamadı') || notesStr.includes('tükendi') || notesStr.includes('satışı yok'));
+        const isAvail = comp.isAvailable === true && priceNum > 0 && !explicitlyOutOfStock;
+        const targetUrl = getProductLink(comp.platform, null, data.productName);
 
         const priceBadge = isAvail
           ? `<div class="text-right shrink-0">
@@ -1302,11 +1303,23 @@ NOTLAR:
           const name = sc.name || sc.competitor || 'Rakip Mağaza';
           const priceNum = Number(sc.estimatedTotalPrice) || 0;
           
+          // Kategori ve Mağaza Uyumluluk Doğrulaması (Vivense sadece mobilya/ev tekstilidir, asla telefon/elektronik satmaz!)
+          const isVivense = name.toLowerCase().includes('vivense') || (sc.website || '').toLowerCase().includes('vivense');
+          const catOrName = ((data.category || '') + ' ' + (data.productName || '')).toLowerCase();
+          const isElectronicsOrAppliance = /telefon|iphone|samsung galaxy|xiaomi|redmi|poco|oppo|huawei|laptop|bilgisayar|tablet|ipad|macbook|televizyon|\btv\b|buzdolabı|çamaşır|bulaşık|fırın|süpürge|robot süpürge|kahve makinesi|airfryer|fritöz|ütü|küçük ev|elektronik|beyaz eşya/i.test(catOrName);
+          
+          if (isVivense && isElectronicsOrAppliance) {
+            sc.isAvailable = false;
+            sc.estimatedTotalPrice = 0;
+            sc.estimatedMonthly = 0;
+            sc.notes = 'Vivense mobilya ve ev dekorasyonu mağazasıdır; bu ürün kategorisinde satışı yoktur.';
+          }
+
           // Eğer isAvailable false ise veya fiyat 0 ise veya notlarda stokta yok deniyorsa -> Kesinlikle Stokta Yok!
           const notesText = (sc.notes || '').toLowerCase();
-          const explicitlyOutOfStock = notesText.includes('stok') && (notesText.includes('yok') || notesText.includes('bulunamadı') || notesText.includes('tükendi'));
-          const isAvail = sc.isAvailable !== false && priceNum > 0 && !explicitlyOutOfStock;
-          const storeUrl = getProductLink(name, sc.productUrl, data.productName);
+          const explicitlyOutOfStock = notesText.includes('stok') && (notesText.includes('yok') || notesText.includes('bulunamadı') || notesText.includes('tükendi') || notesText.includes('satışı yok') || notesText.includes('bulunmuyor'));
+          const isAvail = sc.isAvailable === true && priceNum > 0 && !explicitlyOutOfStock;
+          const storeUrl = getProductLink(name, null, data.productName);
 
           const card = document.createElement('div');
 
