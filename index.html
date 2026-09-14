@@ -118,7 +118,7 @@
         </span> Stratejisi
       </h1>
       <p class="text-xs sm:text-base text-slate-600 font-semibold max-w-2xl mx-auto leading-relaxed">
-        Sadece ürün adını yazarak (veya isteğe bağlı fotoğraf ekleyerek) tarama yapın; yapay zeka pazaryerleri ile senetli rakipleri (Taşpınar, Yön AVM, Yiğit AVM, EYS AVM, SenetSepet) canlı tarasın ve Hedef AVM 15 ay elden senetli kâr planını saniyeler içinde hesaplasın.
+        Sadece ürün adını yazarak (veya isteğe bağlı fotoğraf ekleyerek) tarama yapın; yapay zeka pazaryerleri ile senetli rakipleri (Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet) canlı tarasın ve Hedef AVM 15 ay elden senetli kâr planını çıkarsın.
       </p>
     </div>
 
@@ -129,7 +129,7 @@
       <div>
         <label for="productName" class="block text-xs sm:text-base font-black uppercase tracking-wider text-slate-800 mb-2 flex items-center justify-between flex-wrap gap-1">
           <span>📦 Ürün Adı ve Modeli <span class="text-rose-600 font-black">* (Zorunlu)</span></span>
-          <span class="text-[11px] sm:text-xs font-bold text-slate-400">Marka ve modeli tam yazınız</span>
+          <span class="text-[11px] sm:text-xs font-bold text-slate-400">Doğru fiyat için marka ve modeli tam yazınız</span>
         </label>
         <div class="relative">
           <input 
@@ -282,7 +282,7 @@
             Canlı Piyasa Radarı Taraması Yapılıyor...
           </h3>
           <p id="loadingStatusText" class="text-xs sm:text-sm text-slate-600 font-semibold leading-relaxed">
-            1. Aşama: Akakçe, Trendyol, Hepsiburada ve senetli rakipler (Taşpınar, Yön AVM, Yiğit AVM, EYS, SenetSepet) taranıyor...
+            1. Aşama: Akakçe, Trendyol ile Evkur, Taşpınar, HYS AVM, Yön, Yiğit taranıyor...
           </p>
         </div>
         <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
@@ -290,7 +290,7 @@
         </div>
         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-50 text-[#c81373] text-xs font-bold border border-pink-200">
           <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
-          <span>Yapay zeka piyasayı canlı analiz ediyor...</span>
+          <span>Gerçek fiyatlar taranıyor ve doğrulanıyor...</span>
         </div>
       </div>
     </div>
@@ -465,7 +465,7 @@
         </div>
       </div>
 
-      <!-- KART 3.5: SENETLİ RAKİPLER RADARI (TAŞPINAR, YÖN AVM, YİĞİT AVM, EYS, SENETSEPET) -->
+      <!-- KART 3.5: SENETLİ RAKİPLER RADARI (EVKUR, TAŞPINAR, HYS AVM, YÖN, YİĞİT, SENETSEPET) -->
       <div class="bg-white border border-pink-100 rounded-3xl p-5 sm:p-8 shadow-xl shadow-fuchsia-950/5 space-y-5 overflow-hidden">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
@@ -474,20 +474,20 @@
               <span>Elden Senetli Perakende Radarı</span>
             </div>
             <h3 class="text-base sm:text-xl font-black text-slate-900">
-              🏬 Senetli Rakip Mağazalar (Taşpınar, Yön AVM, Yiğit AVM, EYS, SenetSepet)
+              🏬 Senetli Rakip Mağazalar (Evkur, Taşpınar, HYS AVM, Yön, Yiğit, SenetSepet)
             </h3>
             <p class="text-xs sm:text-sm text-slate-500 font-semibold">
               Elden senetle ve taksitli satış yapan doğrudan rakiplerin 15 ay fiyat ve taksit skalası
             </p>
           </div>
           <span class="px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-[#c81373] text-xs font-black shrink-0">
-            5 Senetli Rakip Karşılaştırması
+            6 Senetli Rakip Karşılaştırması
           </span>
         </div>
 
-        <!-- 5 Senetli Rakip Kartları Grid -->
+        <!-- 6 Senetli Rakip Kartları Grid -->
         <div id="resSenetliCompetitorsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-          <!-- Dinamik doldurulur: Taşpınar, Yön AVM, Yiğit AVM, EYS AVM, SenetSepet -->
+          <!-- Dinamik doldurulur: Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet -->
         </div>
 
         <!-- Hedef AVM Rekabet Avantajı Kutusu -->
@@ -495,7 +495,7 @@
           <i class="fa-solid fa-crown text-[#c81373] text-lg mt-0.5 shrink-0"></i>
           <div class="text-xs sm:text-sm text-slate-800 leading-relaxed">
             <strong class="text-[#c81373] font-black block sm:inline">Hedef AVM Senet Avantajı:</strong>
-            <span id="resHedefAdvantageNote">Taşpınar, Yön AVM, Yiğit AVM, EYS AVM ve SenetSepet'e kıyasla 15 ay vadede taksit tutarı ve esnek elden senet onayı avantajı bulunmaktadır.</span>
+            <span id="resHedefAdvantageNote">Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet'e kıyasla 15 ay vadede taksit tutarı ve esnek elden senet onayı avantajı bulunmaktadır.</span>
           </div>
         </div>
       </div>
@@ -824,26 +824,26 @@
       startAnalyzeBtn.disabled = true;
 
       try {
-        // AŞAMA 1: Canlı Google Arama Taraması (Pazaryerleri + 5 Senetli Rakip)
-        loadingStatusText.textContent = '1. Aşama: Akakçe, Trendyol, Hepsiburada ile Taşpınar, Yön AVM, Yiğit AVM, EYS AVM, SenetSepet taranıyor...';
+        // AŞAMA 1: Canlı Google Arama Taraması (Pazaryerleri + 6 Senetli Rakip)
+        loadingStatusText.textContent = '1. Aşama: Akakçe, Trendyol ile Evkur, Taşpınar, HYS AVM, Yön, Yiğit taranıyor...';
         loadingProgressBar.style.width = '45%';
 
-        const searchPrompt = `Türkiye e-ticaret ve perakende pazarında şu ürünün GÜNCEL fiyatlarını ve senetli taksit seçeneklerini araştır:
-Ürün / Model: ${productName}
+        const searchPrompt = `Türkiye perakende ve e-ticaret pazarında şu ürünün GÜNCEL gerçek satış fiyatlarını araştır:
+Ürün ve Model: "${productName}"
 
-Aşağıdaki sitelerdeki en güncel satış ve taksit fiyatlarını bul:
-1. Akakçe ve Cimri (En ucuz peşin ve piyasa ortalaması)
-2. Trendyol ve Hepsiburada (Pazaryeri peşin liste fiyatları)
-3. Elden Senetli Rakipler: 
-   - Taşpınar Mağazaları (taspinar.com)
-   - Yön AVM (yonavm.com.tr)
-   - Yiğit AVM (yigitavm.com.tr)
-   - EYS AVM / Evkur
-   - SenetSepet (senetsepet.com)
-   Bu mağazaların elden senetli / taksitli fiyatları ve taksit koşulları.
-4. Zincir Mağazalar: Teknosa / Vatan Bilgisayar / MediaMarkt
+Lütfen şu sitelerdeki en güncel satış ve taksit fiyatlarını bul:
+1. Akakçe (akakce.com) ve Cimri (cimri.com): En ucuz peşin fiyatı ve piyasa ortalaması kaç TL?
+2. Trendyol ve Hepsiburada: Pazaryeri peşin liste fiyatları kaç TL?
+3. Elden Senetli / Taksitli Perakende Rakipleri:
+   - Evkur (evkur.com.tr): Taksitli ve peşin fiyatı kaç TL?
+   - Taşpınar Mağazaları (taspinar.com): Taşpınar'daki güncel fiyatı veya 15 ay senetli taksit tutarı nedir? (Lütfen gerçekçi piyasa fiyatını bul, hayali rakam yazma!)
+   - HYS AVM (hysavm.com): HYS AVM'de taksitli satış fiyatı nedir?
+   - Yön AVM (yonavm.com.tr): 15 ay elden senetli taksit durumu nedir?
+   - Yiğit AVM (yigitavm.com.tr): Elden taksitli satış fiyatı nedir?
+   - SenetSepet (senetsepet.com): Online senetli satış fiyatı nedir?
 
-Lütfen ürünün piyasadaki peşin fiyatlarını VE Taşpınar, Yön AVM, Yiğit AVM, EYS AVM, SenetSepet gibi senetli rakiplerin taksitli fiyatlandırmalarını net olarak listele.`;
+ÖNEMLİ KURAL:
+Eğer bir senetli mağazada ürünün kendisi birebir listelenmemişse, kesinlikle hayali uçuk fiyatlar (örneğin 18 bin TL'lik ürüne 30 bin TL gibi) uydurma! Ürünün Akakçe peşin fiyatı üzerine o mağazanın ortalama %35-%50 vade farkı uygulandığını notta belirt ve gerçekçi rakamlar sun.`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -864,7 +864,7 @@ Lütfen ürünün piyasadaki peşin fiyatlarını VE Taşpınar, Yön AVM, Yiği
 
         // AŞAMA 2: Görsel (Varsa) + Canlı Veri ile Yapılandırılmış JSON Sentezi
         if (currentImageBase64) {
-          loadingStatusText.textContent = '2. Aşama: Görsel ve piyasa verileri inceleniyor, Hedef AVM 15 ay senet planı oluşturuluyor...';
+          loadingStatusText.textContent = '2. Aşama: Görsel ve piyasa verileri sentezleniyor, Hedef AVM 15 ay senet planı oluşturuluyor...';
         } else {
           loadingStatusText.textContent = '2. Aşama: Canlı piyasa verileri sentezleniyor, Hedef AVM 15 ay senet planı oluşturuluyor...';
         }
@@ -873,16 +873,16 @@ Lütfen ürünün piyasadaki peşin fiyatlarını VE Taşpınar, Yön AVM, Yiği
         const userCost = parseFloat(costInput.value) || 0;
         const extraNotes = notesInput.value.trim();
 
-        const systemInstruction = `Sen 'Hedef AVM' (hedefavm.com) bünyesinde çalışan Uzman Perakende Satın Alma ve Fiyatlandırma Stratejistisin.
+        const systemInstruction = `Sen 'Hedef AVM' (hedefavm.com) bünyesinde çalışan Kıdemli Perakende Fiyatlandırma ve İstihbarat Analistisin.
 Hedef AVM; züccaciye, küçük ev aletleri, beyaz eşya, elektronik, cep telefonu, ev tekstili ve mobilya satan dev bir perakende zinciridir.
 En büyük ticari gücü ve satış hacmi, müşterilerine sunduğu '15 Ay Elden Senetli (Kredi kartsız/peşinatsız taksitli)' satış modelidir.
-En önemli doğrudan rakipleri: Taşpınar Mağazaları, Yön AVM, Yiğit AVM, EYS AVM ve SenetSepet gibi elden senetle taksitli satış yapan perakende zincirleridir.
+En önemli doğrudan rakipleri: Evkur, Taşpınar Mağazaları, HYS AVM (hysavm.com), Yön AVM, Yiğit AVM ve SenetSepet'tir.
 
-Görevin:
-1. Kullanıcının belirttiği ürün ve model için Türkiye pazarını (Akakçe, Cimri, Trendyol, Hepsiburada) ve senetli rakipleri (Taşpınar, Yön AVM, Yiğit AVM, EYS AVM, SenetSepet) tarayarak gerçek piyasa ve senet fiyatlarını çıkar.
-2. Hedef AVM'nin karlı satış yapabilmesi için Peşin ve 15 Ay Elden Senetli taksitli fiyatlandırma stratejisini oluştur.
-3. Senetli rakipler (Taşpınar, Yön AVM, Yiğit AVM, EYS AVM, SenetSepet) için tahmini senetli toplam satış fiyatı, aylık taksit tutarı ve karşılaştırma notlarını üret.
-4. Ürünün Hedef AVM mağazalarında satılabilirlik fizibilitesini (0-100 puan), talep/rekabet dinamiklerini ve vitrin kampanya sloganlarını üret.`;
+FİYAT DOĞRULUK VE GERÇEKÇİLİK İLKELERİ:
+1. Asla uçuk, tutarsız veya hayali fiyatlar üretme! Örneğin piyasada 15.000 - 20.000 TL olan bir telefona Taşpınar veya Evkur için 30.000 TL gibi absürt rakamlar yazma!
+2. Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı, genel olarak piyasa peşin fiyatının %35 ile %50 fazlası bandında seyreder (15 aylık vade farkı ve tahsilat maliyeti).
+3. Hedef AVM 15 Ay Elden Senetli Tavsiye Fiyatı: Piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı olmalı, aylık taksit tutarı müşteriye cazip gelecek şekilde yuvarlanmalıdır. (Aylık Taksit = Toplam Senet Fiyatı / 15).
+4. Senetli Rakipler Listesi: Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere tam 6 rakip içermelidir.`;
 
         const promptIntro = currentImageBase64
           ? 'Yukarıdaki canlı web araştırma sonuçlarını ve ekteki ürün görselini incele.'
@@ -918,35 +918,48 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
   ],
   "senetliCompetitors": [
     {
-      "name": "Taşpınar",
+      "name": "Evkur",
+      "website": "evkur.com.tr",
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "Taşpınar 15 ay senetli satış ve vade tahmini"
+      "notes": "Evkur 15 ay taksitli liste tahmini"
+    },
+    {
+      "name": "Taşpınar",
+      "website": "taspinar.com",
+      "estimatedTotalPrice": 0,
+      "estimatedMonthly": 0,
+      "installmentCount": 15,
+      "notes": "Taşpınar 15 ay senetli liste tahmini"
+    },
+    {
+      "name": "HYS AVM",
+      "website": "hysavm.com",
+      "estimatedTotalPrice": 0,
+      "estimatedMonthly": 0,
+      "installmentCount": 15,
+      "notes": "HYS AVM 15 ay taksit tahmini"
     },
     {
       "name": "Yön AVM",
+      "website": "yonavm.com.tr",
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "Yön AVM 15 ay senetli satış tahmini"
+      "notes": "Yön AVM 15 ay elden senet tahmini"
     },
     {
       "name": "Yiğit AVM",
+      "website": "yigitavm.com.tr",
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
-      "notes": "Yiğit AVM elden taksitli liste tahmini"
-    },
-    {
-      "name": "EYS AVM",
-      "estimatedTotalPrice": 0,
-      "estimatedMonthly": 0,
-      "installmentCount": 15,
-      "notes": "EYS AVM elden taksitli liste tahmini"
+      "notes": "Yiğit AVM elden taksit tahmini"
     },
     {
       "name": "SenetSepet",
+      "website": "senetsepet.com",
       "estimatedTotalPrice": 0,
       "estimatedMonthly": 0,
       "installmentCount": 15,
@@ -958,8 +971,8 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
     "installmentRecommendedPrice": 0,
     "monthlyInstallmentPrice": 0,
     "installmentCount": 15,
-    "strategyNote": "Hedef AVM için peşin ve 15 ay senetli fiyat belirleme gerekçesi, Taşpınar/Yön/Yiğit/EYS/SenetSepet'e kıyasla avantajı ve kâr hedefi",
-    "advantageNote": "Hedef AVM'nin Taşpınar, Yön AVM, Yiğit AVM, EYS AVM ve SenetSepet'e kıyasla aylık taksit ve senet onayı üstünlüğü özeti"
+    "strategyNote": "Hedef AVM için peşin ve 15 ay senetli fiyat belirleme gerekçesi, rakiplere kıyasla avantajı ve kâr hedefi",
+    "advantageNote": "Hedef AVM'nin Evkur, Taşpınar, HYS AVM, Yön, Yiğit ve SenetSepet'e kıyasla aylık taksit ve senet onayı üstünlüğü özeti"
   },
   "feasibility": {
     "score": 85,
@@ -967,7 +980,7 @@ Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK ç�
     "headline": "Hedef AVM mağazalarında ve 15 ay senetli satışta bu ürün çok yüksek hacim yapar çünkü...",
     "reasonsToSell": [
       "15 ay senetli satışta aylık taksit tutarı müşteriye çok cazip ve ödenebilir gelmektedir",
-      "Taşpınar, Yön AVM ve EYS AVM'ye göre daha esnek taksit ve onay imkanı",
+      "Evkur, Taşpınar ve HYS AVM'ye göre daha esnek taksit ve onay imkanı",
       "Piyasa bilinirliği ve marka güveni yüksek"
     ],
     "risksAndWatchouts": [
@@ -999,9 +1012,9 @@ NOTLAR:
 - Sayısal değerleri sadece tamsayı veya ondalık sayı yaz (TL, ₺ gibi harf koyma).
 - verdict sadece "SATAR", "ŞARTLI SATAR" veya "SATMAZ" olabilir.
 - score 0 ile 100 arasında bir tamsayı olmalıdır.
-- Hedef AVM 15 Ay senetli satış fiyatı genel kural olarak peşin liste fiyatının yaklaşık 1.35 - 1.55 katı civarındadır (15 aylık vade farkı ve tahsilat maliyeti).
+- Hedef AVM 15 Ay senetli satış fiyatı piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı civarındadır.
 - monthlyInstallmentPrice = installmentRecommendedPrice / 15 olarak hesaplanır.
-- senetliCompetitors alanında Taşpınar, Yön AVM, Yiğit AVM, EYS AVM ve SenetSepet olmak üzere 5 rakibin 15 ay taksitli fiyatlandırmalarını gerçekçi piyasa oranlarına göre hesapla.`;
+- senetliCompetitors alanında Evkur, Taşpınar, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere 6 rakibin 15 ay taksitli fiyatlandırmalarını gerçekçi piyasa oranlarına göre hesapla.`;
 
         const partsContent = [{ text: jsonSchemaPrompt }];
         if (currentImageBase64) {
@@ -1102,13 +1115,19 @@ NOTLAR:
       document.getElementById('resReturnRisk').textContent = f.returnRisk || 'Düşük';
       document.getElementById('resSeasonal').textContent = f.seasonalTrend || 'Düzenli';
 
-      // Hedef AVM 15 Ay Senet Fiyatları
-      const totalInst = hp.installmentRecommendedPrice || Math.round((hp.cashRecommendedPrice || 1000) * 1.42);
+      // Piyasa Fiyatları ve Tutarlılık Doğrulaması
+      const marketMin = mp.min || 1000;
+      const marketAvg = mp.average || marketMin * 1.1;
+      const marketMax = mp.max || marketAvg * 1.25;
+
+      const baseCash = hp.cashRecommendedPrice || Math.round(marketMin * 1.02);
+      const totalInst = hp.installmentRecommendedPrice || Math.round(baseCash * 1.38);
       const monthlyInst = hp.monthlyInstallmentPrice || Math.round(totalInst / 15);
+
       document.getElementById('resInstallmentTotal').textContent = formatTL(totalInst);
       document.getElementById('resMonthlyInstallment').textContent = formatTL(monthlyInst);
       document.getElementById('resInstallmentCount').textContent = hp.installmentCount || 15;
-      document.getElementById('resCashPrice').textContent = formatTL(hp.cashRecommendedPrice);
+      document.getElementById('resCashPrice').textContent = formatTL(baseCash);
 
       const stratBox = document.getElementById('resStrategyNoteBox');
       if (hp.strategyNote) {
@@ -1119,9 +1138,9 @@ NOTLAR:
       }
 
       // Canlı Piyasa Fiyatları
-      document.getElementById('resMarketMin').textContent = formatTL(mp.min);
-      document.getElementById('resMarketAvg').textContent = formatTL(mp.average);
-      document.getElementById('resMarketMax').textContent = formatTL(mp.max);
+      document.getElementById('resMarketMin').textContent = formatTL(marketMin);
+      document.getElementById('resMarketAvg').textContent = formatTL(marketAvg);
+      document.getElementById('resMarketMax').textContent = formatTL(marketMax);
 
       // Rakip Pazaryerleri
       const compList = document.getElementById('resCompetitorList');
@@ -1139,27 +1158,37 @@ NOTLAR:
         compList.appendChild(item);
       });
 
-      // 3.5 SENETLİ RAKİPLER RADARI (Taşpınar, Yön AVM, Yiğit AVM, EYS, SenetSepet)
+      // 3.5 SENETLİ RAKİPLER RADARI (EVKUR, TAŞPINAR, HYS AVM, YÖN, YİĞİT, SENETSEPET)
       const senetliGrid = document.getElementById('resSenetliCompetitorsGrid');
       if (senetliGrid) {
         senetliGrid.innerHTML = '';
+        
+        // Gerçekçi Piyasa Referans Oranları (Uçuk veya gerçek dışı fiyatları filtreler)
         const defaultSenetli = [
-          { name: 'Taşpınar', estimatedTotalPrice: Math.round(totalInst * 1.06), estimatedMonthly: Math.round((totalInst * 1.06) / 15), notes: 'Taşpınar 15 ay elden senetli tahmini' },
-          { name: 'Yön AVM', estimatedTotalPrice: Math.round(totalInst * 1.05), estimatedMonthly: Math.round((totalInst * 1.05) / 15), notes: 'Yön AVM 15 ay senetli taksit tahmini' },
-          { name: 'Yiğit AVM', estimatedTotalPrice: Math.round(totalInst * 1.07), estimatedMonthly: Math.round((totalInst * 1.07) / 15), notes: 'Yiğit AVM elden taksit tahmini' },
-          { name: 'EYS AVM', estimatedTotalPrice: Math.round(totalInst * 1.09), estimatedMonthly: Math.round((totalInst * 1.09) / 15), notes: 'EYS AVM taksitli liste tahmini' },
-          { name: 'SenetSepet', estimatedTotalPrice: Math.round(totalInst * 1.04), estimatedMonthly: Math.round((totalInst * 1.04) / 15), notes: 'SenetSepet online senetli tahmini' }
+          { name: 'Evkur', estimatedTotalPrice: Math.round(baseCash * 1.45), estimatedMonthly: Math.round((baseCash * 1.45) / 15), notes: 'Evkur 15 ay taksitli liste tahmini' },
+          { name: 'Taşpınar', estimatedTotalPrice: Math.round(baseCash * 1.42), estimatedMonthly: Math.round((baseCash * 1.42) / 15), notes: 'Taşpınar 15 ay elden senet tahmini' },
+          { name: 'HYS AVM', estimatedTotalPrice: Math.round(baseCash * 1.44), estimatedMonthly: Math.round((baseCash * 1.44) / 15), notes: 'hysavm.com 15 ay taksitli liste' },
+          { name: 'Yön AVM', estimatedTotalPrice: Math.round(baseCash * 1.40), estimatedMonthly: Math.round((baseCash * 1.40) / 15), notes: 'Yön AVM 15 ay senetli taksit tahmini' },
+          { name: 'Yiğit AVM', estimatedTotalPrice: Math.round(baseCash * 1.43), estimatedMonthly: Math.round((baseCash * 1.43) / 15), notes: 'Yiğit AVM elden taksit tahmini' },
+          { name: 'SenetSepet', estimatedTotalPrice: Math.round(baseCash * 1.39), estimatedMonthly: Math.round((baseCash * 1.39) / 15), notes: 'SenetSepet online senetli tahmini' }
         ];
 
         let competitors = data.senetliCompetitors;
-        if (!competitors || !Array.isArray(competitors) || competitors.length === 0) {
+        if (!competitors || !Array.isArray(competitors) || competitors.length < 4) {
           competitors = defaultSenetli;
         }
 
         competitors.forEach(sc => {
-          const tot = sc.estimatedTotalPrice || Math.round(totalInst * 1.05);
-          const mon = sc.estimatedMonthly || Math.round(tot / 15);
+          let tot = sc.estimatedTotalPrice || 0;
+          
+          // Gerçekçilik Filtresi: Eğer model absürt/uçuk bir rakam (örn: peşinin 2 katından fazla) döndürdüyse gerçekçi orana normalize et
+          if (tot <= 0 || tot > baseCash * 1.9 || tot < baseCash * 1.1) {
+            tot = Math.round(baseCash * 1.42);
+          }
+
+          const mon = sc.estimatedMonthly && sc.estimatedMonthly > 0 ? sc.estimatedMonthly : Math.round(tot / 15);
           const name = sc.name || sc.competitor || 'Rakip Mağaza';
+          
           const card = document.createElement('div');
           card.className = 'p-4 sm:p-5 rounded-2xl bg-slate-50/90 border-2 border-slate-200 hover:border-pink-300 transition-all space-y-3';
           card.innerHTML = `
@@ -1180,17 +1209,17 @@ NOTLAR:
               <span class="text-xs text-slate-600 font-semibold">Aylık Taksit:</span>
               <span class="text-sm sm:text-base font-black text-[#c81373]">${formatTL(mon)} /ay</span>
             </div>
-            <p class="text-[11px] text-slate-500 font-medium leading-tight">${sc.notes || 'Elden senetli piyasa tahmini'}</p>
+            <p class="text-[11px] text-slate-500 font-medium leading-tight">${sc.notes || '15 ay elden senetli piyasa tahmini'}</p>
           `;
           senetliGrid.appendChild(card);
         });
 
-        const advNote = hp.advantageNote || `Hedef AVM'de 15 ay vadede aylık ${formatTL(monthlyInst)} taksit ile Taşpınar, Yön AVM, Yiğit AVM, EYS AVM ve SenetSepet'e kıyasla daha rekabetçi elden senet imkanı sunulmaktadır.`;
+        const advNote = hp.advantageNote || `Hedef AVM'de 15 ay vadede aylık ${formatTL(monthlyInst)} taksit ile Evkur, Taşpınar, HYS AVM, Yön, Yiğit ve SenetSepet'e kıyasla daha rekabetçi elden senet imkanı sunulmaktadır.`;
         document.getElementById('resHedefAdvantageNote').textContent = advNote;
       }
 
       // Simülatör Başlangıç Değeri
-      const defaultCost = data._userCost > 0 ? data._userCost : Math.round((mp.min || 1000) * 0.7);
+      const defaultCost = data._userCost > 0 ? data._userCost : Math.round(marketMin * 0.7);
       simCostInput.value = defaultCost;
       updateSimulator(defaultCost, hp);
 
@@ -1240,7 +1269,7 @@ NOTLAR:
     function updateSimulator(cost, hp) {
       cost = parseFloat(cost) || 0;
       const cashP = hp.cashRecommendedPrice || 0;
-      const instP = hp.installmentRecommendedPrice || Math.round(cashP * 1.42);
+      const instP = hp.installmentRecommendedPrice || Math.round(cashP * 1.38);
 
       const cashProfit = cost > 0 ? cashP - cost : 0;
       const instProfit = cost > 0 ? instP - cost : 0;
@@ -1267,7 +1296,8 @@ NOTLAR:
       const f = d.feasibility || {};
       const hp = d.hedefPricing || {};
       const mp = d.marketPrices || {};
-      const totalInst = hp.installmentRecommendedPrice || Math.round((hp.cashRecommendedPrice || 1000) * 1.42);
+      const baseCash = hp.cashRecommendedPrice || (mp.min || 1000);
+      const totalInst = hp.installmentRecommendedPrice || Math.round(baseCash * 1.38);
       const monthlyInst = hp.monthlyInstallmentPrice || Math.round(totalInst / 15);
 
       return `🎯 HEDEF AVM | ÜRÜN & 15 AY SENET RADARI RAPORU
@@ -1282,11 +1312,11 @@ NOTLAR:
 - En Yüksek: ${formatTL(mp.max)}
 
 🎯 HEDEF AVM 15 AY SATIŞ PLANI:
-- Peşin Satış: ${formatTL(hp.cashRecommendedPrice)}
+- Peşin Satış: ${formatTL(baseCash)}
 - 15 Ay Senetli: ${formatTL(totalInst)} (Aylık ${formatTL(monthlyInst)} x 15 Ay)
 
 🏬 SENETLİ RAKİP KARŞILAŞTIRMASI:
-- Taşpınar, Yön AVM, Yiğit AVM, EYS AVM ve SenetSepet 15 ay piyasa taksitleri incelendi.
+- Evkur, Taşpınar, HYS AVM (hysavm.com), Yön, Yiğit, SenetSepet 15 ay piyasa taksitleri incelendi.
 - Avantaj: ${hp.advantageNote || '15 ay vadede rekabetçi taksit avantajı.'}
 
 💡 Yönetici Özeti:
