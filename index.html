@@ -835,7 +835,7 @@
 Ürün ve Model: "${productName}"
 
 Lütfen Google araması yaparak şu platformlardaki GERÇEK VE GÜNCEL TL SATIŞ FİYATLARINI ve DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ tespit et:
-1. Markanın Kendi Resmi Satış Sitesi (Örn: Korkmaz için korkmazstore.com.tr / korkmaz.com.tr, Karaca için karaca.com, Tefal için tefal.com.tr, Philips, Apple, Samsung, Arzum, Fakir vb.): Markanın resmi sitesindeki güncel satış/liste fiyatı kaç TL ve doğrudan ürün linki nedir?
+1. Markanın Kendi Resmi Satış Sitesi (Örn: General Mobile için generalmobile.com, Korkmaz için korkmazstore.com.tr / korkmaz.com.tr, Karaca için karaca.com, Tefal için tefal.com.tr, Philips, Apple, Samsung, Arzum vb.): Markanın resmi sitesindeki güncel satış/liste fiyatı kaç TL ve doğrudan ürün linki nedir?
 2. Fiyat Karşılaştırma Siteleri:
    - Akakçe (akakce.com): En ucuz peşin fiyatı ve doğrudan ürün sayfası linki
    - Cimri (cimri.com): En ucuz peşin fiyatı ve doğrudan ürün sayfası linki
@@ -846,11 +846,10 @@ Lütfen Google araması yaparak şu platformlardaki GERÇEK VE GÜNCEL TL SATIŞ
    - PttAVM (pttavm.com): Satış fiyatı ve doğrudan ürün sayfası linki
 4. Elden Senetli Perakende Rakipleri: Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM, SenetSepet satış/senet fiyatları ve doğrudan ürün linkleri.
 
-KESİN VE ÖNEMLİ KURALLAR:
-1. FİYAT NETLİĞİ: Hepsiburada, Trendyol, N11, PttAVM, Akakçe, Cimri ve Markanın Resmi Sitesi için "fiyat bilgisi için sayfaya gidilmeli" gibi belirsiz yanıtlar VERME! Google arama sonuçlarından, snippet'lardan veya sayfa verilerinden ürünün NET VE GÜNCEL TL SATIŞ FİYATINI bul ve açıkça TL rakamı olarak yaz.
-2. AKSESUAR TUZAĞINA DÜŞME: Sadece cihazın/ürünün kendi orijinal satış fiyatını al. Kesinlikle ekran koruyucu, kılıf, cam gibi ucuz aksesuar fiyatlarını alma!
-3. DOĞRUDAN LİNKLER: Bulunan doğrudan ürün sayfası URL'lerini açıkça belirt.
-4. STOK YOKSA: Eğer bir mağazada veya markanın sitesinde ürün satılmıyorsa veya stokta yoksa 'Stokta / Listede Bulunamadı' olarak belirt; tahmini fiyat uydurma.`;
+KESİN VE SERT KURALLAR:
+1. FİYAT VE LİNK EŞLEŞMESİ (SIFIR ÇELİŞKİ): Belirttiğin fiyat ile doğrudan ürün linkindeki ürün BİREBİR AYNI MODEL VE VARYANT OLMALIDIR. Örneğin 20.000 TL diyorsan link 26.999 TL'lik farklı bir varyanta gitmemelidir! Sadece aranan tam ürün/hafıza/modelin orijinal satış fiyatını al.
+2. AKSESUAR KESİNLİKLE YASAKTIR: Ekran koruyucu, kılıf, cam, şarj kablosu gibi ucuz aksesuar fiyatlarını KESİNLİKLE alma!
+3. SENETLİ RAKİPLER DOĞRULUK KURALI (SIFIR HATA): Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet'i tek tek incele. Eğer bu mağazada aranan ürün (örneğin GM 26 Pro) YOKSA veya farklı bir alt modelse (örneğin Taşpınar'da sadece standart GM 26 varsa), açıkça "BU MAĞAZADA BU MODEL YOKTUR / STOKTA BULUNAMADI" yaz. Kesinlikle uydurma stok veya hayali fiyat üretme!`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -869,41 +868,53 @@ KESİN VE ÖNEMLİ KURALLAR:
           console.warn('Aşama 1 metin ayrıştırılamadı:', stage1Data);
         }
 
-        // Canlı arama sonucunda keşfedilen doğrudan ürün URL'lerini topla (404 vermeyen doğrudan ürün sayfaları)
+        // Canlı arama sonucunda keşfedilen DOĞRULANMIŞ doğrudan ürün URL'lerini topla (Google Grounding Redirects - ASLA 404 VERMEZ)
         const discoveredDirectUrls = {};
         try {
           const chunks = stage1Data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+          const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'ptt', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar'];
+
           chunks.forEach(ch => {
             const uri = ch.web?.uri || '';
             const title = (ch.web?.title || '').toLowerCase();
-            if (uri) {
-              if (title.includes('akakce') || uri.includes('akakce')) discoveredDirectUrls['akakce'] = discoveredDirectUrls['akakce'] || uri;
-              if (title.includes('cimri') || uri.includes('cimri')) discoveredDirectUrls['cimri'] = discoveredDirectUrls['cimri'] || uri;
-              if (title.includes('trendyol') || uri.includes('trendyol')) discoveredDirectUrls['trendyol'] = discoveredDirectUrls['trendyol'] || uri;
-              if (title.includes('hepsiburada') || uri.includes('hepsiburada')) discoveredDirectUrls['hepsiburada'] = discoveredDirectUrls['hepsiburada'] || uri;
-              if (title.includes('n11') || uri.includes('n11.com')) discoveredDirectUrls['n11'] = discoveredDirectUrls['n11'] || uri;
-              if (title.includes('pttavm') || title.includes('ptt') || uri.includes('pttavm')) discoveredDirectUrls['pttavm'] = discoveredDirectUrls['pttavm'] || uri;
-              if (title.includes('evkur') || uri.includes('evkur')) discoveredDirectUrls['evkur'] = discoveredDirectUrls['evkur'] || uri;
-              if (title.includes('taspinar') || uri.includes('taspinar')) discoveredDirectUrls['taspinar'] = discoveredDirectUrls['taspinar'] || uri;
-              if (title.includes('yonavm') || title.includes('yön') || uri.includes('yonavm')) discoveredDirectUrls['yonavm'] = discoveredDirectUrls['yonavm'] || uri;
+            if (!uri) return;
+
+            if ((title.includes('akakce') || title.includes('akakçe')) && !discoveredDirectUrls['akakce']) {
+              discoveredDirectUrls['akakce'] = uri;
+            } else if (title.includes('cimri') && !discoveredDirectUrls['cimri']) {
+              discoveredDirectUrls['cimri'] = uri;
+            } else if (title.includes('trendyol') && !discoveredDirectUrls['trendyol']) {
+              discoveredDirectUrls['trendyol'] = uri;
+            } else if (title.includes('hepsiburada') && !discoveredDirectUrls['hepsiburada']) {
+              discoveredDirectUrls['hepsiburada'] = uri;
+            } else if ((title.includes('n11') || title.includes('n11.com')) && !discoveredDirectUrls['n11']) {
+              discoveredDirectUrls['n11'] = uri;
+            } else if ((title.includes('pttavm') || title.includes('ptt')) && !discoveredDirectUrls['pttavm']) {
+              discoveredDirectUrls['pttavm'] = uri;
+            } else if (title.includes('evkur') && !discoveredDirectUrls['evkur']) {
+              discoveredDirectUrls['evkur'] = uri;
+            } else if ((title.includes('taspinar') || title.includes('taşpınar')) && !discoveredDirectUrls['taspinar']) {
+              discoveredDirectUrls['taspinar'] = uri;
+            } else if (title.includes('vivense') && !discoveredDirectUrls['vivense']) {
+              discoveredDirectUrls['vivense'] = uri;
+            } else if ((title.includes('hys') || title.includes('hysavm')) && !discoveredDirectUrls['hysavm']) {
+              discoveredDirectUrls['hysavm'] = uri;
+            } else if ((title.includes('yonavm') || title.includes('yön')) && !discoveredDirectUrls['yonavm']) {
+              discoveredDirectUrls['yonavm'] = uri;
+            } else if ((title.includes('yigit') || title.includes('yiğit')) && !discoveredDirectUrls['yigitavm']) {
+              discoveredDirectUrls['yigitavm'] = uri;
+            } else if (title.includes('senetsepet') && !discoveredDirectUrls['senetsepet']) {
+              discoveredDirectUrls['senetsepet'] = uri;
+            } else {
+              // Eğer bilinen pazaryeri veya senetli mağaza değilse, markanın kendi resmi sitesidir:
+              if (!knownNonBrand.some(k => title.includes(k)) && !discoveredDirectUrls['official']) {
+                discoveredDirectUrls['official'] = uri;
+                discoveredDirectUrls['official_title'] = ch.web?.title || '';
+              }
             }
           });
-
-          const mdUrlMatches = searchText.match(/https?:\/\/[^\s\)\"\'<>]+/g) || [];
-          mdUrlMatches.forEach(u => {
-            const ul = u.toLowerCase();
-            if (ul.includes('akakce.com') && (ul.includes('.html') || ul.includes('fiyati') || ul.includes('en-ucuz-'))) discoveredDirectUrls['akakce'] = u;
-            if (ul.includes('cimri.com') && (ul.includes('/en-ucuz-') || ul.includes('fiyat') || ul.includes('.html'))) discoveredDirectUrls['cimri'] = u;
-            if (ul.includes('hepsiburada.com') && (ul.includes('-p-') || ul.includes('-pm-'))) discoveredDirectUrls['hepsiburada'] = u;
-            if (ul.includes('n11.com') && (ul.includes('/urun/') || ul.includes('-p-'))) discoveredDirectUrls['n11'] = u;
-            if (ul.includes('pttavm.com') && (ul.includes('-p-') || !ul.includes('/arama'))) discoveredDirectUrls['pttavm'] = u;
-            if (ul.includes('trendyol.com') && (ul.includes('-p-') || !ul.includes('/sr?'))) discoveredDirectUrls['trendyol'] = u;
-            if (ul.includes('yonavm.com.tr') && !ul.includes('/arama') && !ul.includes('/Arama')) discoveredDirectUrls['yonavm'] = u;
-            if (ul.includes('evkur.com.tr') && !ul.includes('/arama')) discoveredDirectUrls['evkur'] = u;
-            if (ul.includes('taspinar.com') && !ul.includes('/ara')) discoveredDirectUrls['taspinar'] = u;
-          });
         } catch(e) {
-          console.warn('Link ayıklama hatası:', e);
+          console.warn('Grounding link ayıklama hatası:', e);
         }
 
         // AŞAMA 2: Görsel (Varsa) + Canlı Veri ile Yapılandırılmış JSON Sentezi
@@ -924,22 +935,26 @@ Piyasa karşılaştırma platformları: Markanın Kendi Resmi Sitesi, Akakçe, C
 En önemli doğrudan elden senetli rakipleri: Evkur, Taşpınar Mağazaları, Vivense, HYS AVM (hysavm.com), Yön AVM, Yiğit AVM ve SenetSepet'tir.
 
 FİYAT VE LİNK TUTARLILIĞI İLKELERİ (SIFIR HATA VE SIFIR HALÜSİNASYON):
-1. GERÇEK FİYATLARI AYNEN KOPYALA:
-   - Aşama 1 canlı piyasa araştırma verisinde Markanın Resmi Sitesi, Hepsiburada, Trendyol, N11, PttAVM, Akakçe ve Cimri için tespit edilen GERÇEK TL SATIŞ FİYATLARINI BİREBİR KULLAN!
-   - Örneğin Korkmaz kendi resmi sitesinde 4.499 TL ise, competitorBenchmarks'taki 'Marka Resmi Mağazası' estimatedPrice alanına tam olarak 4499 yaz!
-   - Hepsiburada'da 3.500 TL ise tam 3500 yaz! Asla farklı veya tahmini fiyat yazma!
-   - Kesinlikle ekran koruyucu, kılıf gibi aksesuar fiyatlarını alma; sadece ürünün ana satış fiyatını al!
-2. MARKANIN RESMİ WEB SİTESİ (ÇOK ÖNEMLİ):
-   - Ürünün markasını tespit et (Örn: Korkmaz, Karaca, Philips, Tefal, Arzum, Fakir, Samsung, Apple, General Mobile vb.).
-   - Markanın kendi resmi satış sitesindeki (örneğin korkmazstore.com.tr, karaca.com, tefal.com.tr vb.) güncel satış/liste fiyatını ve doğrudan ürün linkini competitorBenchmarks listesinin İLK SIRASINA 'Marka Resmi Mağazası (Marka Adı)' olarak ekle. Eğer markanın online satışı yoksa veya ürün sitesinde yoksa 'Resmi Sitede Satış Yok' olarak belirt.
-3. DOĞRUDAN ÜRÜN LİNKLERİ: Aşama 1 canlı arama verisinde yer alan veya bulunan doğrudan ürün sayfası linklerini (productUrl) ilgili mağazanın productUrl alanına eksiksiz aktar.
-4. STOK VE BULUNABİLİRLİK DOĞRULAMASI:
-   - KESİNLİKLE TAHMİNİ VEYA RASTGELE "STOKTA VAR" DEME!
-   - Canlı Google Arama Verisinde (Aşama 1 metninde) ilgili mağaza için aranan ürünün fiyatı net olarak geçmiyorsa veya stokta olmadığı belirtilmişse, o mağaza için KESİNLİKLE "isAvailable": false, "estimatedTotalPrice": 0 (veya "estimatedPrice": 0), "estimatedMonthly": 0 ver ve "notes" kısmına "Stokta / Listede Bulunamadı" yaz!
-   - KATEGORİ UYUMU KURALI: Vivense sadece mobilya, aydınlatma, halı ve ev dekorasyonu satar. Cep telefonu, tablet, bilgisayar, TV, elektronik ve beyaz eşya gibi ürünlerde Vivense için doğrudan "isAvailable": false, "notes": "Vivense mobilya odaklıdır; bu ürün kategorisinde satışı yoktur" yaz.
-5. GERÇEKÇİ 15 AY SENET FİYATI: Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı genel olarak piyasa peşin fiyatının yaklaşık %35 ile %50 fazlası bandında seyreder. Asla piyasa peşin fiyatının 2 katı gibi absürt uçuk fiyatlar yazma!
-6. Hedef AVM 15 Ay Elden Senetli Tavsiye Fiyatı: Piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı olmalı, aylık taksit tutarı müşteriye cazip gelecek şekilde yuvarlanmalıdır (Aylık Taksit = Toplam Senet Fiyatı / 15).
-7. Senetli Rakipler Listesi: Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere tam 7 rakip incelenmelidir.`;
+1. GERÇEK FİYATLARI AYNEN KOPYALA VE VARYANTI KORU:
+   - Aşama 1 canlı piyasa araştırma verisinde tespit edilen fiyat ile ürün linki BİREBİR AYNI VARYANTA VE AYNI SATIŞ FİYATINA AİT OLMALIDIR!
+   - Örneğin Akakçe peşin fiyatı 19.875 TL ise ve bu 8GB/256GB modeliyse, estimatedPrice: 19875 yaz! Asla 19.875 TL yazan bir karta 26.999 TL'lik 24GB RAM modelinin veya resmi sitenin linkini bağlama!
+   - Markanın resmi sitesindeki güncel satış fiyatı neyse (örneğin 26.999 TL), 'Marka Resmi Mağazası' kartına tam olarak o rakamı yaz. Eğer resmi sitede ürün tükenmişse veya stokta yoksa isAvailable: false, estimatedPrice: 0 ve notes: 'Resmi Sitede Stokta Yok' yaz.
+   - Hepsiburada, Trendyol, N11, PttAVM, Cimri için bulunan net orijinal cihaz fiyatlarını ve linklerini aynen aktar.
+   - Kesinlikle ekran koruyucu, kılıf gibi aksesuar fiyatlarını alma!
+2. SENETLİ RAKİPLER SERT KURALI (SIFIR HATA):
+   - Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet için:
+   - Eğer canlı arama verisinde aranan ürünün tam modeli (örn: GM 26 Pro) o mağazada YOKSA veya bulunamadıysa (veya Taşpınar'da olduğu gibi sadece alt model GM 26 varsa), KESİNLİKLE VE İSTİSNASIZ:
+     "isAvailable": false,
+     "estimatedTotalPrice": 0,
+     "estimatedMonthly": 0,
+     "productUrl": "",
+     "notes": "Stokta / Listede Bulunamadı (Bu model mağazada listelenmiyor)"
+     YAZACAKSIN! KESİNLİKLE "Stokta Var" veya tahmini fiyat uyduramazsın!
+3. VİVENSE KATEGORİ UYUMU:
+   - Vivense mobilya ve ev dekorasyonu mağazasıdır. Cep telefonu, tablet, bilgisayar, TV, elektronik ve beyaz eşya ürünlerinde Vivense için daima isAvailable: false, estimatedTotalPrice: 0 ve notes: "Vivense mobilya odaklıdır; bu kategoride satışı yoktur" yaz!
+4. GERÇEKÇİ 15 AY SENET FİYATI: Elden senetli rakiplerin 15 ay vadeli toplam satış fiyatı genel olarak piyasa peşin fiyatının yaklaşık %35 ile %50 fazlası bandında seyreder. Asla piyasa peşin fiyatının 2 katı gibi absürt uçuk fiyatlar yazma!
+5. Hedef AVM 15 Ay Elden Senetli Tavsiye Fiyatı: Piyasa peşin fiyatının yaklaşık 1.35 - 1.45 katı olmalı, aylık taksit tutarı müşteriye cazip gelecek şekilde yuvarlanmalıdır (Aylık Taksit = Toplam Senet Fiyatı / 15).
+6. Senetli Rakipler Listesi: Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM, Yiğit AVM ve SenetSepet olmak üzere tam 7 rakip incelenmelidir.`;
 
         const promptIntro = currentImageBase64
           ? 'Yukarıdaki canlı web araştırma sonuçlarını ve ekteki ürün görselini incele.'
@@ -1124,28 +1139,39 @@ NOTLAR:
         const rawJsonText = stage2Data.candidates[0].content.parts[0].text;
         const analysisData = JSON.parse(rawJsonText);
 
-        // Eğer Stage 2'de doğrudan link boş bırakıldıysa, Stage 1'de keşfedilen doğrulanmış linki tamamla:
+        // SERT KURAL: Google Grounding'den gelen doğrulanmış canlı URL'ler MUTLAK ÖNCELİKLİDİR.
+        // Modellerin uydurduğu ve 404 / 410 hatası veren sahte linkler yerine Google'ın canlı doğrulanmış URL'leri atanır:
         (analysisData.competitorBenchmarks || []).forEach(b => {
           const pl = (b.platform || '').toLowerCase();
-          if (!b.productUrl) {
-            if ((pl.includes('resmi') || pl.includes('marka')) && discoveredDirectUrls['official']) b.productUrl = discoveredDirectUrls['official'];
-            if (pl.includes('akakce') && discoveredDirectUrls['akakce']) b.productUrl = discoveredDirectUrls['akakce'];
-            if (pl.includes('cimri') && discoveredDirectUrls['cimri']) b.productUrl = discoveredDirectUrls['cimri'];
-            if (pl.includes('trendyol') && discoveredDirectUrls['trendyol']) b.productUrl = discoveredDirectUrls['trendyol'];
-            if (pl.includes('hepsiburada') && discoveredDirectUrls['hepsiburada']) b.productUrl = discoveredDirectUrls['hepsiburada'];
-            if (pl.includes('n11') && discoveredDirectUrls['n11']) b.productUrl = discoveredDirectUrls['n11'];
-            if ((pl.includes('ptt') || pl.includes('pttavm')) && discoveredDirectUrls['pttavm']) b.productUrl = discoveredDirectUrls['pttavm'];
+          if (pl.includes('resmi') || pl.includes('marka')) {
+            if (discoveredDirectUrls['official']) b.productUrl = discoveredDirectUrls['official'];
+          } else if (pl.includes('akakce') || pl.includes('akakçe')) {
+            if (discoveredDirectUrls['akakce']) b.productUrl = discoveredDirectUrls['akakce'];
+          } else if (pl.includes('cimri')) {
+            if (discoveredDirectUrls['cimri']) b.productUrl = discoveredDirectUrls['cimri'];
+          } else if (pl.includes('trendyol')) {
+            if (discoveredDirectUrls['trendyol']) b.productUrl = discoveredDirectUrls['trendyol'];
+          } else if (pl.includes('hepsiburada')) {
+            if (discoveredDirectUrls['hepsiburada']) b.productUrl = discoveredDirectUrls['hepsiburada'];
+          } else if (pl.includes('n11')) {
+            if (discoveredDirectUrls['n11']) b.productUrl = discoveredDirectUrls['n11'];
+          } else if (pl.includes('ptt') || pl.includes('pttavm')) {
+            if (discoveredDirectUrls['pttavm']) b.productUrl = discoveredDirectUrls['pttavm'];
           }
         });
 
         (analysisData.senetliCompetitors || []).forEach(sc => {
           const nm = (sc.name || '').toLowerCase();
-          if (!sc.productUrl) {
-            if ((nm.includes('yonavm') || nm.includes('yön')) && discoveredDirectUrls['yonavm']) sc.productUrl = discoveredDirectUrls['yonavm'];
-            if (nm.includes('evkur') && discoveredDirectUrls['evkur']) sc.productUrl = discoveredDirectUrls['evkur'];
-            if ((nm.includes('taspinar') || nm.includes('taşpınar')) && discoveredDirectUrls['taspinar']) sc.productUrl = discoveredDirectUrls['taspinar'];
-          }
+          if (nm.includes('evkur') && discoveredDirectUrls['evkur']) sc.productUrl = discoveredDirectUrls['evkur'];
+          if ((nm.includes('taspinar') || nm.includes('taşpınar')) && discoveredDirectUrls['taspinar']) sc.productUrl = discoveredDirectUrls['taspinar'];
+          if (nm.includes('vivense') && discoveredDirectUrls['vivense']) sc.productUrl = discoveredDirectUrls['vivense'];
+          if ((nm.includes('hys') || nm.includes('hysavm')) && discoveredDirectUrls['hysavm']) sc.productUrl = discoveredDirectUrls['hysavm'];
+          if ((nm.includes('yonavm') || nm.includes('yön')) && discoveredDirectUrls['yonavm']) sc.productUrl = discoveredDirectUrls['yonavm'];
+          if ((nm.includes('yigit') || nm.includes('yiğit')) && discoveredDirectUrls['yigitavm']) sc.productUrl = discoveredDirectUrls['yigitavm'];
+          if (nm.includes('senetsepet') && discoveredDirectUrls['senetsepet']) sc.productUrl = discoveredDirectUrls['senetsepet'];
         });
+
+        analysisData._directUrls = discoveredDirectUrls;
 
         analysisData._image = currentImageBase64 || null;
         analysisData._userCost = userCost;
@@ -1174,7 +1200,7 @@ NOTLAR:
       return (num || 0).toLocaleString('tr-TR') + ' ₺';
     }
 
-    // Doğrulanmış doğrudan ürün sayfası kontrolü (Genel arama yerine doğrudan ürün kartını açar)
+    // Doğrulanmış doğrudan ürün sayfası kontrolü (Genel arama veya 404 yerine doğrudan ürün kartını açar)
     function isValidDirectProductUrl(url, platformOrStore) {
       if (!url || typeof url !== 'string' || (!url.startsWith('http://') && !url.startsWith('https://'))) {
         return false;
@@ -1182,53 +1208,46 @@ NOTLAR:
       const s = (platformOrStore || '').toLowerCase();
       const u = url.toLowerCase();
 
-      // Google grounding yönlendirme URL'leri (Doğrudan spesifik ürüne gider)
+      // Google Grounding yönlendirme URL'leri (Doğrudan spesifik canlı ürüne 302 ile gider - ASLA 404 VERMEZ!)
       if (u.includes('vertexaisearch.cloud.google.com/grounding-api-redirect')) {
         return true;
       }
-      // Akakçe doğrudan ürün sayfası
-      if (s.includes('akakce') && u.includes('akakce.com') && (u.includes('.html') || u.includes('fiyati') || u.includes('en-ucuz-'))) {
+
+      // Akakçe doğrudan ürün sayfası (net ürün ID'si olan)
+      if (s.includes('akakce') && u.includes('akakce.com') && (u.includes('fiyati,') || u.includes('fiyatlari,') || (u.includes('.html') && !u.includes('/arama')))) {
         return true;
       }
       // Cimri doğrudan ürün sayfası
-      if (s.includes('cimri') && u.includes('cimri.com') && (u.includes('/en-ucuz-') || u.includes('fiyat') || u.includes('.html'))) {
+      if (s.includes('cimri') && u.includes('cimri.com') && (u.includes('/en-ucuz-') || u.includes('fiyatlari,') || u.includes('.html')) && !u.includes('/arama')) {
         return true;
       }
       // Hepsiburada doğrudan ürün sayfası
-      if (s.includes('hepsiburada') && u.includes('hepsiburada.com') && (u.includes('-p-') || u.includes('-pm-') || u.includes('/urun/'))) {
+      if (s.includes('hepsiburada') && u.includes('hepsiburada.com') && (u.includes('-p-') || u.includes('-pm-')) && !u.includes('/ara?')) {
         return true;
       }
       // Trendyol doğrudan ürün sayfası
-      if (s.includes('trendyol') && u.includes('trendyol.com') && (u.includes('-p-') || !u.includes('/sr?'))) {
+      if (s.includes('trendyol') && u.includes('trendyol.com') && u.includes('-p-') && !u.includes('/sr?')) {
         return true;
       }
       // N11 doğrudan ürün sayfası
-      if (s.includes('n11') && u.includes('n11.com') && (u.includes('/urun/') || u.includes('-p-') || !u.includes('/arama'))) {
+      if (s.includes('n11') && u.includes('n11.com') && u.includes('/urun/') && !u.includes('/arama')) {
         return true;
       }
       // PttAVM doğrudan ürün sayfası
-      if ((s.includes('ptt') || s.includes('pttavm')) && u.includes('pttavm.com') && (u.includes('-p-') || !u.includes('/arama'))) {
+      if ((s.includes('ptt') || s.includes('pttavm')) && u.includes('pttavm.com') && u.includes('-p-') && !u.includes('/arama')) {
         return true;
       }
-      // Yön AVM doğrudan ürün sayfası
-      if (s.includes('yonavm') && u.includes('yonavm.com.tr') && !u.includes('/arama') && !u.includes('/Arama')) {
-        return true;
-      }
-      // Evkur doğrudan ürün sayfası
-      if (s.includes('evkur') && u.includes('evkur.com.tr') && !u.includes('/arama')) {
-        return true;
-      }
-      // Taşpınar doğrudan ürün sayfası
-      if (s.includes('taspinar') && u.includes('taspinar.com') && !u.includes('/ara')) {
-        return true;
-      }
-      // Marka Resmi Mağazası (Korkmaz, Karaca, Tefal, Philips, Samsung, Apple vb.)
+
+      // Marka Resmi Mağazası (resmi site direkt ürün sayfası)
       if (s.includes('resmi') || s.includes('marka')) {
-        if (!u.includes('google.com/search') && !u.includes('/arama') && !u.includes('/search')) {
+        if (!u.includes('google.com') && !u.includes('/arama') && !u.includes('/search') && !u.includes('/ara?')) {
           return true;
         }
       }
 
+      // Senetli rakipler (Evkur, Taşpınar, Vivense, HYS, Yön, Yiğit, SenetSepet):
+      // SADECE ve SADECE Google Grounding redirect ise doğrudan ürün linki sayılır!
+      // Modellerin uydurduğu sahte slug'lar KESİNLİKLE doğrudan link sayılmaz (404 vermemesi için mağazanın resmi arama URL'sine yönlendirilir).
       return false;
     }
 
@@ -1301,37 +1320,50 @@ NOTLAR:
       document.getElementById('resModelBadge').textContent = 'Model: ' + (data.modelOrCode || '-');
       document.getElementById('resProductName').textContent = data.productName || 'Ürün';
 
-      // Hızlı Canlı Piyasa Arama Butonları (Marka Resmi Sitesi, Cimri, N11, PttAVM dahil)
+      // Hızlı Canlı Piyasa Arama / Doğrudan Ürün Butonları
       const quickLinksBox = document.getElementById('resQuickSearchLinks');
       if (quickLinksBox && data.productName) {
-        const brandBtn = (data.brand && data.brand !== 'Marka')
-          ? `<a href="https://www.google.com/search?q=${encodeURIComponent(data.brand + ' resmi sitesi ' + data.productName)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-black border border-indigo-200 transition-all inline-flex items-center gap-1 shadow-2xs">
+        const directUrls = data._directUrls || {};
+        
+        const officialUrl = directUrls['official'] 
+          || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('resmi'))?.productUrl
+          || (data.brand && data.brand !== 'Marka' ? `https://www.google.com/search?q=${encodeURIComponent(data.brand + ' resmi sitesi ' + data.productName)}` : '');
+
+        const brandBtn = officialUrl
+          ? `<a href="${officialUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-black border border-indigo-200 transition-all inline-flex items-center gap-1 shadow-2xs">
                <i class="fa-solid fa-crown text-[10px] text-indigo-500"></i>
-               <span>${data.brand} Sitesi</span> ↗
+               <span>${data.brand || 'Marka'} Sitesi</span> ↗
              </a>`
           : '';
 
+        const akakceUrl = getProductLink('Akakçe', directUrls['akakce'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('akakce'))?.productUrl, data.productName, data.category);
+        const cimriUrl = getProductLink('Cimri', directUrls['cimri'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('cimri'))?.productUrl, data.productName, data.category);
+        const trendyolUrl = getProductLink('Trendyol', directUrls['trendyol'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('trendyol'))?.productUrl, data.productName, data.category);
+        const hbUrl = getProductLink('Hepsiburada', directUrls['hepsiburada'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('hepsiburada'))?.productUrl, data.productName, data.category);
+        const n11Url = getProductLink('N11', directUrls['n11'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('n11'))?.productUrl, data.productName, data.category);
+        const pttUrl = getProductLink('PttAVM', directUrls['pttavm'] || data.competitorBenchmarks?.find(c => (c.platform || '').toLowerCase().includes('ptt'))?.productUrl, data.productName, data.category);
+
         quickLinksBox.innerHTML = `
           <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1 mr-1">
-            <i class="fa-solid fa-arrow-up-right-from-square text-[#c81373]"></i> Canlı Arama:
+            <i class="fa-solid fa-arrow-up-right-from-square text-[#c81373]"></i> Canlı Arama / Ürün:
           </span>
           ${brandBtn}
-          <a href="${getProductLink('Akakçe', null, data.productName, data.category)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-[#c81373] text-[11px] font-black border border-pink-200 transition-all inline-flex items-center gap-1 shadow-2xs">
+          <a href="${akakceUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-[#c81373] text-[11px] font-black border border-pink-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>Akakçe</span> ↗
           </a>
-          <a href="${getProductLink('Cimri', null, data.productName, data.category)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black border border-emerald-200 transition-all inline-flex items-center gap-1 shadow-2xs">
+          <a href="${cimriUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black border border-emerald-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>Cimri</span> ↗
           </a>
-          <a href="${getProductLink('Trendyol', null, data.productName, data.category)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 text-[11px] font-black border border-orange-200 transition-all inline-flex items-center gap-1 shadow-2xs">
+          <a href="${trendyolUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 text-[11px] font-black border border-orange-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>Trendyol</span> ↗
           </a>
-          <a href="${getProductLink('Hepsiburada', null, data.productName, data.category)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-black border border-amber-200 transition-all inline-flex items-center gap-1 shadow-2xs">
+          <a href="${hbUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-black border border-amber-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>Hepsiburada</span> ↗
           </a>
-          <a href="${getProductLink('N11', null, data.productName, data.category)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 text-[11px] font-black border border-purple-200 transition-all inline-flex items-center gap-1 shadow-2xs">
+          <a href="${n11Url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 text-[11px] font-black border border-purple-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>N11</span> ↗
           </a>
-          <a href="${getProductLink('PttAVM', null, data.productName, data.category)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-yellow-50 hover:bg-yellow-100 text-yellow-800 text-[11px] font-black border border-yellow-200 transition-all inline-flex items-center gap-1 shadow-2xs">
+          <a href="${pttUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-yellow-50 hover:bg-yellow-100 text-yellow-800 text-[11px] font-black border border-yellow-200 transition-all inline-flex items-center gap-1 shadow-2xs">
             <span>PttAVM</span> ↗
           </a>
           <a href="https://www.google.com/search?q=${encodeURIComponent(data.productName + ' fiyatı')}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-black border border-blue-200 transition-all inline-flex items-center gap-1 shadow-2xs">
@@ -1403,7 +1435,14 @@ NOTLAR:
         
         const priceNum = Number(comp.estimatedPrice) || 0;
         const notesStr = (comp.notes || '').toLowerCase();
-        const explicitlyOutOfStock = notesStr.includes('stok') && (notesStr.includes('yok') || notesStr.includes('bulunamadı') || notesStr.includes('tükendi') || notesStr.includes('satışı yok'));
+        const explicitlyOutOfStock = 
+          notesStr.includes('yok') || 
+          notesStr.includes('bulunamadı') || 
+          notesStr.includes('tükendi') || 
+          notesStr.includes('satışı yok') || 
+          notesStr.includes('satılmıyor') || 
+          notesStr.includes('bulunmuyor') || 
+          notesStr.includes('stok');
         const isAvail = comp.isAvailable === true && priceNum > 0 && !explicitlyOutOfStock;
         const targetUrl = getProductLink(comp.platform, comp.productUrl, data.productName, data.category);
 
@@ -1492,9 +1531,22 @@ NOTLAR:
             sc.notes = 'Vivense mobilya ve ev dekorasyonu mağazasıdır; bu ürün kategorisinde satışı yoktur.';
           }
 
-          // Eğer isAvailable false ise veya fiyat 0 ise veya notlarda stokta yok deniyorsa -> Kesinlikle Stokta Yok!
+          // SERT KONTROL: Rakip mağazada bu spesifik modelin gerçekten var olup olmadığını doğrula:
           const notesText = (sc.notes || '').toLowerCase();
-          const explicitlyOutOfStock = notesText.includes('stok') && (notesText.includes('yok') || notesText.includes('bulunamadı') || notesText.includes('tükendi') || notesText.includes('satışı yok') || notesText.includes('bulunmuyor'));
+          const explicitlyOutOfStock = 
+            notesText.includes('yok') || 
+            notesText.includes('bulunamadı') || 
+            notesText.includes('tükendi') || 
+            notesText.includes('satışı yok') || 
+            notesText.includes('satılmıyor') || 
+            notesText.includes('bulunmuyor') || 
+            notesText.includes('ulaşılamamıştır') || 
+            notesText.includes('ulaşılamadı') || 
+            notesText.includes('farklı model') || 
+            notesText.includes('değildir') || 
+            notesText.includes('istenmemektedir') ||
+            notesText.includes('stok');
+
           const isAvail = sc.isAvailable === true && priceNum > 0 && !explicitlyOutOfStock;
           const storeUrl = getProductLink(name, sc.productUrl, data.productName, data.category);
 
