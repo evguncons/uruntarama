@@ -4,8 +4,13 @@ import base64
 from io import BytesIO
 from PIL import Image
 import streamlit as st
-from google import genai
-from google.genai import types
+try:
+    from google import genai
+    from google.genai import types
+    HAS_NEW_GENAI = True
+except Exception as e:
+    HAS_NEW_GENAI = False
+    import google.generativeai as legacy_genai
 
 # =========================================================================
 # SAYFA VE TEMA YAPILANDIRMASI
@@ -232,24 +237,29 @@ Cevabını SADECE geçerli bir JSON nesnesi olarak döndür."""
 {f'Ek Not: {extra_notes}' if extra_notes else ''}"""
 
     # Görseli optimize edilmiş baytlara çevir
-    img_byte_arr = BytesIO()
-    pil_image.save(img_byte_arr, format='JPEG', quality=85)
-    img_bytes = img_byte_arr.getvalue()
+    if HAS_NEW_GENAI:
+        img_byte_arr = BytesIO()
+        pil_image.save(img_byte_arr, format='JPEG', quality=85)
+        img_bytes = img_byte_arr.getvalue()
 
-    struct_response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=[
-            system_instruction,
-            types.Part.from_bytes(data=img_bytes, mime_type='image/jpeg'),
-            json_schema_prompt
-        ],
-        config=types.GenerateContentConfig(
-            response_mime_type='application/json',
-            temperature=0.1
+        struct_response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[
+                system_instruction,
+                types.Part.from_bytes(data=img_bytes, mime_type='image/jpeg'),
+                json_schema_prompt
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type='application/json',
+                temperature=0.1
+            )
         )
-    )
-
-    return json.loads(struct_response.text)
+        return json.loads(struct_response.text)
+    else:
+        legacy_genai.configure(api_key=api_key)
+        model = legacy_genai.GenerativeModel("gemini-1.5-flash", generation_config={"response_mime_type": "application/json"})
+        resp = model.generate_content([system_instruction, pil_image, json_schema_prompt])
+        return json.loads(resp.text)
 
 # =========================================================================
 # ANA ARAYÜZ (HEADER & FORM)
