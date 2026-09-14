@@ -1473,8 +1473,8 @@ NOTLAR:
         const isOfficialBrand = (comp.platform || '').toLowerCase().includes('resmi') || (comp.platform || '').toLowerCase().includes('marka');
         
         item.className = isOfficialBrand
-          ? 'flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-indigo-50/70 border-2 border-indigo-200 text-xs sm:text-base gap-3 hover:border-indigo-400 transition-all shadow-2xs'
-          : 'flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-base gap-3 hover:border-pink-300 transition-all';
+          ? 'p-3.5 sm:p-4 rounded-2xl bg-indigo-50/70 border-2 border-indigo-200 hover:border-indigo-400 transition-all shadow-2xs space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4'
+          : 'p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-pink-300 transition-all space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4';
         
         const priceNum = Number(comp.estimatedPrice) || 0;
         const notesStr = (comp.notes || '').toLowerCase();
@@ -1496,33 +1496,42 @@ NOTLAR:
         const isAvail = !isOutOfStock && priceNum > 0;
         const targetUrl = getProductLink(comp.platform, comp.productUrl, data.productName, data.category);
 
+        const btnClass = isOfficialBrand
+          ? 'px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer'
+          : 'px-3.5 py-2 rounded-xl bg-[#c81373] hover:bg-pink-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer';
+
+        const outBtnClass = 'px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer';
+
         const priceBadge = isAvail
-          ? `<div class="text-right shrink-0">
-               <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-sm sm:text-xl block">${formatTL(priceNum)}</span>
-               <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] sm:text-xs font-black ${isOfficialBrand ? 'text-indigo-700 hover:text-indigo-950' : 'text-[#c81373] hover:text-pink-800'} hover:underline inline-flex items-center gap-1 mt-0.5">
+          ? `<div class="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
+               <div class="sm:text-right">
+                 <span class="text-[10px] text-slate-400 font-bold uppercase block sm:hidden">Pazaryeri Fiyatı</span>
+                 <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-base sm:text-xl block">${formatTL(priceNum)}</span>
+               </div>
+               <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${btnClass}">
                  <span>${isOfficialBrand ? 'Resmi Sitede İncele' : 'Ürüne Git'}</span>
                  <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                </a>
              </div>`
-          : `<div class="text-right shrink-0">
-               <span class="inline-flex items-center gap-1 text-xs sm:text-sm font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl">
+          : `<div class="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
+               <span class="inline-flex items-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
                  <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
                </span>
-               <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] sm:text-xs font-bold text-slate-500 hover:text-slate-800 hover:underline block mt-1">
-                 ${isOfficialBrand ? 'Sitede İncele ↗' : (comp.productUrl ? 'Ürüne Git ↗' : 'Platformda Ara ↗')}
+               <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
+                 <span>${isOfficialBrand ? 'Sitede İncele ↗' : (comp.productUrl ? 'Ürüne Git ↗' : 'Platformda Ara ↗')}</span>
                </a>
              </div>`;
 
         item.innerHTML = `
-          <div class="min-w-0 mr-2">
+          <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               ${isOfficialBrand ? '<i class="fa-solid fa-crown text-indigo-600 text-xs shrink-0"></i>' : ''}
-              <strong class="${isOfficialBrand ? 'text-indigo-950 font-black' : 'text-slate-900 font-black'} block truncate">${comp.platform}</strong>
+              <strong class="${isOfficialBrand ? 'text-indigo-950 font-black' : 'text-slate-900 font-black'} text-sm sm:text-base block truncate">${comp.platform}</strong>
               <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-[#c81373] transition-colors p-0.5" title="${comp.platform} üzerinde ürünü aç">
                 <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
               </a>
             </div>
-            <span class="text-xs text-slate-500 font-semibold block truncate mt-0.5">${comp.notes || (isAvail ? '' : (isOfficialBrand ? 'Markanın resmi online mağazasında bu ürün satılmıyor veya stokta yok' : 'Bu platformda ürün listelenmiyor veya stokta yok'))}</span>
+            <span class="text-xs text-slate-500 font-semibold block line-clamp-2 mt-0.5">${comp.notes || (isAvail ? '' : (isOfficialBrand ? 'Markanın resmi online mağazasında bu ürün satılmıyor veya stokta yok' : 'Bu platformda ürün listelenmiyor veya stokta yok'))}</span>
           </div>
           ${priceBadge}
         `;
