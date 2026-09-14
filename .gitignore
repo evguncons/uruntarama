@@ -30,12 +30,22 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files and secrets (NEVER COMMIT TO GITHUB)
 .env*
+*.env
+.streamlit/secrets.toml
+secrets.toml
 
-# vercel
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# vercel & next
 .vercel
-
-# typescript
 *.tsbuildinfo
 next-env.d.ts
