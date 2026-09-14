@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Tam Ekran ve Header/Footer Gizleme CSS
+# Tam Ekran ve Header/Footer Gizleme CSS (Kayıklığı Önleyen %100 Uyum)
 # -----------------------------------------------------------------------------
 st.markdown("""
     <style>
@@ -23,11 +23,14 @@ st.markdown("""
         #MainMenu {visibility: hidden;}
         .stDeployButton {display:none;}
 
-        /* Ana sayfanın (Streamlit container'ı) kaydırma çubuğunu gizle */
-        body {
-            overflow: hidden; 
-            margin: 0;
-            padding: 0;
+        /* Ana sayfanın (Streamlit container'ı) taşmasını ve kaydırmasını sıfırla */
+        html, body {
+            overflow: hidden !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
         }
         
         /* Streamlit'in iç konteyner boşluklarını sıfırla */
@@ -35,18 +38,20 @@ st.markdown("""
             padding: 0 !important;
             margin: 0 !important;
             max-width: 100% !important;
+            width: 100% !important;
         }
 
-        /* iframe'i ekranın tamamına sabitle */
+        /* iframe'i ekranın tamamına sabitle (100vw yerine %100 kayıklığı ve yatay taşmayı önler) */
         iframe {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            border: none;
-            z-index: 999999;
-            display: block;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            z-index: 999999 !important;
+            display: block !important;
         }
     </style>
 """, unsafe_allow_html=True)
