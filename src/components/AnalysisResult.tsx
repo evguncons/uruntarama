@@ -55,8 +55,25 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({
       {/* Rapor Konteyneri (PDF çıktısı bu ID üzerinden alınır) */}
       <div
         id="printable-analysis-report"
-        className="space-y-6 bg-transparent p-1 sm:p-2 rounded-3xl"
+        className="space-y-6 bg-[#faf5f8] p-2 sm:p-4 rounded-3xl"
       >
+        {/* Kurumsal Rapor Başlığı (PDF ve Ekranda Şık Görünüm) */}
+        <div className="bg-white border border-pink-100 rounded-3xl p-5 px-6 flex items-center justify-between shadow-xs">
+          <img
+            src="/hedef-logo.png"
+            alt="Hedef Alışveriş Merkezleri"
+            className="h-10 sm:h-12 w-auto object-contain"
+          />
+          <div className="text-right">
+            <span className="text-[10px] uppercase font-black tracking-widest text-[#c81373] block">
+              KURUMSAL PİYASA & FİZİBİLİTE RAPORU
+            </span>
+            <span className="text-xs text-slate-500 font-semibold">
+              Satın Alma ve Fiyatlandırma Direktörlüğü
+            </span>
+          </div>
+        </div>
+
         {/* 1. Ürün Kimlik Kartı */}
         <div className="bg-white border border-pink-100 rounded-3xl p-6 sm:p-7 shadow-xl shadow-fuchsia-950/5">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">

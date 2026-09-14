@@ -173,22 +173,30 @@ export default function Home() {
         ) : (
           <div className="space-y-8">
             {/* Hero / Bilgi Şeridi */}
-            <div className="text-center max-w-3xl mx-auto space-y-3.5 pt-4 pb-2">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-fuchsia-100/70 border border-fuchsia-200 text-fuchsia-800 text-xs font-bold shadow-2xs">
-                <Target className="w-3.5 h-3.5 text-fuchsia-600" />
-                <span>Hedef AVM Satın Alma ve Perakende Pazar Radarı</span>
+            <div className="text-center max-w-3xl mx-auto space-y-4 pt-2 pb-2">
+              <div className="flex justify-center mb-1">
+                <img
+                  src="/hedef-logo.png"
+                  alt="Hedef Alışveriş Merkezleri - Evinizin Rengi"
+                  className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform"
+                />
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-50 border border-pink-200 text-[#c81373] text-xs font-black shadow-2xs">
+                <Target className="w-4 h-4 text-[#c81373]" />
+                <span>Hedef AVM Satın Alma ve Perakende İstihbarat Radarı</span>
               </div>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
                 Ürün Satış Potansiyelini{' '}
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 via-rose-600 to-pink-600">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#c81373] via-rose-600 to-pink-600">
                   Yapay Zeka ile Ölçün
                 </span>
               </h1>
 
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto font-medium">
                 Yeni bir ürün mü gördünüz? Fotoğrafını çekin veya yükleyin; yapay zeka Türkiye pazarındaki
-                fiyatları incelesin, <strong>elden senetli ve peşin</strong> satış stratejisini kurgulasın,
+                fiyatları incelesin, <strong>Hedef AVM'ye özel elden senetli ve peşin</strong> satış stratejisini kurgulasın,
                 satılabilirlik puanı ve vitrin sloganı önersin.
               </p>
             </div>
@@ -315,15 +323,19 @@ export default function Home() {
       />
 
       {/* Alt Bilgi (Footer) */}
-      <footer className="w-full border-t border-pink-100 bg-white/80 backdrop-blur py-6 text-center text-xs text-slate-500 mt-12">
+      <footer className="w-full border-t border-pink-100 bg-white/90 backdrop-blur py-6 text-center text-xs text-slate-500 mt-12">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-black text-fuchsia-800">HEDEF AVM</span>
-            <span>•</span>
-            <span className="font-semibold text-slate-600">Özel Ürün Piyasa Araştırması AI Yazılımı</span>
+          <div className="flex items-center gap-3">
+            <img
+              src="/hedef-logo.png"
+              alt="Hedef Alışveriş Merkezleri"
+              className="h-8 w-auto object-contain"
+            />
+            <span className="text-slate-300">|</span>
+            <span className="font-bold text-slate-600">Özel Ürün Piyasa Araştırması AI Yazılımı</span>
           </div>
           <p className="text-[11px] text-slate-400 font-medium">
-            Google Gemini 2.5 Vision & Pazar İstihbarat Motoru ile güçlendirilmiştir.
+            Google Gemini 2.5 Vision & Perakende İstihbarat Motoru ile güçlendirilmiştir.
           </p>
         </div>
       </footer>

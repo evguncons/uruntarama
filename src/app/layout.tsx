@@ -4,9 +4,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Hedef AVM | AI Ürün Piyasa Araştırması ve Satılabilirlik Radarı',
   description:
-    'Hedef AVM için ürün fotoğraflarını tarayarak Türkiye perakende pazar analizi, elden senetli ve peşin fiyat stratejisi, satılabilirlik puanı ve kampanya fizibilitesi sunan kurumsal AI yazılımı.',
+    'Hedef Alışveriş Merkezleri - Evinizin Rengi. Ürün fotoğraflarını tarayarak piyasa analizi, elden senetli taksit stratejisi ve satılabilirlik fizibilitesi sunan kurumsal AI yazılımı.',
   icons: {
-    icon: '/favicon.ico'
+    icon: '/hedef-logo.png',
+    apple: '/hedef-logo.png'
   }
 };
 
@@ -24,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" className="scroll-smooth">
-      <body className="min-h-screen bg-[#faf5f8] text-slate-900 font-sans antialiased selection:bg-fuchsia-600 selection:text-white">
+      <body className="min-h-screen bg-[#faf5f8] text-slate-900 font-sans antialiased selection:bg-[#c81373] selection:text-white">
         {children}
       </body>
     </html>
