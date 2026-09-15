@@ -18,40 +18,33 @@ st.set_page_config(
 st.markdown("""
     <style>
         /* Streamlit Header, Footer ve Menüyü gizle */
-        header {visibility: hidden;}
-        footer {visibility: hidden;}
-        #MainMenu {visibility: hidden;}
-        .stDeployButton {display:none;}
+        header {visibility: hidden; display: none !important;}
+        footer {visibility: hidden; display: none !important;}
+        #MainMenu {visibility: hidden; display: none !important;}
+        .stDeployButton {display: none !important;}
 
-        /* Ana sayfanın (Streamlit container'ı) dikey kaydırılabilir olması */
-        html, body, [data-testid="stAppViewContainer"], .main, section.main {
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
+        /* Ana sayfanın (Streamlit container'ı) taşmasını sıfırla */
+        html, body, [data-testid="stAppViewContainer"], .main, section.main, .block-container {
+            overflow: hidden !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
+            height: 100% !important;
             max-width: 100% !important;
-            min-height: 100% !important;
-            height: auto !important;
-        }
-        
-        /* Streamlit'in iç konteyner boşluklarını sıfırla */
-        .block-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-            width: 100% !important;
+            max-height: 100% !important;
         }
 
-        /* Bileşen iframe'i: inline height değerini ezme (Streamlit setFrameHeight kullansın) */
+        /* iframe ekranın tamamını kaplar; kaydırma iframe içerisinde pürüzsüz çalışır */
         iframe {
-            position: relative !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            min-height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
             border: none !important;
-            z-index: 1 !important;
+            z-index: 999999 !important;
             display: block !important;
         }
     </style>
