@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Hedef AVM | AI Ürün Piyasa & 15 Ay Senet Radarı</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -44,6 +44,8 @@
       width: 100%;
       max-width: 100%;
       overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -103,7 +105,7 @@
   </header>
 
   <!-- ANA İÇERİK KONTEYNERİ (GENİŞ, FERAH, SIFIR TAŞMA) -->
-  <main class="w-full max-w-5xl mx-auto px-3.5 sm:px-6 pt-6 sm:pt-8 space-y-6 sm:space-y-7 overflow-hidden">
+  <main class="w-full max-w-5xl mx-auto px-3.5 sm:px-6 pt-6 sm:pt-8 space-y-6 sm:space-y-7 overflow-x-clip">
 
     <!-- HERO KARŞILAMA BÖLÜMÜ -->
     <div class="text-center space-y-2.5">
@@ -1137,11 +1139,34 @@ NOTLAR:
     });
     streamlitMessage('streamlit:componentReady', {apiVersion: 1});
     function syncComponentHeight() {
-      const height = Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight || 0, 600);
-      streamlitMessage('streamlit:setFrameHeight', {height});
+      try {
+        const doc = document.documentElement;
+        const body = document.body;
+        const height = Math.max(
+          doc ? doc.scrollHeight : 0,
+          body ? body.scrollHeight : 0,
+          doc ? doc.offsetHeight : 0,
+          body ? body.offsetHeight : 0,
+          700
+        ) + 40;
+        streamlitMessage('streamlit:setFrameHeight', {height});
+      } catch (e) {
+        // ignore
+      }
     }
     syncComponentHeight();
-    new ResizeObserver(syncComponentHeight).observe(document.documentElement);
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(syncComponentHeight);
+      if (document.documentElement) ro.observe(document.documentElement);
+      if (document.body) ro.observe(document.body);
+    }
+    if (window.MutationObserver && document.body) {
+      const mo = new MutationObserver(syncComponentHeight);
+      mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+    }
+    window.addEventListener('load', syncComponentHeight);
+    window.addEventListener('resize', syncComponentHeight);
+    setInterval(syncComponentHeight, 1000);
     function verifyProductPages(productName, candidates) {
       return new Promise((resolve, reject) => {
         const id = crypto.randomUUID();

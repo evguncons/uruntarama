@@ -23,10 +23,11 @@ st.markdown("""
         #MainMenu {visibility: hidden;}
         .stDeployButton {display:none;}
 
-        /* Ana sayfanın (Streamlit container'ı) taşmasını ve kaydırmasını sıfırla */
-        html, body {
+        /* Ana sayfanın (Streamlit container'ı) dikey kaydırılabilir olması */
+        html, body, [data-testid="stAppViewContainer"], .main, section.main {
             overflow-x: hidden !important;
             overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
@@ -43,13 +44,12 @@ st.markdown("""
             width: 100% !important;
         }
 
-        /* Bileşen iframe'i belge akışında kalsın; sayfa dikey kaydırılabilsin. */
+        /* Bileşen iframe'i: inline height değerini ezme (Streamlit setFrameHeight kullansın) */
         iframe {
             position: relative !important;
             width: 100% !important;
             max-width: 100% !important;
-            height: auto !important;
-            min-height: 600px !important;
+            min-height: 100vh !important;
             border: none !important;
             z-index: 1 !important;
             display: block !important;
