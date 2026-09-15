@@ -3,3 +3,5 @@ google-genai
 google-generativeai
 pillow
 requests
+beautifulsoup4>=4.12,<5
+curl_cffi>=0.13,<1
