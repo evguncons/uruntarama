@@ -3,7 +3,9 @@ import streamlit.components.v1 as components
 import os
 import shutil
 import tempfile
+import logging
 from services.analysis_service import analyze_product
+logger = logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 # Sayfa Konfigürasyonu
@@ -86,7 +88,8 @@ if os.path.exists(html_file_path):
                 action.get('userCost', 0), action.get('notes', ''), action.get('image'))
             st.rerun()
         except Exception as exc:
-            st.session_state.analysis_error = f"Analiz tamamlanamadı: {exc}"
+            logger.exception("Product analysis failed")
+            st.session_state.analysis_error = "Analiz servisine bağlanılamadı. Sunucu API anahtarı ve bağlantısı kontrol edilmeli."
             st.rerun()
 else:
     st.error("index.html bulunamadı! Lütfen dosyanın streamlit_app.py ile aynı klasörde olduğundan emin olun.")
