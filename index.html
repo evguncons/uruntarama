@@ -1136,7 +1136,12 @@ NOTLAR:
       }
     });
     streamlitMessage('streamlit:componentReady', {apiVersion: 1});
-    streamlitMessage('streamlit:setFrameHeight', {height: 1000});
+    function syncComponentHeight() {
+      const height = Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight || 0, 600);
+      streamlitMessage('streamlit:setFrameHeight', {height});
+    }
+    syncComponentHeight();
+    new ResizeObserver(syncComponentHeight).observe(document.documentElement);
     function verifyProductPages(productName, candidates) {
       return new Promise((resolve, reject) => {
         const id = crypto.randomUUID();

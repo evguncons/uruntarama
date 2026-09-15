@@ -48,8 +48,8 @@ st.markdown("""
             position: relative !important;
             width: 100% !important;
             max-width: 100% !important;
-            height: 1000px !important;
-            min-height: 1000px !important;
+            height: auto !important;
+            min-height: 600px !important;
             border: none !important;
             z-index: 1 !important;
             display: block !important;
