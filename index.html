@@ -913,6 +913,16 @@ KURALLAR:
 
           const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar'];
 
+          // Helper: doğrudan ürün sayfası mı (arama sayfası değil mi)?
+          const isDirectProdUrl = (uri) => {
+            if (!uri || typeof uri !== 'string') return false;
+            const u = uri.toLowerCase();
+            if (u.includes('vertexaisearch.cloud.google.com/grounding-api-redirect')) return true;
+            if (u.includes('/sr?') || u.includes('/sr/') || u.includes('/ara?') || u.includes('/search?') || u.includes('?q=') || u.includes('&q=') || u.includes('searchterm=')) return false;
+            if (u.includes('-p-') || u.includes('/p/') || u.includes('/urun/') || u.includes('/product/') || u.includes('.html') || u.includes('/dp/')) return true;
+            return false;
+          };
+
           // YÖNTEM 1: groundingSupports üzerinden kesin cümle-chunk eşleştirmesi
           supports.forEach(supp => {
             const segText = (supp.segment?.text || '').toLowerCase();
@@ -924,10 +934,14 @@ KURALLAR:
                 chunkIndices.forEach(idx => {
                   const ch = chunks[idx];
                   if (!ch?.web?.uri) return;
+                  const uri = ch.web.uri;
                   const title = (ch.web?.title || '').toLowerCase();
-                  if (domains.some(d => title.includes(d) || ch.web.uri.toLowerCase().includes(d))) {
-                    if (!discoveredDirectUrls[platKey]) {
-                      discoveredDirectUrls[platKey] = ch.web.uri;
+                  if (domains.some(d => title.includes(d) || uri.toLowerCase().includes(d))) {
+                    // Sadece doğrudan ürün linkini veya grounding redirect'ini kaydet
+                    if (isDirectProdUrl(uri)) {
+                      if (!discoveredDirectUrls[platKey] || !isDirectProdUrl(discoveredDirectUrls[platKey])) {
+                        discoveredDirectUrls[platKey] = uri;
+                      }
                     }
                   }
                 });
@@ -945,10 +959,14 @@ KURALLAR:
             if (/kılıf|kilif|ekran koruyucu|nano cam|lens koruma|kamera koruma|şarj aleti|type-c|kapak/i.test(title)) return;
 
             Object.keys(platformDomainMap).forEach(platKey => {
-              if (discoveredDirectUrls[platKey]) return; // Zaten bulunduysa koru
               const domains = platformDomainMap[platKey];
               if (domains.some(d => title.includes(d) || uri.toLowerCase().includes(d))) {
-                discoveredDirectUrls[platKey] = uri;
+                // Doğrudan ürün sayfası kontrolü
+                if (isDirectProdUrl(uri)) {
+                  if (!discoveredDirectUrls[platKey] || !isDirectProdUrl(discoveredDirectUrls[platKey])) {
+                    discoveredDirectUrls[platKey] = uri;
+                  }
+                }
               }
             });
 
@@ -956,7 +974,9 @@ KURALLAR:
             if (!discoveredDirectUrls['official']) {
               if (!knownNonBrand.some(k => title.includes(k) || uri.toLowerCase().includes(k))) {
                 if (title.includes('generalmobile') || title.includes('samsung') || title.includes('apple') || title.includes('xiaomi') || title.includes('philips') || title.includes('arcelik') || title.includes('beko') || title.includes('vestel') || title.includes('dyson') || title.includes('karaca') || title.includes('tefal')) {
-                  discoveredDirectUrls['official'] = uri;
+                  if (isDirectProdUrl(uri) || !uri.includes('google.com')) {
+                    discoveredDirectUrls['official'] = uri;
+                  }
                 }
               }
             }
@@ -968,10 +988,10 @@ KURALLAR:
             const rawUrl = match[0];
             const uLower = rawUrl.toLowerCase();
             Object.keys(platformDomainMap).forEach(platKey => {
-              if (discoveredDirectUrls[platKey] && !discoveredDirectUrls[platKey].includes('vertexaisearch')) return;
+              if (discoveredDirectUrls[platKey] && isDirectProdUrl(discoveredDirectUrls[platKey])) return;
               const domains = platformDomainMap[platKey];
               if (domains.some(d => uLower.includes(d))) {
-                if (!uLower.includes('/arama') && !uLower.includes('/search') && !uLower.includes('/sr?')) {
+                if (isDirectProdUrl(rawUrl)) {
                   discoveredDirectUrls[platKey] = rawUrl;
                 }
               }
@@ -1561,7 +1581,14 @@ NOTLAR:
 
       // Rakip Pazaryerleri ve Marka Resmi Sitesi
       const compList = document.getElementById('resCompetitorList');
-      compList.innerHTML = '';
+      compList.innerHTML = `
+        <div class="p-3 rounded-2xl bg-pink-50/70 border border-pink-100 text-[11px] sm:text-xs text-slate-600 flex items-start gap-2.5">
+          <i class="fa-solid fa-circle-info text-[#c81373] text-sm mt-0.5 shrink-0"></i>
+          <div class="leading-relaxed">
+            <strong class="text-slate-800 font-bold">Fiyat & Stok Bilgilendirmesi:</strong> Fiyatlar mağaza ve e-ticaret dizinlerinden anlık tespit edilmektedir. Ürün mağaza tarafından stoktan kaldırılmış veya kampanya süresi dolmuş olsa dahi son tespit edilen fiyat yansıtılabilir. Kesin ve anlık bilgi için <b>Doğrudan Ürüne Git</b> butonunu kullanınız.
+          </div>
+        </div>
+      `;
       (data.competitorBenchmarks || []).forEach(comp => {
         const item = document.createElement('div');
         const isOfficialBrand = (comp.platform || '').toLowerCase().includes('resmi') || (comp.platform || '').toLowerCase().includes('marka');
@@ -1572,24 +1599,21 @@ NOTLAR:
         
         const priceNum = Number(comp.estimatedPrice) || 0;
         const notesStr = (comp.notes || '').toLowerCase();
-        
-        // SADECE açıkça tükenmişse veya fiyat <= 0 ise stokta yok say (asla tek başına 'yok' kelimesi yüzünden stoktaki ürünü gizleme)
-        const isOutOfStock = 
-          comp.isAvailable === false ||
+
+        // Stok ve Fiyat Doğrulaması:
+        // Eğer geçerli bir fiyat tespit edilmişse (>0), stok durumu belirsiz olsa bile fiyatı asla gizleme!
+        const isExplicitlyOut = 
           priceNum <= 0 ||
           notesStr.includes('stokta yok') || 
           notesStr.includes('stok yok') || 
           notesStr.includes('tükendi') || 
           notesStr.includes('tükenmiş') || 
-          notesStr.includes('satışı yok') || 
-          notesStr.includes('satışta değil') ||
           notesStr.includes('gelince haber ver') ||
-          notesStr.includes('temin edilemiyor') ||
-          notesStr.includes('listede yok') ||
-          notesStr.includes('satılmıyor') ||
-          notesStr.includes('ürün bulunamadı');
+          notesStr.includes('satışta değil') ||
+          notesStr.includes('satışı yok');
 
-        const isAvail = !isOutOfStock && priceNum > 0;
+        // Eğer fiyat varsa ve açık bir tükenme ifadesi yoksa ürün mevcuttur
+        const isAvail = priceNum > 0 && (!isExplicitlyOut || comp.isAvailable === true);
         const targetUrl = getProductLink(comp.platform, comp.productUrl, data.productName, data.category);
         const isDirect = isValidDirectProductUrl(targetUrl, comp.platform);
 
@@ -1600,32 +1624,66 @@ NOTLAR:
         const outBtnClass = 'w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer';
 
         const btnText = isOfficialBrand
-          ? 'Resmi Sitede İncele'
-          : (isDirect ? 'Doğrudan Ürüne Git' : 'Platformda İncele');
+          ? (isDirect ? 'Resmi Ürün Sayfasına Git' : 'Resmi Sitede Ara ↗')
+          : (isDirect ? 'Doğrudan Ürüne Git' : 'Platformda Ara ↗');
 
         const outBtnText = isOfficialBrand
           ? 'Resmi Sitede Ara ↗'
           : (isDirect ? 'Ürün Sayfası (Tükendi) ↗' : 'Platformda Ara ↗');
 
+        const priceDisclaimer = `
+          <span class="text-[10px] text-slate-400 font-medium block mt-0.5 leading-tight">
+            <i class="fa-solid fa-clock-rotate-left text-[9px] mr-0.5 text-slate-400"></i> Son tespit edilen fiyattır (Stok/fiyat anlık değişebilir)
+          </span>
+        `;
+
+        const linkTypeHint = !isDirect ? `<span class="text-[9px] text-amber-700 block text-right mt-0.5 font-medium">(Doğrudan ürün linki bulunamadı, arama sayfası açılır)</span>` : '';
+
         const priceBadge = isAvail
           ? `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
-               <div class="sm:text-right flex items-center justify-between sm:block">
-                 <span class="text-[10px] text-slate-400 font-bold uppercase sm:hidden">Satış Fiyatı:</span>
-                 <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-lg sm:text-xl block">${formatTL(priceNum)}</span>
+               <div class="sm:text-right flex flex-col justify-center">
+                 <div class="flex items-center justify-between sm:block">
+                   <span class="text-[10px] text-slate-400 font-bold uppercase sm:hidden">Satış Fiyatı:</span>
+                   <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-lg sm:text-xl block">${formatTL(priceNum)}</span>
+                 </div>
+                 ${priceDisclaimer}
                </div>
-               <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${btnClass}">
-                 <span>${btnText}</span>
-                 <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-               </a>
+               <div class="flex flex-col items-end">
+                 <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${btnClass}">
+                   <span>${btnText}</span>
+                   <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                 </a>
+                 ${linkTypeHint}
+               </div>
              </div>`
-          : `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
-               <span class="inline-flex items-center justify-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">
-                 <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
-               </span>
-               <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
-                 <span>${outBtnText}</span>
-               </a>
-             </div>`;
+          : (priceNum > 0
+              ? `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
+                   <div class="sm:text-right flex flex-col justify-center">
+                     <span class="font-black text-slate-500 line-through text-base sm:text-lg block">${formatTL(priceNum)}</span>
+                     <span class="text-[10px] text-amber-700 font-semibold block leading-tight">
+                       <i class="fa-solid fa-circle-exclamation text-[9px]"></i> Son Fiyat (Stokta Olmayabilir)
+                     </span>
+                     ${priceDisclaimer}
+                   </div>
+                   <div class="flex flex-col items-end">
+                     <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
+                       <span>${outBtnText}</span>
+                     </a>
+                     ${linkTypeHint}
+                   </div>
+                 </div>`
+              : `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
+                   <span class="inline-flex items-center justify-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">
+                     <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
+                   </span>
+                   <div class="flex flex-col items-end">
+                     <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
+                       <span>${outBtnText}</span>
+                     </a>
+                     ${linkTypeHint}
+                   </div>
+                 </div>`
+            );
 
         item.innerHTML = `
           <div class="min-w-0 flex-1">
@@ -1764,6 +1822,9 @@ NOTLAR:
                 <div>
                   <span class="text-[11px] text-slate-500 font-bold block uppercase tracking-wide">15 Ay Senetli Liste</span>
                   <div class="text-lg sm:text-2xl font-black text-slate-900 mt-0.5">${formatTL(tot)}</div>
+                  <span class="text-[10px] text-slate-400 font-medium block mt-0.5 leading-tight">
+                    <i class="fa-solid fa-clock-rotate-left text-[9px] mr-0.5 text-slate-400"></i> Son tespit edilen fiyattır (Stok/fiyat anlık değişebilir)
+                  </span>
                 </div>
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
                   <span class="text-xs text-slate-600 font-semibold">Aylık Taksit (15 Ay):</span>

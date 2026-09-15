@@ -51,3 +51,4 @@ ENV/
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+.offer_cache.json
