@@ -632,7 +632,7 @@
   <!-- JAVASCRIPT MOTORU VE GEMINI API ÇAĞRISI -->
   <script>
     // Enjekte edilen API Anahtarı
-    const GEMINI_API_KEY = "__GEMINI_API_KEY__";
+    const GEMINI_API_KEY = "";
 
     // Durum Değişkenleri
     let currentImageBase64 = null;
@@ -1499,6 +1499,9 @@ NOTLAR:
         `;
       }
 
+      // Arama/kategori fallback'ları ürün bağlantısı gibi gösterilmez.
+      if (quickLinksBox) quickLinksBox.classList.add('hidden');
+
       // Skor & Durum
       const score = f.score || 50;
       const verdict = f.verdict || 'SATAR';
@@ -1557,9 +1560,9 @@ NOTLAR:
         if (!marketMax || marketMax <= 0 || marketMax > calcMax * 1.3) marketMax = calcMax;
         if (!marketAvg || marketAvg <= 0) marketAvg = calcAvg;
       }
-      if (!marketMin || marketMin <= 0) marketMin = 1000;
-      if (!marketAvg || marketAvg <= 0) marketAvg = Math.round(marketMin * 1.1);
-      if (!marketMax || marketMax <= 0) marketMax = Math.round(marketAvg * 1.25);
+      if (!marketMin || marketMin <= 0) marketMin = 0;
+      if (!marketAvg || marketAvg <= 0) marketAvg = 0;
+      if (!marketMax || marketMax <= 0) marketMax = 0;
 
       const baseCash = hp.cashRecommendedPrice || Math.round(marketMin * 1.02);
       const totalInst = hp.installmentRecommendedPrice || Math.round(baseCash * 1.38);
@@ -1883,10 +1886,10 @@ NOTLAR:
                   <i class="fa-solid fa-circle-info mr-1"></i>${sc.notes || 'Bu ürün rakip mağazada şu anda listelenmiyor veya stokta bulunmuyor.'}
                 </p>
               </div>
-              <a href="${storeUrl}" target="_blank" rel="noopener noreferrer" class="w-full mt-3 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-                <i class="fa-solid fa-magnifying-glass text-[10px] text-slate-500"></i>
-                <span>${name} Mağazasında Ara</span>
-              </a>
+              <button type="button" disabled class="w-full mt-3 py-2 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold cursor-not-allowed">
+                <i class="fa-solid fa-link-slash text-[10px]"></i>
+                <span>Ürün Linki Doğrulanamadı</span>
+              </button>
             `;
           }
           senetliGrid.appendChild(card);
@@ -2128,6 +2131,38 @@ ${f.headline || '-'}
       }
     });
 
+    // Streamlit component bridge: analysis and credentials stay on the server.
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'streamlit:render') return;
+      const analysis = event.data.args?.analysis;
+      const serverError = event.data.args?.error;
+      if (serverError) {
+        showError(serverError); loadingBox.classList.add('hidden');
+        document.body.style.overflow = ''; startAnalyzeBtn.disabled = false;
+      }
+      if (analysis) {
+        currentAnalysis = analysis;
+        renderAnalysis(analysis);
+        loadingBox.classList.add('hidden');
+        resultContainer.classList.remove('hidden');
+        document.body.style.overflow = '';
+        startAnalyzeBtn.disabled = false;
+        resultContainer.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+    startAnalyzeBtn.addEventListener('click', (event) => {
+      event.stopImmediatePropagation();
+      const productName = productNameInput.value.trim();
+      if (!productName) { showError('Lütfen ürünün marka ve tam modelini giriniz.'); return; }
+      hideError(); loadingBox.classList.remove('hidden'); resultContainer.classList.add('hidden');
+      startAnalyzeBtn.disabled = true; document.body.style.overflow = 'hidden';
+      window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:setComponentValue', dataType:'json', value:{
+        requestId: Date.now().toString(), productName,
+        userCost: parseFloat(costInput.value) || 0, notes: notesInput.value.trim(), image: currentImageBase64
+      }}, '*');
+    }, true);
+    window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:componentReady', apiVersion:1}, '*');
+    window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:setFrameHeight', height:window.innerHeight}, '*');
     updateHistoryBadge();
   </script>
 </body>

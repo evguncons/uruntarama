@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict
-from services.models import ProductOffer, StockStatus, FetchStatus
+from services.models import ProductOffer, StockStatus, FetchStatus, UrlStatus
 from services.normalizers import UrlNormalizer
 
 class OfferCacheService:
@@ -44,12 +44,13 @@ class OfferCacheService:
         except Exception:
             pass
 
-    def _cache_key(self, url: str) -> str:
+    def _cache_key(self, url: str, product_context: str = "") -> str:
         canonical = UrlNormalizer.canonicalize(url)
-        return canonical if canonical else url.strip()
+        base = canonical if canonical else url.strip()
+        return base + ('||' + product_context.casefold().strip() if product_context else '')
 
-    def get(self, url: str) -> Optional[ProductOffer]:
-        key = self._cache_key(url)
+    def get(self, url: str, product_context: str = "") -> Optional[ProductOffer]:
+        key = self._cache_key(url, product_context)
         with self._cache_lock:
             entry = self._cache.get(key)
             if not entry:
@@ -70,11 +71,12 @@ class OfferCacheService:
                 data = entry.copy()
                 data['stock_status'] = StockStatus(data['stock_status'])
                 data['fetch_status'] = FetchStatus(data['fetch_status'])
+                data['url_status'] = UrlStatus(data.get('url_status', 'UNKNOWN'))
                 return ProductOffer(**data)
             except Exception:
                 return None
 
-    def set(self, offer_or_url, offer_obj=None, ttl_seconds: Optional[int] = None):
+    def set(self, offer_or_url, offer_obj=None, ttl_seconds: Optional[int] = None, product_context: str = ""):
         if isinstance(offer_or_url, str) and offer_obj is not None:
             offer = offer_obj
             url = offer_or_url
@@ -86,7 +88,7 @@ class OfferCacheService:
         else:
             return
 
-        key = self._cache_key(url)
+        key = self._cache_key(url, product_context)
         if not key:
             return
 

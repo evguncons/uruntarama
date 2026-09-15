@@ -1,7 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import os
-import base64
+import shutil
+import tempfile
+from services.analysis_service import analyze_product
 
 # -----------------------------------------------------------------------------
 # Sayfa Konfigürasyonu
@@ -53,17 +55,13 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 # Aktif Gemini API Anahtarını Çözme
 # -----------------------------------------------------------------------------
-_KB64 = "QVEuQWI4Uk42TE5UTExKeHdadnFHbWZ0M0Fqa0JfQ1VPZ280UVl2a1pTUV9ybmppekZOdlE="
-
 def get_active_api_key():
     try:
-        if "GEMINI_API_KEY" in st.secrets and not st.secrets["GEMINI_API_KEY"].endswith("MgrTA"):
+        if "GEMINI_API_KEY" in st.secrets:
             return st.secrets["GEMINI_API_KEY"]
     except FileNotFoundError:
         pass
-    if os.environ.get("GEMINI_API_KEY") and not os.environ.get("GEMINI_API_KEY").endswith("MgrTA"):
-        return os.environ.get("GEMINI_API_KEY")
-    return base64.b64decode(_KB64).decode("utf-8")
+    return os.environ.get("GEMINI_API_KEY", "")
 
 # -----------------------------------------------------------------------------
 # HTML Dosyasını Okuma ve Gösterme
@@ -71,16 +69,24 @@ def get_active_api_key():
 html_file_path = os.path.join(os.path.dirname(__file__), 'index.html')
 
 if os.path.exists(html_file_path):
-    try:
-        with open(html_file_path, 'r', encoding='utf-8') as f:
-            html_code = f.read()
+    @st.cache_resource
+    def component_path():
+        folder = tempfile.mkdtemp(prefix='uruntarama-ui-')
+        shutil.copy2(html_file_path, os.path.join(folder, 'index.html'))
+        return folder
 
-        api_key = get_active_api_key()
-        html_code = html_code.replace("__GEMINI_API_KEY__", api_key)
-
-        components.html(html_code, height=1000, scrolling=True)
-
-    except Exception as e:
-        st.error(f"Hata: {e}")
+    radar = components.declare_component('verified_product_radar', path=component_path())
+    action = radar(analysis=st.session_state.get('analysis'), error=st.session_state.get('analysis_error'), key='radar', default=None)
+    if action and action.get('requestId') != st.session_state.get('request_id'):
+        st.session_state.request_id = action['requestId']
+        st.session_state.analysis_error = None
+        try:
+            st.session_state.analysis = analyze_product(
+                action.get('productName', ''), get_active_api_key(),
+                action.get('userCost', 0), action.get('notes', ''), action.get('image'))
+            st.rerun()
+        except Exception as exc:
+            st.session_state.analysis_error = f"Analiz tamamlanamadı: {exc}"
+            st.rerun()
 else:
     st.error("index.html bulunamadı! Lütfen dosyanın streamlit_app.py ile aynı klasörde olduğundan emin olun.")

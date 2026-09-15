@@ -3,3 +3,4 @@ google-genai
 google-generativeai
 pillow
 requests
+beautifulsoup4

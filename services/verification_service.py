@@ -29,7 +29,6 @@ class OfferVerificationService:
         """
         raw_url = candidate.get('url', '').strip()
         merchant = candidate.get('merchant') or candidate.get('platform') or 'Bilinmeyen Mağaza'
-        initial_price = PriceNormalizer.parse(candidate.get('price'))
 
         if not raw_url:
             return ProductOffer(
@@ -39,14 +38,14 @@ class OfferVerificationService:
                 url_status=UrlStatus.INVALID_URL,
                 url_verified=False,
                 url_verified_at=datetime.now(timezone.utc).isoformat(),
-                display_price=initial_price,
+                display_price=None,
                 stock_status=StockStatus.UNKNOWN,
                 fetch_status=FetchStatus.FAILED,
                 notes='Geçersiz veya boş URL'
             )
 
         # 1. Check cache
-        cached = self.cache.get(raw_url)
+        cached = self.cache.get(raw_url, expected_product)
         if cached:
             return cached
 
@@ -74,16 +73,16 @@ class OfferVerificationService:
                 url_status=url_status,
                 url_verified=False,
                 url_verified_at=datetime.now(timezone.utc).isoformat(),
-                regular_price=initial_price,
-                display_price=initial_price,
+                regular_price=None,
+                display_price=None,
                 stock_status=StockStatus.UNKNOWN,  # Crucial: NEVER OUT_OF_STOCK on error
                 verification_method=VerificationMethod.DISCOVERY_FALLBACK.value,
                 fetch_status=status,
                 verified=False,
-                notes=f'Canlı teyit yapılamadı ({status.value}): Son tespit edilen fiyat gösterilmektedir'
+                notes=f'Canlı teyit yapılamadı ({status.value}); keşif fiyatı gösterilmedi'
             )
             # Short cache for failed fetches so we don't bombard
-            self.cache.set(raw_url, offer)
+            self.cache.set(raw_url, offer, product_context=expected_product)
             return offer
 
         # 4. Parse live page using matching adapter
@@ -104,8 +103,8 @@ class OfferVerificationService:
                 url_status=UrlStatus.UNKNOWN,
                 url_verified=False,
                 url_verified_at=datetime.now(timezone.utc).isoformat(),
-                regular_price=initial_price,
-                display_price=initial_price,
+                regular_price=None,
+                display_price=None,
                 stock_status=StockStatus.UNKNOWN,
                 fetch_status=FetchStatus.PARSE_ERROR,
                 notes=f'Sayfa ayrıştırma hatası: {str(e)}'
@@ -129,10 +128,9 @@ class OfferVerificationService:
             offer.source_url = ""  # Block mismatch URL from frontend "Ürüne Git"
             offer.verified = False
             offer.notes = f'Ürün uyuşmazlığı ({confidence:.2f}): ' + ', '.join(reasons)
-            if any('Aksesuar' in r or 'Seri' in r for r in reasons):
-                offer.display_price = None
-                offer.regular_price = None
-        else:
+            offer.display_price = None
+            offer.regular_price = None
+        elif offer.product_evidence or (offer.display_price is not None and scraped_title):
             # Match is accepted
             offer.verified = True
             offer.url_verified = True
@@ -143,14 +141,20 @@ class OfferVerificationService:
             offer.canonical_url = UrlNormalizer.canonicalize(final_url)
 
             # If price was not found on live page, fallback to discovery price with clear note
-            if not offer.display_price and initial_price:
-                offer.regular_price = initial_price
-                offer.display_price = initial_price
-                offer.verification_method = VerificationMethod.DISCOVERY_FALLBACK.value
-                offer.notes = 'Canlı fiyata ulaşılamadı; son indekslenen fiyat gösteriliyor'
+            if not offer.display_price:
+                offer.notes = 'Ürün sayfası doğrulandı; canlı fiyat doğrulanamadı'
+        else:
+            offer.fetch_status = FetchStatus.PARSE_ERROR
+            offer.url_status = UrlStatus.NON_PRODUCT_PAGE
+            offer.url_verified = False
+            offer.source_url = ''
+            offer.display_price = None
+            offer.regular_price = None
+            offer.verified = False
+            offer.notes = 'Tekil ürün sayfası kanıtı bulunamadı'
 
         # 6. Cache and return
-        self.cache.set(raw_url, offer)
+        self.cache.set(raw_url, offer, product_context=expected_product)
         return offer
 
     def verify_offers(self, expected_product: str, candidates: List[Dict[str, Any]], max_workers: int = 5) -> List[ProductOffer]:
@@ -176,7 +180,7 @@ class OfferVerificationService:
                         source_url='',
                         url_status=UrlStatus.UNKNOWN,
                         url_verified=False,
-                        display_price=PriceNormalizer.parse(cand.get('price')),
+                        display_price=None,
                         stock_status=StockStatus.UNKNOWN,
                         fetch_status=FetchStatus.FAILED,
                         notes=f'İşlem hatası: {str(exc)}'

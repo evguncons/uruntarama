@@ -23,6 +23,7 @@ class TaspinarAdapter(BaseAdapter):
             if p:
                 offer.regular_price = p
                 offer.display_price = p
+                offer.product_evidence = bool(offer.model)
         offer.stock_status = StockNormalizer.normalize(None, soup.get_text()[:3000])
         return offer
 
@@ -41,9 +42,12 @@ class YonavmAdapter(BaseAdapter):
         offer.model = soup.h1.get_text().strip() if soup.h1 else ""
 
         # Strictly check "Gelince Haber Ver" button
-        if soup.select_one('#aGelinceHaberVer') or 'gelince haber ver' in html.lower():
+        notice = soup.select_one('#aGelinceHaberVer')
+        notice_visible = notice and not notice.has_attr('hidden') and notice.get('aria-hidden') != 'true' and 'display:none' not in notice.get('style', '').replace(' ', '').lower()
+        if notice_visible:
             offer.stock_status = StockStatus.OUT_OF_STOCK
             offer.notes = "Tükendi / Gelince Haber Ver (Stokta Yok)"
+            offer.product_evidence = bool(offer.model)
             return offer
 
         price_elem = soup.select_one('.spanFiyat') or soup.select_one('.product-price')
@@ -52,6 +56,7 @@ class YonavmAdapter(BaseAdapter):
             if p:
                 offer.regular_price = p
                 offer.display_price = p
+                offer.product_evidence = bool(offer.model)
         offer.stock_status = StockNormalizer.normalize(None, soup.get_text()[:3000])
         return offer
 
@@ -74,5 +79,6 @@ class EvkurAdapter(BaseAdapter):
             if p:
                 offer.regular_price = p
                 offer.display_price = p
+                offer.product_evidence = bool(offer.model)
         offer.stock_status = StockNormalizer.normalize(None, soup.get_text()[:3000])
         return offer

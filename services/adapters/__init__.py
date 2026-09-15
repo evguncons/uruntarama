@@ -7,8 +7,10 @@ from services.adapters.hepsiburada import HepsiburadaAdapter
 from services.adapters.vatan import VatanAdapter
 from services.adapters.aggregators import AkakceAdapter, CimriAdapter
 from services.adapters.installment import TaspinarAdapter, YonavmAdapter, EvkurAdapter
+from services.adapters.general_mobile import GeneralMobileAdapter
 
 ALL_ADAPTERS: List[Type[BaseAdapter]] = [
+    GeneralMobileAdapter,
     TrendyolAdapter,
     HepsiburadaAdapter,
     VatanAdapter,

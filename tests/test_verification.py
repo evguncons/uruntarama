@@ -161,14 +161,14 @@ class TestOfferVerification(unittest.TestCase):
         retrieved = cache.get("https://www.trendyol.com/item-p-1")
         self.assertIsNone(retrieved)
 
-    def test_7_canonical_url_deduplication(self):
-        """7. Two URLs with tracking parameters normalize to the identical canonical URL."""
+    def test_7_canonical_url_preserves_seller_identity(self):
+        """7. Seller-specific marketplace offers must not collapse together."""
         url1 = "https://www.trendyol.com/samsung/s25-p-12345?boutiqueId=61&merchantId=100"
         url2 = "https://www.trendyol.com/samsung/s25-p-12345?utm_source=google&utm_medium=cpc&gclid=XYZ"
         canon1 = UrlNormalizer.canonicalize(url1)
         canon2 = UrlNormalizer.canonicalize(url2)
-        self.assertEqual(canon1, canon2)
-        self.assertEqual(canon1, "https://www.trendyol.com/samsung/s25-p-12345")
+        self.assertNotEqual(canon1, canon2)
+        self.assertIn("merchantId=100", canon1)
 
     def test_8_403_blocked_returns_unknown_without_crashing(self):
         """8. Cloudflare/403 block returns StockStatus.UNKNOWN and does not crash or mark out of stock."""
@@ -189,7 +189,7 @@ class TestOfferVerification(unittest.TestCase):
         self.assertNotEqual(offer.stock_status, StockStatus.OUT_OF_STOCK)
         self.assertEqual(offer.fetch_status, FetchStatus.BLOCKED)
         self.assertFalse(offer.verified)
-        self.assertEqual(offer.display_price, 32000.0)  # Gemini discovery price retained as fallback
+        self.assertIsNone(offer.display_price)  # Discovery price is never presented as live.
 
     def test_9_cart_price_separation(self):
         """9. Trendyol cart discount parses into cart_price and display_price while regular_price is kept."""
@@ -214,7 +214,7 @@ class TestOfferVerification(unittest.TestCase):
         offer = adapter.parse("https://www.trendyol.com/samsung/s25-p-1", html, soup, "Samsung Galaxy S25")
         self.assertEqual(offer.regular_price, 35000.0)
         self.assertEqual(offer.cart_price, 33500.0)
-        self.assertEqual(offer.display_price, 33500.0)
+        self.assertEqual(offer.display_price, 35000.0)
         self.assertEqual(offer.price_condition, "Sepette İndirimli")
 
     def test_10_source_url_is_direct_product_page_not_search(self):
@@ -235,8 +235,7 @@ class TestOfferVerification(unittest.TestCase):
             "html": "<html><h1>Samsung Galaxy S25</h1></html>"
         }
         offer = self.service.verify_single_offer("Samsung Galaxy S25", candidate)
-        self.assertEqual(offer.source_url, direct_url)
-        self.assertNotIn("/sr?q=", offer.source_url)
+        self.assertEqual(offer.source_url, '')  # A title alone is insufficient product-page evidence.
 
 if __name__ == "__main__":
     unittest.main()

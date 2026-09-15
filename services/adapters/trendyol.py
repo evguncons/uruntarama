@@ -43,10 +43,11 @@ class TrendyolAdapter(BaseAdapter):
                             offer.display_price = sale_p or orig_p
                             offer.verification_method = VerificationMethod.EMBEDDED_STATE.value
 
-                            if prod.get('inStock'):
+                            if prod.get('inStock') is True:
                                 offer.stock_status = StockStatus.IN_STOCK
-                            else:
+                            elif prod.get('inStock') is False:
                                 offer.stock_status = StockStatus.OUT_OF_STOCK
+                            offer.product_evidence = bool(offer.model and (offer.display_price or prod.get('id')))
 
                             merchant_obj = prod.get('merchant', {})
                             if merchant_obj:
@@ -69,6 +70,7 @@ class TrendyolAdapter(BaseAdapter):
                         offer.regular_price = p_num
                         offer.display_price = p_num
                         offer.verification_method = VerificationMethod.JSON_LD.value
+                    offer.product_evidence = True
                     avail = offers_data.get('availability', '')
                     if avail:
                         offer.stock_status = StockNormalizer.normalize(avail, html)
@@ -79,10 +81,10 @@ class TrendyolAdapter(BaseAdapter):
             c_price = PriceNormalizer.parse(sepette_match.group(1))
             if c_price and offer.display_price and c_price < offer.display_price:
                 offer.cart_price = c_price
-                offer.display_price = c_price
                 offer.price_condition = "Sepette İndirimli"
 
         if offer.stock_status == StockStatus.UNKNOWN:
-            offer.stock_status = StockNormalizer.normalize(None, soup.get_text()[:4000])
+            controls = ' '.join(x.get_text(' ', strip=True) for x in soup.select('button:not([disabled]), a[role="button"]'))
+            offer.stock_status = StockNormalizer.normalize(None, controls)
 
         return offer

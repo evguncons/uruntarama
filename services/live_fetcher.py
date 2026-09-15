@@ -15,8 +15,11 @@ from services.adapters.vatan import VatanAdapter
 from services.adapters.aggregators import AkakceAdapter, CimriAdapter
 from services.adapters.installment import TaspinarAdapter, YonavmAdapter, EvkurAdapter
 from services.adapters.generic import GenericAdapter
+from services.adapters.general_mobile import GeneralMobileAdapter
+from services.safe_http import fetch_page
 
 ADAPTERS = [
+    GeneralMobileAdapter,
     TrendyolAdapter,
     HepsiburadaAdapter,
     VatanAdapter,
@@ -34,6 +37,22 @@ class LiveProductFetcher:
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/131.0.0.0 Safari/537.36"
     )
+
+    @classmethod
+    def fetch(cls, url: str):
+        """Compatibility fetch used by the verifier, backed by the bounded transport."""
+        result = fetch_page(url)
+        code = result['code']
+        if code == 200:
+            status = FetchStatus.SUCCESS
+        elif code in (401, 403, 429, 503):
+            status = FetchStatus.BLOCKED
+        elif result.get('error') == 'TIMEOUT':
+            status = FetchStatus.TIMEOUT
+        else:
+            status = FetchStatus.FAILED
+        return {'status': status, 'http_status': code, 'final_url': result['final_url'],
+                'html': result['html'], 'error': result.get('error')}
 
     @classmethod
     def is_safe_url(cls, url: str) -> Tuple[bool, str]:
@@ -143,7 +162,7 @@ class LiveProductFetcher:
 
             if response.status_code == 404:
                 offer.fetch_status = FetchStatus.FAILED
-                offer.stock_status = StockStatus.OUT_OF_STOCK
+                offer.stock_status = StockStatus.UNKNOWN
                 offer.notes = "Ürün sayfası bulunamadı (404)."
                 return offer
 

@@ -9,7 +9,7 @@ class PriceNormalizer:
     @staticmethod
     def parse(value) -> Optional[float]:
         """Normalizes any price string or number to a clean float in TRY."""
-        if value is None:
+        if value is None or isinstance(value, bool):
             return None
         if isinstance(value, (int, float)):
             val = float(value)
@@ -111,9 +111,7 @@ class UrlNormalizer:
     }
 
     # Query parameters stripped during canonical deduplication (seller/campaign tags)
-    CANONICAL_STRIP_PARAMS = {
-        'boutiqueid', 'merchantid'
-    }
+    CANONICAL_STRIP_PARAMS = set()
 
     @classmethod
     def normalize(cls, url: str) -> str:
@@ -122,29 +120,31 @@ class UrlNormalizer:
             return ""
         url = url.strip()
         if not (url.startswith('http://') or url.startswith('https://')):
-            return url
+            return ""
 
         if 'vertexaisearch.cloud.google.com/grounding-api-redirect' in url:
             return url
 
         try:
             parsed = urlparse(url)
-            query_tuples = parse_qsl(parsed.query, keep_blank_values=False)
+            if not parsed.hostname or parsed.username or parsed.password or parsed.port not in (None, 80, 443):
+                return ""
+            query_tuples = parse_qsl(parsed.query, keep_blank_values=True)
             filtered_query = [
                 (k, v) for k, v in query_tuples
-                if k.lower() not in cls.DROP_PARAMS
+                if k.lower() not in cls.DROP_PARAMS and not k.lower().startswith('utm_') and k.lower() != 'srsltid'
             ]
             clean_query = urlencode(filtered_query)
             return urlunparse((
                 parsed.scheme,
                 parsed.netloc.lower(),
-                parsed.path.rstrip('/') if len(parsed.path) > 1 else parsed.path,
+                parsed.path,
                 parsed.params,
                 clean_query,
-                ''
+                parsed.fragment
             ))
         except Exception:
-            return url
+            return ""
 
     @classmethod
     def canonicalize(cls, url: str) -> str:

@@ -9,6 +9,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import logging
+import json
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Tuple, List
 from bs4 import BeautifulSoup
@@ -16,6 +17,7 @@ from bs4 import BeautifulSoup
 from services.models import UrlStatus, ProductOffer, StockStatus, FetchStatus, VerificationMethod
 from services.normalizers import UrlNormalizer
 from services.product_matcher import ProductMatcher
+from services.safe_http import fetch_page, host_key
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +88,8 @@ class UrlValidationService:
             return False
         try:
             parsed = urllib.parse.urlparse(url)
+            if parsed.username or parsed.password or parsed.port not in (None, 80, 443):
+                return False
             hostname = parsed.hostname
             if not hostname:
                 return False
@@ -139,6 +143,18 @@ class UrlValidationService:
         """Executes HTTP GET with SSRF protection, redirect tracking, and error mapping.
         Returns: (status_code, final_url, html_content, redirect_target, url_status)
         """
+        result = fetch_page(url, timeout=cls.TIMEOUT)
+        code, final_url, html = result['code'], result['final_url'], result['html']
+        redirected = final_url if final_url != url else None
+        if code == 200:
+            return code, final_url, html, redirected, None
+        mapping = {404: UrlStatus.NOT_FOUND, 410: UrlStatus.GONE, 403: UrlStatus.BLOCKED,
+                   401: UrlStatus.BLOCKED, 429: UrlStatus.BLOCKED}
+        error = result.get('error')
+        status = mapping.get(code, UrlStatus.TIMEOUT if error == 'TIMEOUT' else
+                             UrlStatus.INVALID_URL if error == 'INVALID_URL' else UrlStatus.UNKNOWN)
+        return code, final_url, '', redirected, status
+
         redirect_info = None
 
         class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -287,9 +303,9 @@ class UrlValidationService:
         canonical_url = ""
         if canonical_link and canonical_link.get('href'):
             can_href = canonical_link['href'].strip()
-            if cls.is_safe_url(can_href):
+            if cls.is_safe_url(can_href) and host_key(can_href) == host_key(final_url):
                 can_score, _ = ProductMatcher.match_product(expected_product, can_href)
-                if can_score >= 0.70:
+                if can_score >= 0.75:
                     canonical_url = UrlNormalizer.canonicalize(can_href)
                     offer.canonical_url = canonical_url
 
@@ -344,6 +360,8 @@ class UrlValidationService:
 
             if not cls.is_safe_url(full_link):
                 continue
+            if host_key(full_link) != host_key(candidate_url):
+                continue
             if cls.is_category_url(full_link) or cls.is_search_url(full_link):
                 continue
 
@@ -386,18 +404,13 @@ class UrlValidationService:
         url_status: UrlStatus,
         verified: bool
     ):
-        """Prints debug log in the exact required format."""
-        msg = f"""
-[URL_VERIFY]
-Candidate: {candidate}
-HTTP Status: {status}
-Redirect: {redirect or 'None'}
-Final: {final}
-Canonical: {canonical or 'None'}
-Expected Product: {expected}
-Detected Product: {detected}
-URL Status: {url_status.value}
-Verified: {str(verified).lower()}
-"""
-        print(msg.strip())
-        logger.info(msg.strip())
+        """Structured server log; query strings and user text are not emitted."""
+        def safe(value):
+            parsed = urllib.parse.urlparse(value or '')
+            return urllib.parse.urlunparse((parsed.scheme, parsed.netloc, parsed.path, '', '', ''))
+        logger.info("URL_VERIFY %s", json.dumps({
+            'candidate': safe(candidate), 'http_status': status,
+            'redirect': safe(redirect), 'final': safe(final), 'canonical': safe(canonical),
+            'url_status': url_status.value, 'verified': verified,
+            'expected_present': bool(expected), 'detected_present': bool(detected),
+        }, ensure_ascii=False))

@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from services.adapters.base import BaseAdapter
 from services.models import ProductOffer, StockStatus, FetchStatus, VerificationMethod
 from services.normalizers import PriceNormalizer, StockNormalizer, UrlNormalizer
+from services.product_matcher import ProductMatcher
 
 class GenericAdapter(BaseAdapter):
     MERCHANT_NAME = "Genel Mağaza"
@@ -27,7 +28,9 @@ class GenericAdapter(BaseAdapter):
 
         # 1. Try JSON-LD
         products = self.extract_json_ld(soup)
-        for p in products:
+        matched_products = [p for p in products if ProductMatcher.evaluate(expected_product, str(p.get('name') or ''))[0]]
+        for p in matched_products[:1]:
+            offer.product_evidence = True
             name = p.get('name')
             if name:
                 offer.model = str(name)
@@ -40,7 +43,7 @@ class GenericAdapter(BaseAdapter):
             if isinstance(offers_data, list) and offers_data:
                 offers_data = offers_data[0]
             if isinstance(offers_data, dict):
-                raw_price = offers_data.get('price') or offers_data.get('lowPrice')
+                raw_price = offers_data.get('price') if offers_data.get('@type', 'Offer') != 'AggregateOffer' else None
                 parsed_p = PriceNormalizer.parse(raw_price)
                 if parsed_p:
                     offer.regular_price = parsed_p
@@ -49,7 +52,7 @@ class GenericAdapter(BaseAdapter):
 
                 avail = offers_data.get('availability', '')
                 if avail:
-                    offer.stock_status = StockNormalizer.normalize(avail, html)
+                    offer.stock_status = StockNormalizer.normalize(avail)
 
                 seller = offers_data.get('seller', {})
                 if isinstance(seller, dict):
@@ -58,7 +61,7 @@ class GenericAdapter(BaseAdapter):
                     offer.seller = seller
 
         # 2. Meta tags fallback (OpenGraph)
-        if not offer.display_price:
+        if not offer.display_price and not products:
             og_price = soup.find('meta', property='og:price:amount') or soup.find('meta', property='product:price:amount')
             if og_price and og_price.get('content'):
                 p = PriceNormalizer.parse(og_price['content'])
@@ -66,8 +69,10 @@ class GenericAdapter(BaseAdapter):
                     offer.regular_price = p
                     offer.display_price = p
                     offer.verification_method = VerificationMethod.HTML_PARSER.value
+                    offer.product_evidence = bool(soup.h1)
 
         if offer.stock_status == StockStatus.UNKNOWN:
-            offer.stock_status = StockNormalizer.normalize(None, soup.get_text()[:4000])
+            active = [x.get_text(' ', strip=True) for x in soup.select('button:not([disabled]), a[role="button"]')]
+            offer.stock_status = StockNormalizer.normalize(None, ' '.join(active))
 
         return offer

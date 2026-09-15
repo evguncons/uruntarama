@@ -74,6 +74,12 @@ class ProductOffer:
     expires_at: str = ""
     fetch_status: FetchStatus = FetchStatus.SUCCESS
     notes: str = ""
+    product_id: str = ""
+    previous_price: Optional[float] = None
+    created_at: str = ""
+    updated_at: str = ""
+    verification_score: float = 0.0
+    product_evidence: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)

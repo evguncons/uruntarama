@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, List
 import json
 import re
+from urllib.parse import urlsplit
 from bs4 import BeautifulSoup
 
 from services.models import ProductOffer, StockStatus, FetchStatus, VerificationMethod
@@ -16,8 +17,8 @@ class BaseAdapter(ABC):
     def matches_url(cls, url: str) -> bool:
         if not url:
             return False
-        u = url.lower()
-        return any(d in u for d in cls.DOMAINS)
+        host = (urlsplit(url).hostname or '').lower()
+        return any(host == d or host == 'www.' + d for d in cls.DOMAINS)
 
     @classmethod
     def extract_json_ld(cls, soup: BeautifulSoup) -> List[Dict[str, Any]]:
@@ -42,7 +43,7 @@ class BaseAdapter(ABC):
             # Check @type
             t = obj.get('@type', '')
             types = t if isinstance(t, list) else [t]
-            if any('Product' in str(x) for x in types):
+            if any(str(x).rsplit('/', 1)[-1] == 'Product' for x in types):
                 results.append(obj)
             if '@graph' in obj:
                 cls._collect_products(obj['@graph'], results)
