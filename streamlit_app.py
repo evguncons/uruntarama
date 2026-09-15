@@ -78,8 +78,7 @@ if os.path.exists(html_file_path):
         api_key = get_active_api_key()
         html_code = html_code.replace("__GEMINI_API_KEY__", api_key)
 
-        from radar_component import render_radar
-        render_radar(html_code)
+        components.html(html_code, height=1000, scrolling=True)
 
     except Exception as e:
         st.error(f"Hata: {e}")
