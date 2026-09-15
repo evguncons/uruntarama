@@ -25,12 +25,14 @@ st.markdown("""
 
         /* Ana sayfanın (Streamlit container'ı) taşmasını ve kaydırmasını sıfırla */
         html, body {
-            overflow: hidden !important; 
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
-            height: 100% !important;
+            min-height: 100% !important;
+            height: auto !important;
         }
         
         /* Streamlit'in iç konteyner boşluklarını sıfırla */
@@ -41,16 +43,15 @@ st.markdown("""
             width: 100% !important;
         }
 
-        /* iframe'i ekranın tamamına sabitle (100vw yerine %100 kayıklığı ve yatay taşmayı önler) */
+        /* Bileşen iframe'i belge akışında kalsın; sayfa dikey kaydırılabilsin. */
         iframe {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
+            position: relative !important;
             width: 100% !important;
             max-width: 100% !important;
-            height: 100% !important;
+            height: 1000px !important;
+            min-height: 1000px !important;
             border: none !important;
-            z-index: 999999 !important;
+            z-index: 1 !important;
             display: block !important;
         }
     </style>
