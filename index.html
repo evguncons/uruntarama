@@ -841,7 +841,7 @@
         const searchPrompt = `Türkiye e-ticaret ve perakende piyasasında canlı fiyat araştırması yap.
 Aranan Ürün: "${productName}" (Model: "${shortName}")
 
-Google Search aracıyla şu platformların doğrudan ürün sayfalarını ve satış fiyatlarını ara:
+Google Search aracıyla şu platformların doğrudan ürün sayfalarını, güncel TL satış fiyatlarını ve stok durumlarını ara:
 - ${shortName} akakce fiyatı
 - ${shortName} cimri fiyatı
 - ${shortName} trendyol satın al fiyatı (Stokta varsa güncel TL satış fiyatını oku)
@@ -852,22 +852,23 @@ Google Search aracıyla şu platformların doğrudan ürün sayfalarını ve sat
 - ${shortName} evkur.com.tr
 - ${shortName} resmi sitesi online satış fiyatı
 
-ZORUNLU RAPOR FORMATI:
-- MARKA RESMİ SİTESİ: [Net TL Satış Fiyatı veya Resmi Sitede Stokta Yok]
-- AKAKÇE: [En ucuz peşin TL Fiyatı veya Stokta Yok]
-- CİMRİ: [En ucuz peşin TL Fiyatı veya Stokta Yok]
-- TRENDYOL: [Trendyol'daki net satış fiyatı (ör: 24.000 TL) veya Tükendi/Stokta Yok]
-- HEPSİBURADA: [Hepsiburada'daki net satış fiyatı (ör: 19.999 TL) veya Stokta Yok]
-- VATAN BİLGİSAYAR: [Vatan Bilgisayar'daki net satış fiyatı (ör: 24.999 TL) veya Stokta Yok]
-- TAŞPINAR: [Taşpınar web sitesindeki liste fiyatı (ör: 24.690 TL) veya mağaza senetli imkanı veya Listede Yok]
-- YÖN AVM: [Eğer sitede 'Gelince Haber Ver' veya 'Tükendi' yazıyorsa mutlaka 'Tükendi / Gelince Haber Ver (Stokta Yok)' yaz, ASLA stokta var deme!]
-- EVKUR: [Net Fiyat / Taksit veya Listede Yok]
+ZORUNLU RAPOR FORMATI (HER PLATFORM İÇİN NET FİYAT, STOK VE DOĞRUDAN ÜRÜN LİNKİ):
+- MARKA RESMİ SİTESİ: [Net TL Satış Fiyatı veya Resmi Sitede Stokta Yok] [Link]
+- AKAKÇE: [En ucuz peşin TL Fiyatı veya Stokta Yok] [Link]
+- CİMRİ: [En ucuz peşin TL Fiyatı veya Stokta Yok] [Link]
+- TRENDYOL: [Trendyol'daki net satış fiyatı (ör: 20.500 TL) veya Tükendi/Stokta Yok] [Link]
+- HEPSİBURADA: [Hepsiburada'daki net satış fiyatı (ör: 20.000 TL) veya Stokta Yok] [Link]
+- VATAN BİLGİSAYAR: [Vatan Bilgisayar'daki net satış fiyatı (ör: 22.499 TL) veya Stokta Yok] [Link]
+- TAŞPINAR: [Taşpınar web sitesindeki liste fiyatı veya Listede Yok] [Link]
+- YÖN AVM: [Eğer sitede 'Gelince Haber Ver' veya 'Tükendi' yazıyorsa mutlaka 'Tükendi / Gelince Haber Ver (Stokta Yok)' yaz, Fiyat: 0] [Link]
+- EVKUR: [Net Fiyat / Taksit veya Listede Yok] [Link]
 
 KURALLAR:
 1. N11'i rapordan tamamen çıkar, N11 raporlama.
 2. Teknosa'yı baz alma, zincir mağaza olarak SADECE Vatan Bilgisayar'ı baz al.
 3. Aksesuarları (kılıf, ekran koruyucu, cam, şarj) kesinlikle hariç tut! Sadece cihazın kendisini raporla.
-4. Yön AVM'de 'Gelince Haber Ver' uyarısı varsa kesinlikle Stokta Yok olarak bildir.`;
+4. Yön AVM'de 'Gelince Haber Ver' uyarısı varsa kesinlikle Stokta Yok olarak bildir.
+5. Her platform için bulduğun doğrudan ürün sayfası linkini (URL) açıkça belirt.`;
 
         const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
@@ -887,76 +888,95 @@ KURALLAR:
         }
 
         // Canlı arama sonucunda keşfedilen DOĞRULANMIŞ doğrudan ürün URL'lerini topla (Google Grounding Redirects MUTLAK ÖNCELİKLİDİR)
-        // NOT: Modelin serbest metne yazdığı URL'ler (p-123456789, 404 veren linkler) LLM halüsinasyonudur! Sadece Google'ın bizzat getirdiği Grounding Chunks kullanılır!
         const discoveredDirectUrls = {};
         try {
-          const chunks = stage1Data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-          const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar', 'iletkom', 'gsmborsasi', 'neoteo'];
+          const candidateObj = stage1Data.candidates?.[0] || {};
+          const meta = candidateObj.groundingMetadata || {};
+          const chunks = meta.groundingChunks || [];
+          const supports = meta.groundingSupports || [];
 
-          // Ürünün aranacak temel kelimeleri (aksesuarlardan ayırmak için)
-          const searchTokens = shortName.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+          // Platform alan adı tanımları
+          const platformDomainMap = {
+            'trendyol': ['trendyol.com', 'ty.gl'],
+            'hepsiburada': ['hepsiburada.com', 'hb.biz'],
+            'vatan': ['vatanbilgisayar.com'],
+            'akakce': ['akakce.com'],
+            'cimri': ['cimri.com'],
+            'taspinar': ['taspinar.com'],
+            'yonavm': ['yonavm.com.tr'],
+            'evkur': ['evkur.com.tr'],
+            'vivense': ['vivense.com'],
+            'hysavm': ['hysavm.com'],
+            'yigitavm': ['yigitavm.com.tr'],
+            'senetsepet': ['senetsepet.com']
+          };
 
-          // Platform bazında en iyi chunk'ları seçmek için puanlama sistemi
-          const platformCandidates = {};
+          const knownNonBrand = ['akakce', 'cimri', 'trendyol', 'hepsiburada', 'n11', 'amazon', 'teknosa', 'vatan', 'mediamarkt', 'evkur', 'taspinar', 'vivense', 'hys', 'yonavm', 'yigit', 'senetsepet', 'google', 'youtube', 'wikipedia', 'eksisozluk', 'sikayetvar'];
 
+          // YÖNTEM 1: groundingSupports üzerinden kesin cümle-chunk eşleştirmesi
+          supports.forEach(supp => {
+            const segText = (supp.segment?.text || '').toLowerCase();
+            const chunkIndices = supp.groundingChunkIndices || [];
+            
+            Object.keys(platformDomainMap).forEach(platKey => {
+              const domains = platformDomainMap[platKey];
+              if (domains.some(d => segText.includes(d) || segText.includes(platKey))) {
+                chunkIndices.forEach(idx => {
+                  const ch = chunks[idx];
+                  if (!ch?.web?.uri) return;
+                  const title = (ch.web?.title || '').toLowerCase();
+                  if (domains.some(d => title.includes(d) || ch.web.uri.toLowerCase().includes(d))) {
+                    if (!discoveredDirectUrls[platKey]) {
+                      discoveredDirectUrls[platKey] = ch.web.uri;
+                    }
+                  }
+                });
+              }
+            });
+          });
+
+          // YÖNTEM 2: Tüm groundingChunks üzerinden platform başlığı eşleştirmesi
           chunks.forEach(ch => {
             const uri = ch.web?.uri || '';
             const title = (ch.web?.title || '').toLowerCase();
-            const uriLower = uri.toLowerCase();
             if (!uri) return;
 
-            // 1. Platform tespiti
-            let platKey = null;
-            if (title.includes('akakce') || title.includes('akakçe') || uriLower.includes('akakce.com')) platKey = 'akakce';
-            else if (title.includes('cimri') || uriLower.includes('cimri.com')) platKey = 'cimri';
-            else if (title.includes('trendyol') || uriLower.includes('trendyol.com')) platKey = 'trendyol';
-            else if (title.includes('hepsiburada') || uriLower.includes('hepsiburada.com')) platKey = 'hepsiburada';
-            else if (title.includes('vatan bilgisayar') || title.includes('vatanbilgisayar') || uriLower.includes('vatanbilgisayar.com')) platKey = 'vatan';
-            else if (title.includes('taspinar') || title.includes('taşpınar') || uriLower.includes('taspinar.com')) platKey = 'taspinar';
-            else if (title.includes('evkur') || uriLower.includes('evkur.com.tr')) platKey = 'evkur';
-            else if (title.includes('yonavm') || title.includes('yön') || uriLower.includes('yonavm.com.tr')) platKey = 'yonavm';
-            else if (title.includes('vivense') || uriLower.includes('vivense.com')) platKey = 'vivense';
-            else if (title.includes('hys') || title.includes('hysavm') || uriLower.includes('hysavm.com')) platKey = 'hysavm';
-            else if (title.includes('yigit') || title.includes('yiğit')) platKey = 'yigitavm';
-            else if (title.includes('senetsepet') || uriLower.includes('senetsepet.com')) platKey = 'senetsepet';
-            else {
-              if (!knownNonBrand.some(k => title.includes(k) || uriLower.includes(k))) {
-                platKey = 'official';
+            // Aksesuar başlıklarını ele
+            if (/kılıf|kilif|ekran koruyucu|nano cam|lens koruma|kamera koruma|şarj aleti|type-c|kapak/i.test(title)) return;
+
+            Object.keys(platformDomainMap).forEach(platKey => {
+              if (discoveredDirectUrls[platKey]) return; // Zaten bulunduysa koru
+              const domains = platformDomainMap[platKey];
+              if (domains.some(d => title.includes(d) || uri.toLowerCase().includes(d))) {
+                discoveredDirectUrls[platKey] = uri;
+              }
+            });
+
+            // Marka Resmi Sitesi tespiti
+            if (!discoveredDirectUrls['official']) {
+              if (!knownNonBrand.some(k => title.includes(k) || uri.toLowerCase().includes(k))) {
+                if (title.includes('generalmobile') || title.includes('samsung') || title.includes('apple') || title.includes('xiaomi') || title.includes('philips') || title.includes('arcelik') || title.includes('beko') || title.includes('vestel') || title.includes('dyson') || title.includes('karaca') || title.includes('tefal')) {
+                  discoveredDirectUrls['official'] = uri;
+                }
               }
             }
-
-            if (!platKey) return;
-
-            // 2. Aksesuar tespiti (kılıf, ekran koruyucu, cam, şarj aleti KESİNLİKLE doğrudan ürün DEĞİLDİR)
-            const isAccessory = /kılıf|kilif|ekran koruyucu|nano cam|lens koruma|kamera koruma|şarj aleti|type-c kablo|kapak|kulaklık kılıfı/i.test(title);
-            if (isAccessory) return; // Aksesuarları doğrudan çöpe at
-
-            // 3. İlgililik puanı
-            let score = 5; // Taban puan
-
-            // Ürün başlıkta ne kadar geçiyor?
-            const matchedTokens = searchTokens.filter(tok => title.includes(tok));
-            score += matchedTokens.length * 5;
-
-            // Doğrudan ürün sayfası sinyalleri
-            if (title.includes('fiyat') || title.includes('özellik') || title.includes('yorum')) score += 3;
-            if (platKey === 'trendyol' && (title.includes('-p-') || !title.includes('arama'))) score += 8;
-            if (platKey === 'hepsiburada' && !title.includes('kategori')) score += 8;
-            if (platKey === 'akakce' && (title.includes('fiyat') || title.includes('en ucuz'))) score += 10;
-            if (platKey === 'cimri' && (title.includes('fiyat') || title.includes('en ucuz'))) score += 10;
-            if (platKey === 'vatan' && (title.includes('telefon') || title.includes('gm') || uriLower.includes('.html'))) score += 10;
-            if (platKey === 'taspinar' && (title.includes('-p-') || title.includes('general'))) score += 8;
-            if (platKey === 'yonavm' && !title.includes('arama')) score += 5;
-
-            if (!platformCandidates[platKey] || score > platformCandidates[platKey].score) {
-              platformCandidates[platKey] = { uri: uri, score: score, title: title };
-            }
           });
 
-          // En yüksek puanlı Google Grounding linklerini ata
-          Object.keys(platformCandidates).forEach(k => {
-            discoveredDirectUrls[k] = platformCandidates[k].uri;
-          });
+          // YÖNTEM 3: Modelin metin çıktısındaki doğrudan URL'leri Regex ile yakala (Yön AVM, Vatan vb. doğrudan linkleri)
+          const textUrlMatches = searchText.matchAll(/https?:\/\/[^\s\)\],>"']+/g);
+          for (const match of textUrlMatches) {
+            const rawUrl = match[0];
+            const uLower = rawUrl.toLowerCase();
+            Object.keys(platformDomainMap).forEach(platKey => {
+              if (discoveredDirectUrls[platKey] && !discoveredDirectUrls[platKey].includes('vertexaisearch')) return;
+              const domains = platformDomainMap[platKey];
+              if (domains.some(d => uLower.includes(d))) {
+                if (!uLower.includes('/arama') && !uLower.includes('/search') && !uLower.includes('/sr?')) {
+                  discoveredDirectUrls[platKey] = rawUrl;
+                }
+              }
+            });
+          }
 
         } catch(e) {
           console.warn('Grounding link ayıklama hatası:', e);
@@ -1552,52 +1572,54 @@ NOTLAR:
         
         const priceNum = Number(comp.estimatedPrice) || 0;
         const notesStr = (comp.notes || '').toLowerCase();
+        
+        // SADECE açıkça tükenmişse veya fiyat <= 0 ise stokta yok say (asla tek başına 'yok' kelimesi yüzünden stoktaki ürünü gizleme)
         const isOutOfStock = 
           comp.isAvailable === false ||
           priceNum <= 0 ||
-          notesStr.includes('yok') || 
-          notesStr.includes('bulunamadı') || 
+          notesStr.includes('stokta yok') || 
+          notesStr.includes('stok yok') || 
           notesStr.includes('tükendi') || 
           notesStr.includes('tükenmiş') || 
           notesStr.includes('satışı yok') || 
-          notesStr.includes('satılmıyor') || 
-          notesStr.includes('bulunmuyor') || 
-          notesStr.includes('temin edilemiyor') || 
-          notesStr.includes('stokta yok') ||
-          notesStr.includes('stok yok') ||
-          notesStr.includes('satışta değil');
+          notesStr.includes('satışta değil') ||
+          notesStr.includes('gelince haber ver') ||
+          notesStr.includes('temin edilemiyor') ||
+          notesStr.includes('listede yok') ||
+          notesStr.includes('satılmıyor') ||
+          notesStr.includes('ürün bulunamadı');
 
         const isAvail = !isOutOfStock && priceNum > 0;
         const targetUrl = getProductLink(comp.platform, comp.productUrl, data.productName, data.category);
         const isDirect = isValidDirectProductUrl(targetUrl, comp.platform);
 
         const btnClass = isOfficialBrand
-          ? 'px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer'
-          : 'px-3.5 py-2 rounded-xl bg-[#c81373] hover:bg-pink-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer';
+          ? 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer'
+          : 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#c81373] hover:bg-pink-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer';
 
-        const outBtnClass = 'px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer';
+        const outBtnClass = 'w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer';
 
         const btnText = isOfficialBrand
           ? 'Resmi Sitede İncele'
           : (isDirect ? 'Doğrudan Ürüne Git' : 'Platformda İncele');
 
         const outBtnText = isOfficialBrand
-          ? 'Sitede Ara ↗'
+          ? 'Resmi Sitede Ara ↗'
           : (isDirect ? 'Ürün Sayfası (Tükendi) ↗' : 'Platformda Ara ↗');
 
         const priceBadge = isAvail
-          ? `<div class="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
-               <div class="sm:text-right">
-                 <span class="text-[10px] text-slate-400 font-bold uppercase block sm:hidden">Pazaryeri Fiyatı</span>
-                 <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-base sm:text-xl block">${formatTL(priceNum)}</span>
+          ? `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
+               <div class="sm:text-right flex items-center justify-between sm:block">
+                 <span class="text-[10px] text-slate-400 font-bold uppercase sm:hidden">Satış Fiyatı:</span>
+                 <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-lg sm:text-xl block">${formatTL(priceNum)}</span>
                </div>
                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${btnClass}">
                  <span>${btnText}</span>
-                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                 <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                </a>
              </div>`
-          : `<div class="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
-               <span class="inline-flex items-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
+          : `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
+               <span class="inline-flex items-center justify-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">
                  <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
                </span>
                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
@@ -1721,10 +1743,7 @@ NOTLAR:
               // Eğer mağazada ürün mevcut ancak webde sadece elden senetli teklif veriliyorsa gerçekçi 15 ay fiyatı
               tot = Math.round(baseCash * 1.40);
             }
-            // Absürt uçuk fiyat koruması (peşin fiyatın 2 katından fazla ise üst sınıra çek)
-            if (tot > baseCash * 2.0) {
-              tot = Math.round(baseCash * 1.50);
-            }
+            // Gerçek mağaza fiyatını aynen yansıt (asla yapay formülle fiyatı tahrif etme)
             const mon = sc.estimatedMonthly && Number(sc.estimatedMonthly) > 0 
               ? Number(sc.estimatedMonthly) 
               : Math.round(tot / 15);
