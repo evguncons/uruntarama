@@ -97,21 +97,58 @@ class StockNormalizer:
         return StockStatus.UNKNOWN
 
 class UrlNormalizer:
-    # Query parameters to drop (analytics, affiliates, tracking)
+    # Query parameters to drop (strictly analytics, advertising and affiliate tracking)
     DROP_PARAMS = {
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
-        'ref', 'gclid', 'fbclid', 'boutiqueid', 'merchantid', 'adjust_t',
-        'adjust_tracker', 'yclid', 'dclid', 'msclkid', 'zanpid', 'igshid'
+        'ref', 'gclid', 'fbclid', 'adjust_t', 'adjust_tracker',
+        'yclid', 'dclid', 'msclkid', 'zanpid', 'igshid'
     }
 
-    # Query parameters that define the actual product or variant (MUST BE PRESERVED)
+    # Query parameters that define the actual product, variant, SKU or seller (MUST BE PRESERVED)
     KEEP_PARAMS = {
-        'variant', 'color', 'renk', 'size', 'beden', 'v', 'sku', 'model', 'hafiza', 'ram', 'capacity'
+        'variant', 'sku', 'productid', 'product_id', 'item', 'itemid',
+        'seller', 'merchant', 'color', 'renk', 'size', 'beden', 'v', 'model', 'hafiza', 'ram', 'capacity'
+    }
+
+    # Query parameters stripped during canonical deduplication (seller/campaign tags)
+    CANONICAL_STRIP_PARAMS = {
+        'boutiqueid', 'merchantid'
     }
 
     @classmethod
+    def normalize(cls, url: str) -> str:
+        """Removes tracking/ad query parameters while strictly preserving variant, SKU, and product IDs."""
+        if not url or not isinstance(url, str):
+            return ""
+        url = url.strip()
+        if not (url.startswith('http://') or url.startswith('https://')):
+            return url
+
+        if 'vertexaisearch.cloud.google.com/grounding-api-redirect' in url:
+            return url
+
+        try:
+            parsed = urlparse(url)
+            query_tuples = parse_qsl(parsed.query, keep_blank_values=False)
+            filtered_query = [
+                (k, v) for k, v in query_tuples
+                if k.lower() not in cls.DROP_PARAMS
+            ]
+            clean_query = urlencode(filtered_query)
+            return urlunparse((
+                parsed.scheme,
+                parsed.netloc.lower(),
+                parsed.path.rstrip('/') if len(parsed.path) > 1 else parsed.path,
+                parsed.params,
+                clean_query,
+                ''
+            ))
+        except Exception:
+            return url
+
+    @classmethod
     def canonicalize(cls, url: str) -> str:
-        """Removes tracking/ad query parameters while preserving variant and product IDs."""
+        """Removes tracking/ad query parameters and marketplace campaign/seller IDs for canonical product matching."""
         if not url or not isinstance(url, str):
             return ""
         url = url.strip()
@@ -127,7 +164,7 @@ class UrlNormalizer:
             query_tuples = parse_qsl(parsed.query, keep_blank_values=False)
             filtered_query = [
                 (k, v) for k, v in query_tuples
-                if k.lower() not in cls.DROP_PARAMS or k.lower() in cls.KEEP_PARAMS
+                if k.lower() not in cls.DROP_PARAMS and k.lower() not in cls.CANONICAL_STRIP_PARAMS
             ]
             clean_query = urlencode(filtered_query)
             canonical = urlunparse((

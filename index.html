@@ -1178,41 +1178,67 @@ NOTLAR:
 
         // SERT KURAL: Her platform için URL SADECE Stage 1'de doğrulanmış URL olabilir.
         // Stage 2 modelinin uydurduğu URL'ler 404/yanlış ürün verir — bunlar tamamen temizlenir.
-        // Eğer Stage 1'de platform için URL bulunamadıysa boş string → "Platformda İncele" arama butonuna düşer.
+        // Akış: candidate_url -> validation -> source_url (doğrulanmadıysa buton pasif olur)
         (analysisData.competitorBenchmarks || []).forEach(b => {
           const pl = (b.platform || '').toLowerCase();
+          let cand = '';
           if (pl.includes('resmi') || pl.includes('marka')) {
-            b.productUrl = discoveredDirectUrls['official'] || '';
+            cand = discoveredDirectUrls['official'] || '';
           } else if (pl.includes('akakce') || pl.includes('akakçe')) {
-            b.productUrl = discoveredDirectUrls['akakce'] || '';
+            cand = discoveredDirectUrls['akakce'] || '';
           } else if (pl.includes('cimri')) {
-            b.productUrl = discoveredDirectUrls['cimri'] || '';
+            cand = discoveredDirectUrls['cimri'] || '';
           } else if (pl.includes('trendyol')) {
-            b.productUrl = discoveredDirectUrls['trendyol'] || '';
+            cand = discoveredDirectUrls['trendyol'] || '';
           } else if (pl.includes('hepsiburada')) {
-            b.productUrl = discoveredDirectUrls['hepsiburada'] || '';
+            cand = discoveredDirectUrls['hepsiburada'] || '';
           } else if (pl.includes('vatan')) {
-            b.productUrl = discoveredDirectUrls['vatan'] || '';
+            cand = discoveredDirectUrls['vatan'] || '';
           } else {
-            // Diğer bilinmeyen platformlar: Stage 2 URL'sini de temizle (hallucination riski)
-            b.productUrl = '';
+            cand = '';
           }
 
-          // Platform link temizliği: Yabancı alan adı karışmasını kesin engelle
-          b.productUrl = sanitizeBenchmarkUrl(b.productUrl, b.platform);
+          cand = sanitizeBenchmarkUrl(cand, b.platform);
+          b.candidate_url = cand;
+
+          if (cand && isValidDirectProductUrl(cand, b.platform)) {
+            b.productUrl = cand;
+            b.source_url = cand;
+            b.url_verified = true;
+            b.url_status = 'VALID';
+          } else {
+            b.productUrl = '';
+            b.source_url = '';
+            b.url_verified = false;
+            b.url_status = cand ? 'NON_PRODUCT_PAGE' : 'NOT_FOUND';
+          }
         });
 
         (analysisData.senetliCompetitors || []).forEach(sc => {
           const nm = (sc.name || '').toLowerCase();
-          // Senetli rakipler için de SADECE Stage 1'de doğrulanmış URL'ler kullanılır
-          if (nm.includes('evkur')) sc.productUrl = discoveredDirectUrls['evkur'] || '';
-          else if (nm.includes('taspinar') || nm.includes('taşpınar')) sc.productUrl = discoveredDirectUrls['taspinar'] || '';
-          else if (nm.includes('vivense')) sc.productUrl = discoveredDirectUrls['vivense'] || '';
-          else if (nm.includes('hys') || nm.includes('hysavm')) sc.productUrl = discoveredDirectUrls['hysavm'] || '';
-          else if (nm.includes('yonavm') || nm.includes('yön')) sc.productUrl = discoveredDirectUrls['yonavm'] || '';
-          else if (nm.includes('yigit') || nm.includes('yiğit')) sc.productUrl = discoveredDirectUrls['yigitavm'] || '';
-          else if (nm.includes('senetsepet')) sc.productUrl = discoveredDirectUrls['senetsepet'] || '';
-          else sc.productUrl = '';
+          let cand = '';
+          if (nm.includes('evkur')) cand = discoveredDirectUrls['evkur'] || '';
+          else if (nm.includes('taspinar') || nm.includes('taşpınar')) cand = discoveredDirectUrls['taspinar'] || '';
+          else if (nm.includes('vivense')) cand = discoveredDirectUrls['vivense'] || '';
+          else if (nm.includes('hys') || nm.includes('hysavm')) cand = discoveredDirectUrls['hysavm'] || '';
+          else if (nm.includes('yonavm') || nm.includes('yön')) cand = discoveredDirectUrls['yonavm'] || '';
+          else if (nm.includes('yigit') || nm.includes('yiğit')) cand = discoveredDirectUrls['yigitavm'] || '';
+          else if (nm.includes('senetsepet')) cand = discoveredDirectUrls['senetsepet'] || '';
+
+          cand = sanitizeBenchmarkUrl(cand, sc.name);
+          sc.candidate_url = cand;
+
+          if (cand && isValidDirectProductUrl(cand, sc.name)) {
+            sc.productUrl = cand;
+            sc.source_url = cand;
+            sc.url_verified = true;
+            sc.url_status = 'VALID';
+          } else {
+            sc.productUrl = '';
+            sc.source_url = '';
+            sc.url_verified = false;
+            sc.url_status = cand ? 'NON_PRODUCT_PAGE' : 'NOT_FOUND';
+          }
         });
 
         analysisData._directUrls = discoveredDirectUrls;
@@ -1592,22 +1618,26 @@ NOTLAR:
 
         // Eğer fiyat varsa ve açık bir tükenme ifadesi yoksa ürün mevcuttur
         const isAvail = priceNum > 0 && (!isExplicitlyOut || comp.isAvailable === true);
-        const targetUrl = getProductLink(comp.platform, comp.productUrl, data.productName, data.category);
-        const isDirect = isValidDirectProductUrl(targetUrl, comp.platform);
+        const isUrlVerified = comp.url_verified === true && comp.source_url && (comp.url_status === 'VALID' || comp.url_status === 'REDIRECTED');
+        const targetUrl = comp.source_url || '';
 
-        const btnClass = isOfficialBrand
+        const verifiedBtnClass = isOfficialBrand
           ? 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer'
           : 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#c81373] hover:bg-pink-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer';
 
-        const outBtnClass = 'w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer';
+        const disabledBtnClass = 'w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75 shrink-0';
 
-        const btnText = isOfficialBrand
-          ? (isDirect ? 'Resmi Ürün Sayfasına Git' : 'Resmi Sitede Ara ↗')
-          : (isDirect ? 'Doğrudan Ürüne Git' : 'Platformda Ara ↗');
+        const btnText = isOfficialBrand ? 'Resmi Ürün Sayfasına Git' : 'Doğrudan Ürüne Git';
 
-        const outBtnText = isOfficialBrand
-          ? 'Resmi Sitede Ara ↗'
-          : (isDirect ? 'Ürün Sayfası (Tükendi) ↗' : 'Platformda Ara ↗');
+        const actionButtonHtml = isUrlVerified
+          ? `<a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${verifiedBtnClass}">
+               <span>${btnText}</span>
+               <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+             </a>`
+          : `<button type="button" disabled class="${disabledBtnClass}" title="Doğrulanmış ürün sayfası bulunamadı">
+               <i class="fa-solid fa-link-slash text-xs text-slate-400"></i>
+               <span>Ürün Sayfası Doğrulanamadı</span>
+             </button>`;
 
         const priceDisclaimer = `
           <span class="text-[10px] text-slate-400 font-medium block mt-0.5 leading-tight">
@@ -1615,7 +1645,9 @@ NOTLAR:
           </span>
         `;
 
-        const linkTypeHint = !isDirect ? `<span class="text-[9px] text-amber-700 block text-right mt-0.5 font-medium">(Doğrudan ürün linki bulunamadı, arama sayfası açılır)</span>` : '';
+        const statusNote = !isUrlVerified 
+          ? `<span class="text-[9px] text-slate-400 block text-right mt-0.5 font-medium">(Doğrulanmış ürün bağlantısı yok)</span>` 
+          : '';
 
         const priceBadge = isAvail
           ? `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
@@ -1627,11 +1659,8 @@ NOTLAR:
                  ${priceDisclaimer}
                </div>
                <div class="flex flex-col items-end">
-                 <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${btnClass}">
-                   <span>${btnText}</span>
-                   <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                 </a>
-                 ${linkTypeHint}
+                 ${actionButtonHtml}
+                 ${statusNote}
                </div>
              </div>`
           : (priceNum > 0
@@ -1644,10 +1673,8 @@ NOTLAR:
                      ${priceDisclaimer}
                    </div>
                    <div class="flex flex-col items-end">
-                     <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
-                       <span>${outBtnText}</span>
-                     </a>
-                     ${linkTypeHint}
+                     ${actionButtonHtml}
+                     ${statusNote}
                    </div>
                  </div>`
               : `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
@@ -1655,10 +1682,8 @@ NOTLAR:
                      <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
                    </span>
                    <div class="flex flex-col items-end">
-                     <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="${outBtnClass}">
-                       <span>${outBtnText}</span>
-                     </a>
-                     ${linkTypeHint}
+                     ${actionButtonHtml}
+                     ${statusNote}
                    </div>
                  </div>`
             );
@@ -1668,9 +1693,12 @@ NOTLAR:
             <div class="flex items-center gap-2">
               ${isOfficialBrand ? '<i class="fa-solid fa-crown text-indigo-600 text-xs shrink-0"></i>' : ''}
               <strong class="${isOfficialBrand ? 'text-indigo-950 font-black' : 'text-slate-900 font-black'} text-sm sm:text-base block truncate">${comp.platform}</strong>
-              <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-[#c81373] transition-colors p-0.5" title="${comp.platform} üzerinde ürünü aç">
-                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-              </a>
+              ${isUrlVerified 
+                ? `<a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-[#c81373] transition-colors p-0.5" title="${comp.platform} üzerinde ürünü aç">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                   </a>` 
+                : `<span class="text-xs text-slate-300 p-0.5" title="Doğrulanmış ürün linki yok"><i class="fa-solid fa-link-slash text-[10px]"></i></span>`
+              }
             </div>
             <span class="text-xs text-slate-500 font-semibold block line-clamp-2 mt-0.5">${comp.notes || (isAvail ? '' : (isOfficialBrand ? 'Markanın resmi online mağazasında bu ürün satılmıyor veya stokta yok' : 'Bu platformda ürün listelenmiyor veya stokta yok'))}</span>
           </div>
@@ -1788,11 +1816,17 @@ NOTLAR:
             card.innerHTML = `
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <a href="${storeUrl}" target="_blank" rel="noopener noreferrer" class="text-sm sm:text-base font-black text-slate-900 hover:text-[#c81373] flex items-center gap-1.5 transition-colors group">
-                    <i class="fa-solid fa-building text-[#c81373] text-xs"></i>
-                    <span>${name}</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 group-hover:text-[#c81373] transition-colors"></i>
-                  </a>
+                  ${sc.url_verified && sc.source_url
+                    ? `<a href="${sc.source_url}" target="_blank" rel="noopener noreferrer" class="text-sm sm:text-base font-black text-slate-900 hover:text-[#c81373] flex items-center gap-1.5 transition-colors group">
+                        <i class="fa-solid fa-building text-[#c81373] text-xs"></i>
+                        <span>${name}</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 group-hover:text-[#c81373] transition-colors"></i>
+                       </a>`
+                    : `<div class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5">
+                        <i class="fa-solid fa-building text-slate-400 text-xs"></i>
+                        <span>${name}</span>
+                       </div>`
+                  }
                   <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
                     Stokta Var ✓
                   </span>
@@ -1810,10 +1844,16 @@ NOTLAR:
                 </div>
                 <p class="text-[11px] text-slate-500 font-medium leading-tight">${sc.notes || '15 ay elden senetli taksit'}</p>
               </div>
-              <a href="${storeUrl}" target="_blank" rel="noopener noreferrer" class="w-full mt-3 py-2.5 px-3 rounded-xl bg-white hover:bg-pink-50 text-slate-900 hover:text-[#c81373] border-2 border-slate-200 hover:border-pink-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all shadow-2xs group cursor-pointer">
-                <span>${name}'da Ürünü İncele</span>
-                <i class="fa-solid fa-arrow-up-right-from-square text-[11px] text-[#c81373] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
-              </a>
+              ${sc.url_verified && sc.source_url
+                ? `<a href="${sc.source_url}" target="_blank" rel="noopener noreferrer" class="w-full mt-3 py-2.5 px-3 rounded-xl bg-white hover:bg-pink-50 text-slate-900 hover:text-[#c81373] border-2 border-slate-200 hover:border-pink-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all shadow-2xs group cursor-pointer">
+                    <span>${name}'da Doğrudan Ürüne Git</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[11px] text-[#c81373] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                  </a>`
+                : `<button type="button" disabled class="w-full mt-3 py-2.5 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-not-allowed opacity-75" title="Doğrulanmış ürün sayfası bulunamadı">
+                    <i class="fa-solid fa-link-slash text-xs text-slate-400"></i>
+                    <span>Ürün Sayfası Doğrulanamadı</span>
+                  </button>`
+              }
             `;
           } else {
             // Stokta / Listede Yok Kartı - Kesinlikle uydurma fiyat yazılmaz!
@@ -1821,11 +1861,10 @@ NOTLAR:
             card.innerHTML = `
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <a href="${storeUrl}" target="_blank" rel="noopener noreferrer" class="text-sm sm:text-base font-black text-slate-700 hover:text-slate-900 flex items-center gap-1.5 group">
+                  <div class="text-sm sm:text-base font-black text-slate-700 flex items-center gap-1.5">
                     <i class="fa-solid fa-store-slash text-slate-400 text-xs"></i>
                     <span>${name}</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 group-hover:text-slate-700"></i>
-                  </a>
+                  </div>
                   <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 shrink-0">
                     Stokta / Listede Yok
                   </span>

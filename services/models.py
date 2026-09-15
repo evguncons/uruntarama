@@ -12,6 +12,18 @@ class StockStatus(str, Enum):
     VARIANT_OUT_OF_STOCK = "VARIANT_OUT_OF_STOCK"
     UNKNOWN = "UNKNOWN"
 
+class UrlStatus(str, Enum):
+    VALID = "VALID"
+    REDIRECTED = "REDIRECTED"
+    NOT_FOUND = "NOT_FOUND"
+    GONE = "GONE"
+    BLOCKED = "BLOCKED"
+    TIMEOUT = "TIMEOUT"
+    INVALID_URL = "INVALID_URL"
+    PRODUCT_MISMATCH = "PRODUCT_MISMATCH"
+    NON_PRODUCT_PAGE = "NON_PRODUCT_PAGE"
+    UNKNOWN = "UNKNOWN"
+
 class FetchStatus(str, Enum):
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
@@ -31,8 +43,13 @@ class VerificationMethod(str, Enum):
 @dataclass
 class ProductOffer:
     merchant: str
-    source_url: str
+    candidate_url: str = ""
+    source_url: str = ""
+    final_url: str = ""
     canonical_url: str = ""
+    url_status: UrlStatus = UrlStatus.UNKNOWN
+    url_verified: bool = False
+    url_verified_at: str = ""
     seller: Optional[str] = None
     brand: Optional[str] = None
     model: Optional[str] = None
@@ -62,4 +79,5 @@ class ProductOffer:
         d = asdict(self)
         d['stock_status'] = self.stock_status.value if isinstance(self.stock_status, StockStatus) else self.stock_status
         d['fetch_status'] = self.fetch_status.value if isinstance(self.fetch_status, FetchStatus) else self.fetch_status
+        d['url_status'] = self.url_status.value if isinstance(self.url_status, UrlStatus) else self.url_status
         return d
