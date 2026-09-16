@@ -121,7 +121,8 @@ Fiyatı yalnızca ürünün güncel satış fiyatı olarak sayfada açıkça var
 Sadece JSON döndür:
 {{"found":false,"title":"","price":null,"stock":"UNKNOWN","seller":"","evidence":""}}
 stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabilir.'''
-    interaction = genai.Client(api_key=api_key).interactions.create(
+    client = genai.Client(api_key=api_key)
+    interaction = client.interactions.create(
         model='gemini-3.8-flash', input=prompt,
         tools=[{"type": "url_context"}])
     data = _json(interaction.output_text)
