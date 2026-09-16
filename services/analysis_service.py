@@ -144,7 +144,11 @@ stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabili
     data = _json(interaction.output_text)
     if not data.get('found') or not str(data.get('title') or '').strip():
         return None
-    confidence, _ = ProductMatcher.match_product(product_name, str(data['title']))
+    # Dynamic marketplace pages sometimes expose a shortened browser title.
+    # The already-discovered direct product slug is valid model evidence too
+    # (for example, "s25-fe-8-256-gb" on Trendyol).
+    match_subject = str(data['title']) + ' ' + urlsplit(url).path.replace('-', ' ').replace('_', ' ')
+    confidence, _ = ProductMatcher.match_product(product_name, match_subject)
     if confidence < 0.75:
         return None
     stock_name = str(data.get('stock') or 'UNKNOWN').upper()
