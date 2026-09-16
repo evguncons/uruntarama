@@ -134,22 +134,23 @@ Arama yapma. Başka URL kullanma. Sayfa okunamıyorsa found=false döndür.
 Fiyatı yalnızca ürünün güncel satış fiyatı olarak sayfada açıkça varsa yaz.
 Yalnızca "Gelince haber ver", "tükendi", "stokta yok" gibi açık bir tükenme kanıtı varsa OUT_OF_STOCK yaz ve price null yap.
 Güncel satış fiyatı varsa ve açık tükenme kanıtı yoksa, satın alma düğmesi dinamik yüklenmese bile IN_STOCK yaz.
+Beklenen model, FE/Pro/Plus/Ultra eki ve kapasite aynıysa exactProduct=true yaz; farklı varyantta false yaz.
 Sadece JSON döndür:
-{{"found":false,"title":"","price":null,"stock":"UNKNOWN","seller":"","evidence":""}}
+{{"found":false,"exactProduct":false,"title":"","price":null,"stock":"UNKNOWN","seller":"","evidence":""}}
 stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabilir.'''
     client = genai.Client(api_key=api_key)
     interaction = client.interactions.create(
         model='gemini-3.8-flash', input=prompt,
         tools=[{"type": "url_context"}])
     data = _json(interaction.output_text)
-    if not data.get('found') or not str(data.get('title') or '').strip():
+    if not data.get('found') or data.get('exactProduct') is not True or not str(data.get('title') or '').strip():
         return None
     # Dynamic marketplace pages sometimes expose a shortened browser title.
     # The already-discovered direct product slug is valid model evidence too
     # (for example, "s25-fe-8-256-gb" on Trendyol).
     match_subject = str(data['title']) + ' ' + urlsplit(url).path.replace('-', ' ').replace('_', ' ')
     confidence, _ = ProductMatcher.match_product(product_name, match_subject)
-    if confidence < 0.75:
+    if confidence <= 0:
         return None
     stock_name = str(data.get('stock') or 'UNKNOWN').upper()
     stock = StockStatus.__members__.get(stock_name, StockStatus.UNKNOWN)
