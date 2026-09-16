@@ -1627,7 +1627,7 @@ NOTLAR:
           ? 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer'
           : 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#c81373] hover:bg-pink-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer';
 
-        const disabledBtnClass = 'w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75 shrink-0';
+        const disabledBtnClass = 'w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-rose-50 text-rose-800 border-2 border-rose-300 text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 cursor-not-allowed shrink-0 shadow-sm';
 
         const btnText = isOfficialBrand ? 'Resmi Ürün Sayfasına Git' : 'Doğrudan Ürüne Git';
 
@@ -1637,13 +1637,13 @@ NOTLAR:
                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
              </a>`
           : `<button type="button" disabled class="${disabledBtnClass}" title="Doğrulanmış ürün sayfası bulunamadı">
-               <i class="fa-solid fa-link-slash text-xs text-slate-400"></i>
-               <span>Ürün Sayfası Doğrulanamadı</span>
+               <i class="fa-solid fa-triangle-exclamation text-sm text-rose-600"></i>
+               <span>Doğrulanmış Ürün Sayfası Bulunamadı</span>
              </button>`;
 
         const priceDisclaimer = `
-          <span class="text-[10px] text-slate-400 font-medium block mt-0.5 leading-tight">
-            <i class="fa-solid fa-clock-rotate-left text-[9px] mr-0.5 text-slate-400"></i> Son tespit edilen fiyattır (Stok/fiyat anlık değişebilir)
+          <span class="text-[10px] text-blue-900 font-bold inline-flex items-center gap-1 mt-1 leading-tight bg-blue-50 border border-blue-200 rounded-lg px-2 py-1">
+            <i class="fa-solid fa-clock-rotate-left text-[10px] text-blue-600"></i> Son tespit edilen fiyat · stok ve fiyat değişebilir
           </span>
         `;
 
@@ -1669,10 +1669,9 @@ NOTLAR:
               ? `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
                    <div class="sm:text-right flex flex-col justify-center">
                      <span class="font-black text-slate-500 line-through text-base sm:text-lg block">${formatTL(priceNum)}</span>
-                     <span class="text-[10px] text-amber-700 font-semibold block leading-tight">
-                       <i class="fa-solid fa-circle-exclamation text-[9px]"></i> Son Fiyat (Stokta Olmayabilir)
+                     <span class="text-xs text-rose-900 font-black inline-flex items-center gap-1.5 leading-tight bg-rose-50 border-2 border-rose-300 rounded-lg px-2.5 py-1.5 mt-1 shadow-sm">
+                       <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> SON FİYAT · STOKTA OLMAYABİLİR
                      </span>
-                     ${priceDisclaimer}
                    </div>
                    <div class="flex flex-col items-end">
                      ${actionButtonHtml}
@@ -1836,8 +1835,8 @@ NOTLAR:
                 <div>
                   <span class="text-[11px] text-slate-500 font-bold block uppercase tracking-wide">15 Ay Senetli Liste</span>
                   <div class="text-lg sm:text-2xl font-black text-slate-900 mt-0.5">${formatTL(tot)}</div>
-                  <span class="text-[10px] text-slate-400 font-medium block mt-0.5 leading-tight">
-                    <i class="fa-solid fa-clock-rotate-left text-[9px] mr-0.5 text-slate-400"></i> Son tespit edilen fiyattır (Stok/fiyat anlık değişebilir)
+                  <span class="text-[10px] text-blue-900 font-bold inline-flex items-center gap-1 mt-1 leading-tight bg-blue-50 border border-blue-200 rounded-lg px-2 py-1">
+                    <i class="fa-solid fa-clock-rotate-left text-[10px] text-blue-600"></i> Son tespit edilen fiyat · stok ve fiyat değişebilir
                   </span>
                 </div>
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
@@ -1851,9 +1850,9 @@ NOTLAR:
                     <span>${name}'da Doğrudan Ürüne Git</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[11px] text-[#c81373] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
                   </a>`
-                : `<button type="button" disabled class="w-full mt-3 py-2.5 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-not-allowed opacity-75" title="Doğrulanmış ürün sayfası bulunamadı">
-                    <i class="fa-solid fa-link-slash text-xs text-slate-400"></i>
-                    <span>Ürün Sayfası Doğrulanamadı</span>
+                : `<button type="button" disabled class="w-full mt-3 py-2.5 px-3 rounded-xl bg-rose-50 text-rose-800 border-2 border-rose-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 cursor-not-allowed shadow-sm" title="Doğrulanmış ürün sayfası bulunamadı">
+                    <i class="fa-solid fa-triangle-exclamation text-sm text-rose-600"></i>
+                    <span>Doğrulanmış Ürün Sayfası Bulunamadı</span>
                   </button>`
               }
             `;
@@ -1874,9 +1873,12 @@ NOTLAR:
                 <div>
                   <span class="text-[11px] text-slate-400 font-bold block uppercase tracking-wide">15 Ay Senetli Liste</span>
                   ${priceNum > 0
-                    ? `<div class="mt-1 inline-flex flex-col text-xs sm:text-sm font-black text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
-                        <span>${formatTL(priceNum)}</span>
-                        <span class="text-[9px] font-semibold text-amber-700">Son listelenen fiyat · stok dışı</span>
+                    ? `<div class="mt-1 w-full flex items-center gap-2 text-rose-950 bg-rose-50 border-2 border-rose-300 px-3 py-2.5 rounded-xl shadow-sm">
+                        <i class="fa-solid fa-triangle-exclamation text-lg text-rose-600 shrink-0"></i>
+                        <span class="flex flex-col">
+                          <strong class="text-base sm:text-lg font-black">${formatTL(priceNum)}</strong>
+                          <span class="text-[10px] sm:text-xs font-black uppercase tracking-wide text-rose-800">Son listelenen fiyat · ürün stok dışı</span>
+                        </span>
                        </div>`
                     : `<div class="mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
                         <i class="fa-solid fa-circle-xmark text-amber-500"></i> Fiyat Bilgisi Yok
