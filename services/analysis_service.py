@@ -18,7 +18,6 @@ def _json(text):
 
 def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=None):
     from google import genai
-    from google.genai import types
     if not api_key:
         raise RuntimeError('Sunucuda GEMINI_API_KEY tanımlı değil')
     prompt = f'''Türkiye'de "{product_name}" için sadece doğrudan ürün sayfası adaylarını keşfet.
@@ -26,15 +25,17 @@ N11 ve Teknosa dahil etme. Kategori, arama ve ana sayfa URL'si verme. Fiyat ve s
 Marka resmi sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, Vatan, Evkur, Taşpınar ve Yön AVM'yi ara.
 Sadece JSON döndür: {{"brand":"", "category":"", "modelOrCode":"", "candidates":[{{"merchant":"", "url":""}}]}}'''
     client = genai.Client(api_key=api_key)
-    contents = [prompt]
+    contents = [{"type": "text", "text": prompt}]
     if image_data and ',' in image_data:
         header, encoded = image_data.split(',', 1)
         mime = header.split(';', 1)[0].split(':', 1)[-1]
-        contents.append(types.Part.from_bytes(data=base64.b64decode(encoded), mime_type=mime))
-    response = client.models.generate_content(
-        model='gemini-2.5-flash', contents=contents,
-        config=types.GenerateContentConfig(tools=[types.Tool(google_search=types.GoogleSearch())], temperature=0))
-    discovery = _json(response.text)
+        # Validate the payload before sending it; Interactions expects base64 text.
+        base64.b64decode(encoded, validate=True)
+        contents.append({"type": "image", "data": encoded, "mime_type": mime})
+    interaction = client.interactions.create(
+        model='gemini-3.8-flash', input=contents,
+        tools=[{"type": "google_search"}])
+    discovery = _json(interaction.output_text)
     candidates = [c for c in discovery.get('candidates', []) if c.get('merchant') not in ('N11', 'Teknosa')]
     offers = OfferVerificationService().verify_offers(product_name, candidates, max_workers=4)
 
