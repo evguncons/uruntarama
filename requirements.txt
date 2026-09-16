@@ -1,6 +1,5 @@
 streamlit
 google-genai>=2.23.0
-google-generativeai
 pillow
 requests
 beautifulsoup4

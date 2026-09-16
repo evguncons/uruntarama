@@ -1,7 +1,7 @@
 """Server-side discovery and live verification orchestration."""
 import json
 import re
-import base64
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from services.verification_service import OfferVerificationService
 from services.models import StockStatus
@@ -10,33 +10,79 @@ from services.models import StockStatus
 PLATFORMS = ('Marka Resmi Mağazası', 'Akakçe', 'Cimri', 'Trendyol', 'Hepsiburada', 'Vatan Bilgisayar',
              'Evkur', 'Taşpınar', 'Yön AVM', 'Vivense', 'HYS AVM', 'Yiğit AVM', 'SenetSepet')
 
+DISCOVERY_TARGETS = (
+    ('Marka Resmi Mağazası', 'üreticinin Türkiye resmi sitesi'),
+    ('Akakçe', 'akakce.com'),
+    ('Cimri', 'cimri.com'),
+    ('Trendyol', 'trendyol.com'),
+    ('Hepsiburada', 'hepsiburada.com'),
+    ('Vatan Bilgisayar', 'vatanbilgisayar.com'),
+    ('Evkur', 'evkur.com.tr'),
+    ('Taşpınar', 'taspinar.com'),
+    ('Yön AVM', 'yonavm.com.tr'),
+)
+
 
 def _json(text):
     text = re.sub(r'^```(?:json)?|```$', '', text.strip(), flags=re.I).strip()
     return json.loads(text)
 
 
-def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=None):
+def _discover_one(api_key, product_name, merchant, target):
+    """Discover at most one direct product URL without sharing failures across stores."""
     from google import genai
+
+    prompt = f'''Google'da yalnızca bir kez arama yap.
+Ürün: "{product_name}"
+Hedef mağaza/site: {target}
+Bu mağazadaki tam olarak aynı ürüne ait doğrudan ürün detay sayfasını bul.
+Kategori, arama, ana sayfa, kampanya veya başka ürün URL'si verme.
+Doğrudan ve aynı ürün sayfası bulunamazsa url alanını boş bırak.
+Fiyat veya stok tahmini yapma. İkinci bir arama yapma.
+Sadece JSON döndür: {{"url":""}}'''
+    client = genai.Client(api_key=api_key)
+    try:
+        interaction = client.interactions.create(
+            model='gemini-3.8-flash', input=prompt,
+            tools=[{"type": "google_search"}])
+    except Exception as exc:
+        # The API specifically recommends retrying with the tool-limit error in
+        # the prompt. Keep the retry to one attempt so a store cannot loop.
+        if 'too many tool calls' not in str(exc).lower():
+            raise
+        interaction = client.interactions.create(
+            model='gemini-3.8-flash',
+            input=prompt + '\nÖnceki deneme araç çağrısı sınırını aştı. Yalnızca tek arama yap.',
+            tools=[{"type": "google_search"}])
+    result = _json(interaction.output_text)
+    url = str(result.get('url') or '').strip()
+    return {'merchant': merchant, 'url': url} if url.startswith(('http://', 'https://')) else None
+
+
+def _discover_candidates(api_key, product_name, max_workers=4):
+    candidates = []
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {
+            pool.submit(_discover_one, api_key, product_name, merchant, target): merchant
+            for merchant, target in DISCOVERY_TARGETS
+        }
+        for future in as_completed(futures):
+            try:
+                candidate = future.result()
+                if candidate:
+                    candidates.append(candidate)
+            except Exception:
+                # Discovery is deliberately isolated per merchant. Live URL and
+                # product checks below remain the source of truth.
+                continue
+    order = {merchant: index for index, (merchant, _) in enumerate(DISCOVERY_TARGETS)}
+    return sorted(candidates, key=lambda item: order.get(item['merchant'], len(order)))
+
+
+def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=None):
     if not api_key:
         raise RuntimeError('Sunucuda GEMINI_API_KEY tanımlı değil')
-    prompt = f'''Türkiye'de "{product_name}" için sadece doğrudan ürün sayfası adaylarını keşfet.
-N11 ve Teknosa dahil etme. Kategori, arama ve ana sayfa URL'si verme. Fiyat ve stok hakkında karar verme.
-Marka resmi sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, Vatan, Evkur, Taşpınar ve Yön AVM'yi ara.
-Sadece JSON döndür: {{"brand":"", "category":"", "modelOrCode":"", "candidates":[{{"merchant":"", "url":""}}]}}'''
-    client = genai.Client(api_key=api_key)
-    contents = [{"type": "text", "text": prompt}]
-    if image_data and ',' in image_data:
-        header, encoded = image_data.split(',', 1)
-        mime = header.split(';', 1)[0].split(':', 1)[-1]
-        # Validate the payload before sending it; Interactions expects base64 text.
-        base64.b64decode(encoded, validate=True)
-        contents.append({"type": "image", "data": encoded, "mime_type": mime})
-    interaction = client.interactions.create(
-        model='gemini-3.8-flash', input=contents,
-        tools=[{"type": "google_search"}])
-    discovery = _json(interaction.output_text)
-    candidates = [c for c in discovery.get('candidates', []) if c.get('merchant') not in ('N11', 'Teknosa')]
+    candidates = _discover_candidates(api_key, product_name)
     offers = OfferVerificationService().verify_offers(product_name, candidates, max_workers=4)
 
     def row(o):
@@ -72,8 +118,8 @@ Sadece JSON döndür: {{"brand":"", "category":"", "modelOrCode":"", "candidates
     cash = round(minimum * 1.02) if minimum else 0
     total = round(cash * 1.38) if cash else 0
     return {
-        'productName': product_name, 'brand': discovery.get('brand', ''), 'category': discovery.get('category', ''),
-        'modelOrCode': discovery.get('modelOrCode', ''),
+        'productName': product_name, 'brand': '', 'category': '',
+        'modelOrCode': product_name,
         'marketPrices': {'min': minimum, 'average': average, 'max': maximum, 'currency': 'TRY'},
         'competitorBenchmarks': benchmarks, 'senetliCompetitors': installment,
         'hedefPricing': {'cashRecommendedPrice': cash, 'installmentRecommendedPrice': total,
