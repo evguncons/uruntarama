@@ -132,7 +132,8 @@ def _inspect_product_page(api_key, product_name, candidate):
 Beklenen ürün: "{product_name}"
 Arama yapma. Başka URL kullanma. Sayfa okunamıyorsa found=false döndür.
 Fiyatı yalnızca ürünün güncel satış fiyatı olarak sayfada açıkça varsa yaz.
-"Gelince haber ver", "tükendi" veya satın alma düğmesi yoksa stok OUT_OF_STOCK olmalı ve price null olmalı.
+Yalnızca "Gelince haber ver", "tükendi", "stokta yok" gibi açık bir tükenme kanıtı varsa OUT_OF_STOCK yaz ve price null yap.
+Güncel satış fiyatı varsa ve açık tükenme kanıtı yoksa, satın alma düğmesi dinamik yüklenmese bile IN_STOCK yaz.
 Sadece JSON döndür:
 {{"found":false,"title":"","price":null,"stock":"UNKNOWN","seller":"","evidence":""}}
 stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabilir.'''
@@ -149,12 +150,20 @@ stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabili
     stock_name = str(data.get('stock') or 'UNKNOWN').upper()
     stock = StockStatus.__members__.get(stock_name, StockStatus.UNKNOWN)
     price = PriceNormalizer.parse(data.get('price'))
-    if stock in (StockStatus.OUT_OF_STOCK, StockStatus.VARIANT_OUT_OF_STOCK):
+    evidence = str(data.get('evidence') or '').strip()
+    evidence_lower = evidence.lower()
+    explicit_out = any(term in evidence_lower for term in (
+        'gelince haber ver', 'stokta yok', 'stok yok', 'tükendi', 'tükenmiş',
+        'satışa kapalı', 'temin edilemiyor', 'out of stock', 'sold out'))
+    if price and not explicit_out:
+        stock = StockStatus.IN_STOCK
+    elif explicit_out or stock in (StockStatus.OUT_OF_STOCK, StockStatus.VARIANT_OUT_OF_STOCK):
+        stock = StockStatus.OUT_OF_STOCK
         price = None
     return {
         'title': str(data['title']).strip(), 'price': price, 'stock': stock,
         'seller': str(data.get('seller') or '').strip(),
-        'evidence': str(data.get('evidence') or '').strip(), 'confidence': confidence,
+        'evidence': evidence, 'confidence': confidence,
     }
 
 
