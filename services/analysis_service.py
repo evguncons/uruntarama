@@ -172,7 +172,13 @@ stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabili
     explicit_out = any(term in evidence_lower for term in (
         'gelince haber ver', 'stokta yok', 'stok yok', 'tükendi', 'tükenmiş',
         'satışa kapalı', 'temin edilemiyor', 'out of stock', 'sold out'))
+    explicit_in = any(term in evidence_lower for term in (
+        'sepete ekle', 'satın al', 'stokta 10+', 'stokta var', 'son 1 ürün',
+        'son 2 ürün', 'son 3 ürün', 'son 4 ürün', 'son 5 ürün',
+        'adetten az stok', 'in stock'))
     if price and not explicit_out:
+        stock = StockStatus.IN_STOCK
+    elif explicit_in and not explicit_out:
         stock = StockStatus.IN_STOCK
     elif explicit_out or stock in (StockStatus.OUT_OF_STOCK, StockStatus.VARIANT_OUT_OF_STOCK):
         stock = StockStatus.OUT_OF_STOCK

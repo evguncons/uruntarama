@@ -1610,7 +1610,6 @@ NOTLAR:
         // Stok ve Fiyat Doğrulaması:
         // Eğer geçerli bir fiyat tespit edilmişse (>0), stok durumu belirsiz olsa bile fiyatı asla gizleme!
         const isExplicitlyOut = 
-          priceNum <= 0 ||
           notesStr.includes('stokta yok') || 
           notesStr.includes('stok yok') || 
           notesStr.includes('tükendi') || 
@@ -1620,7 +1619,7 @@ NOTLAR:
           notesStr.includes('satışı yok');
 
         // Eğer fiyat varsa ve açık bir tükenme ifadesi yoksa ürün mevcuttur
-        const isAvail = priceNum > 0 && (!isExplicitlyOut || comp.isAvailable === true);
+        const isAvail = comp.isAvailable === true && !isExplicitlyOut;
         const isUrlVerified = comp.url_verified === true && comp.source_url && (comp.url_status === 'VALID' || comp.url_status === 'REDIRECTED');
         const targetUrl = comp.source_url || '';
 
@@ -1657,9 +1656,9 @@ NOTLAR:
                <div class="sm:text-right flex flex-col justify-center">
                  <div class="flex items-center justify-between sm:block">
                    <span class="text-[10px] text-slate-400 font-bold uppercase sm:hidden">Satış Fiyatı:</span>
-                   <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-lg sm:text-xl block">${formatTL(priceNum)}</span>
+                   <span class="font-black ${isOfficialBrand ? 'text-indigo-950' : 'text-slate-900'} text-lg sm:text-xl block">${priceNum > 0 ? formatTL(priceNum) : 'Stokta · Fiyat okunamadı'}</span>
                  </div>
-                 ${priceDisclaimer}
+                 ${priceNum > 0 ? priceDisclaimer : ''}
                </div>
                <div class="flex flex-col items-end">
                  ${actionButtonHtml}
