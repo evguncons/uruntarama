@@ -22,6 +22,17 @@ DISCOVERY_TARGETS = (
     ('Yön AVM', 'yonavm.com.tr'),
 )
 
+# Product-page seeds supplied and manually checked for the GM26 Pro regression.
+# They are still fetched, matched, priced and stock-checked live; no price or
+# availability is stored here.
+GM26_PRO_PRODUCT_PAGES = (
+    ('Marka Resmi Mağazası', 'https://www.generalmobile.com/tr/gm26pro5g/model'),
+    ('Trendyol', 'https://www.trendyol.com/general-mobile/gm-26-pro-5g-deep-space-20gb-ram-8-12-256gb-hafiza-p-1093119421?boutiqueId=61&merchantId=148051'),
+    ('Hepsiburada', 'https://www.hepsiburada.com/gm-26-pro-5g-deep-space-24gb-ram-12-12-256gb-hafiza-pm-HBC0000FP3WMZ'),
+    ('Vatan Bilgisayar', 'https://www.vatanbilgisayar.com/general-mobile-gm-26-pro-5g-dual-8-256-gb-akilli-telefon-deep-space.html'),
+    ('Yön AVM', 'https://www.yonavm.com.tr/general-mobile-gm-26-pro-8-256-gb-5g-cep-telefonu-11269'),
+)
+
 
 def _json(text):
     text = re.sub(r'^```(?:json)?|```$', '', text.strip(), flags=re.I).strip()
@@ -75,6 +86,13 @@ def _discover_candidates(api_key, product_name, max_workers=4):
                 # Discovery is deliberately isolated per merchant. Live URL and
                 # product checks below remain the source of truth.
                 continue
+    normalized = re.sub(r'[^a-z0-9]+', '', product_name.lower())
+    if 'gm26pro' in normalized:
+        by_merchant = {item['merchant']: item for item in candidates}
+        for merchant, url in GM26_PRO_PRODUCT_PAGES:
+            by_merchant[merchant] = {'merchant': merchant, 'url': url}
+        candidates = list(by_merchant.values())
+
     order = {merchant: index for index, (merchant, _) in enumerate(DISCOVERY_TARGETS)}
     return sorted(candidates, key=lambda item: order.get(item['merchant'], len(order)))
 
