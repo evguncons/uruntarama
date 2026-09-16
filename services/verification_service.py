@@ -130,7 +130,7 @@ class OfferVerificationService:
         confidence, reasons = ProductMatcher.match_product(expected_product, scraped_title)
         offer.match_confidence = confidence
 
-        if confidence < 0.75:
+        if confidence < 0.75 and not candidate.get('trusted_direct'):
             # Model mismatch detected (e.g. S25 instead of S25 FE, or wrong capacity/accessory)
             offer.fetch_status = FetchStatus.PRODUCT_MISMATCH
             offer.url_status = UrlStatus.PRODUCT_MISMATCH

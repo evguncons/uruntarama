@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import logging
+import hashlib
 from services.analysis_service import analyze_product
 logger = logging.getLogger(__name__)
 
@@ -72,12 +73,14 @@ html_file_path = os.path.join(os.path.dirname(__file__), 'index.html')
 
 if os.path.exists(html_file_path):
     @st.cache_resource
-    def component_path():
+    def component_path(ui_version):
         folder = tempfile.mkdtemp(prefix='uruntarama-ui-')
         shutil.copy2(html_file_path, os.path.join(folder, 'index.html'))
         return folder
 
-    radar = components.declare_component('verified_product_radar', path=component_path())
+    with open(html_file_path, 'rb') as ui_file:
+        ui_version = hashlib.sha256(ui_file.read()).hexdigest()[:12]
+    radar = components.declare_component('verified_product_radar', path=component_path(ui_version))
     action = radar(analysis=st.session_state.get('analysis'), error=st.session_state.get('analysis_error'), key='radar', default=None)
     if action and action.get('requestId') != st.session_state.get('request_id'):
         st.session_state.request_id = action['requestId']
