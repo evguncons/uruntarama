@@ -4,7 +4,9 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from services.verification_service import OfferVerificationService
-from services.models import StockStatus
+from services.models import StockStatus, FetchStatus, UrlStatus
+from services.product_matcher import ProductMatcher
+from services.normalizers import PriceNormalizer
 
 
 PLATFORMS = ('Marka Resmi Mağazası', 'Akakçe', 'Cimri', 'Trendyol', 'Hepsiburada', 'Vatan Bilgisayar',
@@ -20,6 +22,10 @@ DISCOVERY_TARGETS = (
     ('Evkur', 'evkur.com.tr'),
     ('Taşpınar', 'taspinar.com'),
     ('Yön AVM', 'yonavm.com.tr'),
+    ('Vivense', 'vivense.com'),
+    ('HYS AVM', 'hysavm.com'),
+    ('Yiğit AVM', 'yigitavm.com.tr'),
+    ('SenetSepet', 'senetsepet.com'),
 )
 
 # Product-page seeds supplied and manually checked for the GM26 Pro regression.
@@ -97,11 +103,86 @@ def _discover_candidates(api_key, product_name, max_workers=4):
     return sorted(candidates, key=lambda item: order.get(item['merchant'], len(order)))
 
 
+def _inspect_product_page(api_key, product_name, candidate):
+    """Read the discovered product URL itself; never derive price from search snippets."""
+    from google import genai
+
+    url = candidate['url']
+    prompt = f'''Aşağıdaki TEK URL'yi URL Context ile aç ve yalnızca açılan sayfadaki veriyi kullan:
+{url}
+Beklenen ürün: "{product_name}"
+Arama yapma. Başka URL kullanma. Sayfa okunamıyorsa found=false döndür.
+Fiyatı yalnızca ürünün güncel satış fiyatı olarak sayfada açıkça varsa yaz.
+"Gelince haber ver", "tükendi" veya satın alma düğmesi yoksa stok OUT_OF_STOCK olmalı ve price null olmalı.
+Sadece JSON döndür:
+{{"found":false,"title":"","price":null,"stock":"UNKNOWN","seller":"","evidence":""}}
+stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabilir.'''
+    interaction = genai.Client(api_key=api_key).interactions.create(
+        model='gemini-3.8-flash', input=prompt,
+        tools=[{"type": "url_context"}])
+    data = _json(interaction.output_text)
+    if not data.get('found') or not str(data.get('title') or '').strip():
+        return None
+    confidence, _ = ProductMatcher.match_product(product_name, str(data['title']))
+    if confidence < 0.75:
+        return None
+    stock_name = str(data.get('stock') or 'UNKNOWN').upper()
+    stock = StockStatus.__members__.get(stock_name, StockStatus.UNKNOWN)
+    price = PriceNormalizer.parse(data.get('price'))
+    if stock in (StockStatus.OUT_OF_STOCK, StockStatus.VARIANT_OUT_OF_STOCK):
+        price = None
+    return {
+        'title': str(data['title']).strip(), 'price': price, 'stock': stock,
+        'seller': str(data.get('seller') or '').strip(),
+        'evidence': str(data.get('evidence') or '').strip(), 'confidence': confidence,
+    }
+
+
+def _enrich_from_product_pages(api_key, product_name, candidates, offers, max_workers=4):
+    """Use URL Context as a general fallback when store servers block cloud fetches."""
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {
+            pool.submit(_inspect_product_page, api_key, product_name, candidate): index
+            for index, candidate in enumerate(candidates)
+        }
+        for future in as_completed(futures):
+            index = futures[future]
+            try:
+                page = future.result()
+            except Exception:
+                continue
+            if not page:
+                continue
+            offer = offers[index]
+            offer.model = page['title']
+            offer.display_price = page['price']
+            offer.regular_price = page['price']
+            offer.stock_status = page['stock']
+            offer.seller = page['seller'] or offer.seller
+            offer.match_confidence = page['confidence']
+            offer.product_evidence = True
+            offer.verified = True
+            offer.url_verified = True
+            offer.source_url = candidate['url']
+            offer.final_url = candidate['url']
+            offer.url_status = UrlStatus.VALID
+            offer.fetch_status = FetchStatus.SUCCESS
+            offer.verification_method = 'URL_CONTEXT'
+            if page['stock'] in (StockStatus.OUT_OF_STOCK, StockStatus.VARIANT_OUT_OF_STOCK):
+                offer.notes = page['evidence'] or 'Ürün sayfasında stokta yok'
+            elif page['price']:
+                offer.notes = page['evidence'] or 'Fiyat ve stok doğrudan ürün sayfasından doğrulandı'
+            else:
+                offer.notes = page['evidence'] or 'Ürün sayfası doğrulandı; fiyat bulunamadı'
+    return offers
+
+
 def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=None):
     if not api_key:
         raise RuntimeError('Sunucuda GEMINI_API_KEY tanımlı değil')
     candidates = _discover_candidates(api_key, product_name)
     offers = OfferVerificationService().verify_offers(product_name, candidates, max_workers=4)
+    offers = _enrich_from_product_pages(api_key, product_name, candidates, offers, max_workers=4)
 
     def row(o):
         live_price = o.display_price if o.verified else None
