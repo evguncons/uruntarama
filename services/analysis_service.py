@@ -170,8 +170,8 @@ def _enrich_from_product_pages(api_key, product_name, candidates, offers, max_wo
             offer.product_evidence = True
             offer.verified = True
             offer.url_verified = True
-            offer.source_url = candidate['url']
-            offer.final_url = candidate['url']
+            offer.source_url = candidates[index]['url']
+            offer.final_url = candidates[index]['url']
             offer.url_status = UrlStatus.VALID
             offer.fetch_status = FetchStatus.SUCCESS
             offer.verification_method = 'URL_CONTEXT'
