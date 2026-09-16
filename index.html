@@ -1617,6 +1617,7 @@ NOTLAR:
         // Stok ve Fiyat Doğrulaması:
         // Eğer geçerli bir fiyat tespit edilmişse (>0), stok durumu belirsiz olsa bile fiyatı asla gizleme!
         const isExplicitlyOut = 
+          ['OUT_OF_STOCK', 'VARIANT_OUT_OF_STOCK'].includes(String(comp.stockStatus || '').toUpperCase()) ||
           notesStr.includes('stokta yok') || 
           notesStr.includes('stok yok') || 
           notesStr.includes('tükendi') || 
@@ -1686,8 +1687,8 @@ NOTLAR:
                    </div>
                  </div>`
               : `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
-                   <span class="inline-flex items-center justify-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">
-                     <i class="fa-solid fa-circle-xmark text-amber-500"></i> ${isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok'}
+                   <span class="inline-flex items-center justify-center gap-1 text-xs font-black ${isExplicitlyOut ? 'text-rose-800 bg-rose-50 border-rose-200' : 'text-amber-800 bg-amber-50 border-amber-200'} border px-3 py-2 rounded-xl">
+                     <i class="fa-solid ${isExplicitlyOut ? 'fa-circle-xmark text-rose-600' : 'fa-circle-question text-amber-600'}"></i> ${isExplicitlyOut ? (isOfficialBrand ? 'Resmi Sitede Stokta Yok' : 'Stokta / Listede Yok') : 'Fiyat / Stok Doğrulanamadı'}
                    </span>
                    <div class="flex flex-col items-end">
                      ${actionButtonHtml}
@@ -1775,21 +1776,18 @@ NOTLAR:
 
           // Kesin stokta yok / tükendi sinyalleri (bu sinyaller varsa KESİNLİKLE stokta yok kabul edilir, asla ezilemez!)
           const isExplicitlyOutOfStock = 
-            sc.isAvailable === false ||
+            ['OUT_OF_STOCK', 'VARIANT_OUT_OF_STOCK'].includes(String(sc.stockStatus || '').toUpperCase()) ||
             notesText.includes('gelince haber ver') ||
             notesText.includes('haber ver') ||
             notesText.includes('tükendi') ||
             notesText.includes('tükenmiş') ||
             notesText.includes('satışı yok') || 
             notesText.includes('satılmıyor') || 
-            notesText.includes('ulaşılamamıştır') || 
-            notesText.includes('ulaşılamadı') || 
             notesText.includes('istenmemektedir') ||
             notesText.includes('temin edilemiyor') || 
             notesText.includes('stokta yok') ||
             notesText.includes('stok yok') ||
-            notesText.includes('bulunamadı') ||
-            notesText.includes('bulunmuyor');
+            notesText.includes('ürün bulunmuyor');
 
           // Taşpınar mağazasında ürün listeleniyorsa
           const isTaspinarStoreAvail = isTaspinar && (notesText.includes('mağaza') || notesText.includes('senet') || notesText.includes('listeleniyor')) && !isExplicitlyOutOfStock;
@@ -1873,8 +1871,8 @@ NOTLAR:
                     <i class="fa-solid fa-store-slash text-slate-400 text-xs"></i>
                     <span>${name}</span>
                   </div>
-                  <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 shrink-0">
-                    Stokta / Listede Yok
+                  <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full ${isExplicitlyOutOfStock ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'} shrink-0">
+                    ${isExplicitlyOutOfStock ? 'Stokta / Listede Yok' : 'Durum Doğrulanamadı'}
                   </span>
                 </div>
                 <div>
@@ -1884,7 +1882,7 @@ NOTLAR:
                         <i class="fa-solid fa-triangle-exclamation text-lg text-rose-600 shrink-0"></i>
                         <span class="flex flex-col">
                           <strong class="text-base sm:text-lg font-black">${formatTL(priceNum)}</strong>
-                          <span class="text-[10px] sm:text-xs font-black uppercase tracking-wide text-rose-800">Son listelenen fiyat · ürün stok dışı</span>
+                          <span class="text-[10px] sm:text-xs font-black uppercase tracking-wide text-rose-800">${isExplicitlyOutOfStock ? 'Son listelenen fiyat · ürün stok dışı' : 'Son fiyat · güncel stok doğrulanamadı'}</span>
                         </span>
                        </div>`
                     : `<div class="mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
@@ -1896,7 +1894,7 @@ NOTLAR:
                   <span class="text-xs sm:text-sm font-bold text-slate-400">-</span>
                 </div>
                 <p class="text-[11px] text-amber-800/90 bg-amber-50/80 p-2 rounded-xl font-medium leading-tight border border-amber-100">
-                  <i class="fa-solid fa-circle-info mr-1"></i>${escapeHtml(sc.notes || 'Bu ürün rakip mağazada şu anda listelenmiyor veya stokta bulunmuyor.')}
+                  <i class="fa-solid fa-circle-info mr-1"></i>${escapeHtml(sc.notes || (isExplicitlyOutOfStock ? 'Ürün sayfasında açık stok dışı bilgisi bulundu.' : 'Mağazadaki fiyat ve stok durumu doğrulanamadı.'))}
                 </p>
               </div>
               ${sc.url_verified && sc.source_url
