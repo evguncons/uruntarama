@@ -403,7 +403,7 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({
                       Afiş & Reklam Sloganı:
                     </span>
                     <span className="text-xs font-bold text-fuchsia-900 italic block">
-                      "{camp.bannerSlogan}"
+                      &quot;{camp.bannerSlogan}&quot;
                     </span>
                   </div>
                 )}

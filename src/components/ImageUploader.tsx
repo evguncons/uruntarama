@@ -63,15 +63,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   ];
 
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (isLoading) {
-      setLoadingStep(0);
       interval = setInterval(() => {
         setLoadingStep((prev) => (prev + 1) % loadingMessages.length);
       }, 2500);
     }
-    return () => clearInterval(interval);
-  }, [isLoading]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isLoading, loadingMessages.length]);
 
   // Canlı kamera akışını başlat
   const startLiveCamera = async () => {
@@ -154,8 +155,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       setPreview(optimized.previewUrl);
       setBase64Data(optimized.base64);
       setMimeType(optimized.mimeType);
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Görsel işlenirken bir sorun oluştu.');
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Görsel işlenirken bir sorun oluştu.');
     }
   };
 

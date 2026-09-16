@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Header } from '@/components/Header';
 import { ImageUploader } from '@/components/ImageUploader';
 import { AnalysisResult } from '@/components/AnalysisResult';
@@ -10,7 +10,6 @@ import {
   Sparkles,
   TrendingUp,
   ShieldCheck,
-  Zap,
   ShoppingBag,
   CreditCard,
   Target,
@@ -24,23 +23,17 @@ export default function Home() {
   const [analysis, setAnalysis] = useState<ProductAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [history, setHistory] = useState<ProductAnalysis[]>([]);
-  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
-
-  // Tarama geçmişini yerel depolamadan yükle
-  useEffect(() => {
+  const [history, setHistory] = useState<ProductAnalysis[]>(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setHistory(parsed);
-        }
-      }
-    } catch (err) {
-      console.warn('Geçmiş yüklenemedi:', err);
+      const parsed: unknown = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed as ProductAnalysis[] : [];
+    } catch {
+      return [];
     }
-  }, []);
+  });
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
 
   // Geçmişi kaydet
   const saveToHistory = (newAnalysis: ProductAnalysis) => {
@@ -98,9 +91,9 @@ export default function Home() {
       saveToHistory(completedAnalysis);
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Analiz Hatası:', err);
-      setErrorMessage(err.message || 'Ürün analizi sırasında bir hata oluştu.');
+      setErrorMessage(err instanceof Error ? err.message : 'Ürün analizi sırasında bir hata oluştu.');
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +191,7 @@ export default function Home() {
 
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto font-medium">
                 Yeni bir ürün mü gördünüz? Fotoğrafını çekin veya yükleyin; yapay zeka Türkiye pazarındaki
-                fiyatları incelesin, <strong>Hedef AVM'ye özel elden senetli ve peşin</strong> satış stratejisini kurgulasın,
+                fiyatları incelesin, <strong>Hedef AVM&apos;ye özel elden senetli ve peşin</strong> satış stratejisini kurgulasın,
                 satılabilirlik puanı ve vitrin sloganı önersin.
               </p>
             </div>
@@ -242,7 +235,7 @@ export default function Home() {
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-slate-900 mb-1">
-                    "Satar mı?" Fizibilitesi
+                    &quot;Satar mı?&quot; Fizibilitesi
                   </h4>
                   <p className="text-xs text-slate-500 leading-relaxed font-medium">
                     0-100 Puan, pazar talebi, iade riski ve mağaza içi kampanya kurguları.

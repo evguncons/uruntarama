@@ -209,11 +209,11 @@ ${additionalNotes ? `Kullanıcıdan Ek Not: "${additionalNotes}"` : ''}`;
         currency: parsed.marketPrices?.currency || '₺'
       },
       competitorBenchmarks: Array.isArray(parsed.competitorBenchmarks)
-        ? parsed.competitorBenchmarks.map((c: any) => ({
-            platform: c.platform || 'Pazaryeri',
+        ? parsed.competitorBenchmarks.map((c: Record<string, unknown>) => ({
+            platform: String(c.platform || 'Pazaryeri'),
             estimatedPrice: Number(c.estimatedPrice) || 0,
-            currency: c.currency || '₺',
-            notes: c.notes || ''
+            currency: String(c.currency || '₺'),
+            notes: String(c.notes || '')
           }))
         : [],
       hedefPricing: {
@@ -243,18 +243,18 @@ ${additionalNotes ? `Kullanıcıdan Ek Not: "${additionalNotes}"` : ''}`;
         seasonalTrend: parsed.feasibility?.seasonalTrend || 'Standart'
       },
       campaigns: Array.isArray(parsed.campaigns)
-        ? parsed.campaigns.map((camp: any) => ({
-            title: camp.title || 'Kampanya Fırsatı',
-            campaignType: camp.campaignType || 'Özel Fırsat',
-            description: camp.description || '',
-            bannerSlogan: camp.bannerSlogan || ''
+        ? parsed.campaigns.map((camp: Record<string, unknown>) => ({
+            title: String(camp.title || 'Kampanya Fırsatı'),
+            campaignType: String(camp.campaignType || 'Özel Fırsat'),
+            description: String(camp.description || ''),
+            bannerSlogan: String(camp.bannerSlogan || '')
           }))
         : [],
       userCost: userCost ? Number(userCost) : undefined
     };
 
     return result;
-  } catch (parseError: any) {
+  } catch (parseError: unknown) {
     console.error('Gemini JSON Parse Error:', parseError, 'Raw response:', responseText);
     throw new Error('Gemini API analiz sonucu işlenemedi. Lütfen tekrar deneyiniz.');
   }

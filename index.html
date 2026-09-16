@@ -637,6 +637,7 @@
     // Durum Değişkenleri
     let currentImageBase64 = null;
     let currentAnalysis = null;
+    let pendingProductName = '';
 
     // DOM Elemanları
     const productNameInput = document.getElementById('productName');
@@ -1272,6 +1273,12 @@ NOTLAR:
       return (num || 0).toLocaleString('tr-TR') + ' ₺';
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      })[char]);
+    }
+
     // Bilinen resmi marka alan adları ve doğrudan mağaza içi arama endpoint'leri
     const BRAND_DOMAINS = {
       'general mobile': { domain: 'generalmobile.com', search: (q) => `https://www.generalmobile.com/tr/search?q=${encodeURIComponent(q)}` },
@@ -1693,15 +1700,15 @@ NOTLAR:
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               ${isOfficialBrand ? '<i class="fa-solid fa-crown text-indigo-600 text-xs shrink-0"></i>' : ''}
-              <strong class="${isOfficialBrand ? 'text-indigo-950 font-black' : 'text-slate-900 font-black'} text-sm sm:text-base block truncate">${comp.platform}</strong>
+              <strong class="${isOfficialBrand ? 'text-indigo-950 font-black' : 'text-slate-900 font-black'} text-sm sm:text-base block truncate">${escapeHtml(comp.platform)}</strong>
               ${isUrlVerified 
-                ? `<a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-[#c81373] transition-colors p-0.5" title="${comp.platform} üzerinde ürünü aç">
+                ? `<a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 hover:text-[#c81373] transition-colors p-0.5" title="${escapeHtml(comp.platform)} üzerinde ürünü aç">
                     <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                    </a>` 
                 : `<span class="text-xs text-slate-300 p-0.5" title="Doğrulanmış ürün linki yok"><i class="fa-solid fa-link-slash text-[10px]"></i></span>`
               }
             </div>
-            <span class="text-xs text-slate-500 font-semibold block line-clamp-2 mt-0.5">${comp.notes || (isAvail ? '' : (isOfficialBrand ? 'Markanın resmi online mağazasında bu ürün satılmıyor veya stokta yok' : 'Bu platformda ürün listelenmiyor veya stokta yok'))}</span>
+            <span class="text-xs text-slate-500 font-semibold block line-clamp-2 mt-0.5">${escapeHtml(comp.notes || (isAvail ? '' : (isOfficialBrand ? 'Markanın resmi online mağazasında bu ürün satılmıyor veya stokta yok' : 'Bu platformda ürün listelenmiyor veya stokta yok')))}</span>
           </div>
           ${priceBadge}
         `;
@@ -1843,7 +1850,7 @@ NOTLAR:
                   <span class="text-xs text-slate-600 font-semibold">Aylık Taksit (15 Ay):</span>
                   <span class="text-sm sm:text-base font-black text-[#c81373]">${formatTL(mon)} /ay</span>
                 </div>
-                <p class="text-[11px] text-slate-500 font-medium leading-tight">${sc.notes || '15 ay elden senetli taksit'}</p>
+                <p class="text-[11px] text-slate-500 font-medium leading-tight">${escapeHtml(sc.notes || '15 ay elden senetli taksit')}</p>
               </div>
               ${sc.url_verified && sc.source_url
                 ? `<a href="${sc.source_url}" target="_blank" rel="noopener noreferrer" class="w-full mt-3 py-2.5 px-3 rounded-xl bg-white hover:bg-pink-50 text-slate-900 hover:text-[#c81373] border-2 border-slate-200 hover:border-pink-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all shadow-2xs group cursor-pointer">
@@ -1889,7 +1896,7 @@ NOTLAR:
                   <span class="text-xs sm:text-sm font-bold text-slate-400">-</span>
                 </div>
                 <p class="text-[11px] text-amber-800/90 bg-amber-50/80 p-2 rounded-xl font-medium leading-tight border border-amber-100">
-                  <i class="fa-solid fa-circle-info mr-1"></i>${sc.notes || 'Bu ürün rakip mağazada şu anda listelenmiyor veya stokta bulunmuyor.'}
+                  <i class="fa-solid fa-circle-info mr-1"></i>${escapeHtml(sc.notes || 'Bu ürün rakip mağazada şu anda listelenmiyor veya stokta bulunmuyor.')}
                 </p>
               </div>
               ${sc.url_verified && sc.source_url
@@ -1922,7 +1929,7 @@ NOTLAR:
       (f.reasonsToSell || []).forEach(r => {
         const d = document.createElement('div');
         d.className = 'p-3 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs sm:text-base font-bold text-emerald-950 flex items-start gap-2.5 break-words';
-        d.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mt-1 shrink-0"></i> <span>${r}</span>`;
+        d.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mt-1 shrink-0"></i> <span>${escapeHtml(r)}</span>`;
         reasonsList.appendChild(d);
       });
 
@@ -1932,7 +1939,7 @@ NOTLAR:
       (f.risksAndWatchouts || []).forEach(r => {
         const d = document.createElement('div');
         d.className = 'p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs sm:text-base font-bold text-amber-950 flex items-start gap-2.5 break-words';
-        d.innerHTML = `<i class="fa-solid fa-exclamation text-amber-600 mt-1 shrink-0"></i> <span>${r}</span>`;
+        d.innerHTML = `<i class="fa-solid fa-exclamation text-amber-600 mt-1 shrink-0"></i> <span>${escapeHtml(r)}</span>`;
         risksList.appendChild(d);
       });
 
@@ -1945,13 +1952,13 @@ NOTLAR:
         d.innerHTML = `
           <div class="flex items-center justify-between flex-wrap gap-2">
             <span class="text-[11px] sm:text-xs font-black uppercase tracking-wider bg-pink-100 text-[#c81373] px-2.5 py-0.5 rounded-full">
-              ${c.campaignType || 'Kampanya'}
+              ${escapeHtml(c.campaignType || 'Kampanya')}
             </span>
-            <span class="text-xs sm:text-base font-black text-slate-900">${c.title}</span>
+            <span class="text-xs sm:text-base font-black text-slate-900">${escapeHtml(c.title)}</span>
           </div>
-          <p class="text-xs sm:text-sm text-slate-600 font-medium">${c.description}</p>
+          <p class="text-xs sm:text-sm text-slate-600 font-medium">${escapeHtml(c.description)}</p>
           <div class="p-3 rounded-xl bg-white border-2 border-pink-200 text-xs sm:text-base font-black text-[#c81373] italic shadow-2xs">
-            📢 "${c.bannerSlogan}"
+            📢 "${escapeHtml(c.bannerSlogan)}"
           </div>
         `;
         campList.appendChild(d);
@@ -2112,8 +2119,8 @@ ${f.headline || '-'}
         div.className = 'p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-pink-300 transition-all flex items-center justify-between cursor-pointer gap-2';
         div.innerHTML = `
           <div class="min-w-0">
-            <strong class="text-slate-900 font-black text-sm block truncate">${h.productName || 'Ürün'}</strong>
-            <span class="text-xs text-slate-500 font-semibold">${h._timestamp || ''} • Skor: ${h.feasibility?.score || '-'}/100</span>
+            <strong class="text-slate-900 font-black text-sm block truncate">${escapeHtml(h.productName || 'Ürün')}</strong>
+            <span class="text-xs text-slate-500 font-semibold">${escapeHtml(h._timestamp || '')} • Skor: ${escapeHtml(h.feasibility?.score || '-')}/100</span>
           </div>
           <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-pink-100 text-[#c81373] shrink-0">Gör</span>
         `;
@@ -2149,10 +2156,15 @@ ${f.headline || '-'}
       const analysis = event.data.args?.analysis;
       const serverError = event.data.args?.error;
       if (serverError) {
+        pendingProductName = '';
         showError(serverError); loadingBox.classList.add('hidden');
         document.body.style.overflow = ''; startAnalyzeBtn.disabled = false;
       }
       if (analysis) {
+        const expected = pendingProductName.toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+        const received = String(analysis.productName || analysis.modelOrCode || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+        if (expected && received && expected !== received) return;
+        pendingProductName = '';
         currentAnalysis = analysis;
         renderAnalysis(analysis);
         loadingBox.classList.add('hidden');
@@ -2166,6 +2178,7 @@ ${f.headline || '-'}
       event.stopImmediatePropagation();
       const productName = productNameInput.value.trim();
       if (!productName) { showError('Lütfen ürünün marka ve tam modelini giriniz.'); return; }
+      pendingProductName = productName;
       hideError(); loadingBox.classList.remove('hidden'); resultContainer.classList.add('hidden');
       startAnalyzeBtn.disabled = true; document.body.style.overflow = 'hidden';
       window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:setComponentValue', dataType:'json', value:{

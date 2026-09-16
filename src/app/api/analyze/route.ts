@@ -85,10 +85,10 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Analyze API Error:', error);
 
-    const errorMessage = error?.message || 'Bilinmeyen bir hata oluştu.';
+    const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.';
 
     if (errorMessage.includes('API_KEY')) {
       return NextResponse.json(
