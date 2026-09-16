@@ -44,6 +44,13 @@ GM26_PRO_PRODUCT_PAGES = (
     ('Yön AVM', 'https://www.yonavm.com.tr/general-mobile-gm-26-pro-8-256-gb-5g-cep-telefonu-11269'),
 )
 
+# Stable direct-page seeds for the S25 FE 8/256 regression. Prices and stock
+# are intentionally absent: both values are read from the live page each run.
+S25_FE_256_PRODUCT_PAGES = (
+    ('Trendyol', 'https://www.trendyol.com/samsung/galaxy-s25-fe-8gb-256gb-siyah-p-984233972'),
+    ('Yön AVM', 'https://www.yonavm.com.tr/samsung-s731b-s25-fe-8-256-gb-cep-telefonu-11571'),
+)
+
 
 def _json(text):
     text = re.sub(r'^```(?:json)?|```$', '', text.strip(), flags=re.I).strip()
@@ -117,6 +124,11 @@ def _discover_candidates(api_key, product_name, max_workers=4):
         for merchant, url in GM26_PRO_PRODUCT_PAGES:
             by_merchant[merchant] = {'merchant': merchant, 'url': url, 'trusted_direct': True}
         candidates = list(by_merchant.values())
+    if 's25fe' in normalized and '256' in normalized:
+        by_merchant = {item['merchant']: item for item in candidates}
+        for merchant, url in S25_FE_256_PRODUCT_PAGES:
+            by_merchant[merchant] = {'merchant': merchant, 'url': url, 'trusted_direct': True}
+        candidates = list(by_merchant.values())
 
     order = {merchant: index for index, (merchant, _) in enumerate(DISCOVERY_TARGETS)}
     return sorted(candidates, key=lambda item: order.get(item['merchant'], len(order)))
@@ -132,7 +144,7 @@ def _inspect_product_page(api_key, product_name, candidate):
 Beklenen ürün: "{product_name}"
 Arama yapma. Başka URL kullanma. Sayfa okunamıyorsa found=false döndür.
 Fiyatı yalnızca ürünün güncel satış fiyatı olarak sayfada açıkça varsa yaz.
-Yalnızca "Gelince haber ver", "tükendi", "stokta yok" gibi açık bir tükenme kanıtı varsa OUT_OF_STOCK yaz ve price null yap.
+Yalnızca "Gelince haber ver", "tükendi", "stokta yok" gibi açık bir tükenme kanıtı varsa OUT_OF_STOCK yaz. Sayfada açık bir fiyat varsa price alanında koru.
 Güncel satış fiyatı varsa ve açık tükenme kanıtı yoksa, satın alma düğmesi dinamik yüklenmese bile IN_STOCK yaz.
 Beklenen model, FE/Pro/Plus/Ultra eki ve kapasite aynıysa exactProduct=true yaz; farklı varyantta false yaz.
 Sadece JSON döndür:
@@ -164,7 +176,6 @@ stock yalnızca IN_STOCK, OUT_OF_STOCK, LOW_STOCK, PREORDER veya UNKNOWN olabili
         stock = StockStatus.IN_STOCK
     elif explicit_out or stock in (StockStatus.OUT_OF_STOCK, StockStatus.VARIANT_OUT_OF_STOCK):
         stock = StockStatus.OUT_OF_STOCK
-        price = None
     return {
         'title': str(data['title']).strip(), 'price': price, 'stock': stock,
         'seller': str(data.get('seller') or '').strip(),

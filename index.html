@@ -1859,7 +1859,7 @@ NOTLAR:
               }
             `;
           } else {
-            // Stokta / Listede Yok Kartı - Kesinlikle uydurma fiyat yazılmaz!
+            // Stok dışı ürünlerde yalnızca sayfada doğrulanan son fiyat gösterilir.
             card.className = 'p-4 sm:p-5 rounded-2xl bg-slate-50/70 border-2 border-dashed border-slate-300 transition-all space-y-3 flex flex-col justify-between';
             card.innerHTML = `
               <div class="space-y-3">
@@ -1874,9 +1874,14 @@ NOTLAR:
                 </div>
                 <div>
                   <span class="text-[11px] text-slate-400 font-bold block uppercase tracking-wide">15 Ay Senetli Liste</span>
-                  <div class="mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
-                    <i class="fa-solid fa-circle-xmark text-amber-500"></i> Fiyat Bilgisi Yok
-                  </div>
+                  ${priceNum > 0
+                    ? `<div class="mt-1 inline-flex flex-col text-xs sm:text-sm font-black text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
+                        <span>${formatTL(priceNum)}</span>
+                        <span class="text-[9px] font-semibold text-amber-700">Son listelenen fiyat · stok dışı</span>
+                       </div>`
+                    : `<div class="mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-xl">
+                        <i class="fa-solid fa-circle-xmark text-amber-500"></i> Fiyat Bilgisi Yok
+                       </div>`}
                 </div>
                 <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between">
                   <span class="text-xs text-slate-400 font-medium">Aylık Taksit:</span>

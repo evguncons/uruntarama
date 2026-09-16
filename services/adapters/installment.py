@@ -41,6 +41,17 @@ class YonavmAdapter(BaseAdapter):
         )
         offer.model = soup.h1.get_text().strip() if soup.h1 else ""
 
+        # Keep the last price visibly listed on the product page even when the
+        # selected variant is sold out. Availability remains OUT_OF_STOCK, so
+        # this value is not included in active market-price calculations.
+        price_elem = soup.select_one('.spanFiyat') or soup.select_one('.product-price')
+        if price_elem:
+            p = PriceNormalizer.parse(price_elem.get_text())
+            if p:
+                offer.regular_price = p
+                offer.display_price = p
+                offer.product_evidence = bool(offer.model)
+
         # Strictly check "Gelince Haber Ver" button
         notice = soup.select_one('#aGelinceHaberVer')
         notice_visible = notice and not notice.has_attr('hidden') and notice.get('aria-hidden') != 'true' and 'display:none' not in notice.get('style', '').replace(' ', '').lower()
@@ -50,13 +61,6 @@ class YonavmAdapter(BaseAdapter):
             offer.product_evidence = bool(offer.model)
             return offer
 
-        price_elem = soup.select_one('.spanFiyat') or soup.select_one('.product-price')
-        if price_elem:
-            p = PriceNormalizer.parse(price_elem.get_text())
-            if p:
-                offer.regular_price = p
-                offer.display_price = p
-                offer.product_evidence = bool(offer.model)
         offer.stock_status = StockNormalizer.normalize(None, soup.get_text()[:3000])
         return offer
 
