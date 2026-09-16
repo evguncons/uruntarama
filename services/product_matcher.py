@@ -33,7 +33,7 @@ class ProductMatcher:
         raw_matches = re.findall(r'([a-z]+)[\s-]*(\d+)([a-z0-9]*)', normalize_text(text))
         codes = set()
         for prefix, num, suffix in raw_matches:
-            if prefix not in ('pro', 'plus', 'ultra', 'fe', 'max', 'lite', 'ram', 'gb', 'tb', 'kg', 'mah', 'watt'):
+            if prefix not in ('pro', 'plus', 'ultra', 'fe', 'max', 'lite', 'ram', 'gb', 'tb', 'kg', 'mah', 'watt', 'g'):
                 codes.add(compact(prefix + num + suffix))
         return codes
 
@@ -62,8 +62,11 @@ class ProductMatcher:
 
         # 1. Critical Suffix Check (Pro, Plus, Ultra, FE, Max, Lite)
         for suffix in cls.CRITICAL_SUFFIXES:
-            q_has = bool(re.search(r'\b' + suffix + r'\b', q_norm))
-            t_has = bool(re.search(r'\b' + suffix + r'\b', t_norm))
+            # Store titles often concatenate the suffix into a model code
+            # (GM26PRO, S25FE). Treat that as the same suffix as "GM 26 Pro".
+            suffix_pattern = r'(?:\b' + suffix + r'\b|[a-z]+\d+' + suffix + r'\b)'
+            q_has = bool(re.search(suffix_pattern, q_norm))
+            t_has = bool(re.search(suffix_pattern, t_norm))
             if q_has != t_has:
                 return False, 0.30, f"Model eki uyuşmuyor: '{suffix}' beklendi/bulundu farkı"
 
@@ -81,7 +84,13 @@ class ProductMatcher:
 
         if expected_codes:
             # All primary model codes from query must be in detected title
-            if not all(c in detected_codes for c in expected_codes):
+            def code_matches(expected_code):
+                return any(
+                    detected == expected_code or
+                    any(detected == expected_code + suffix for suffix in cls.CRITICAL_SUFFIXES)
+                    for detected in detected_codes
+                )
+            if not all(code_matches(c) for c in expected_codes):
                 return False, 0.50, f"Model kodu uyuşmuyor: Beklenen {expected_codes}, Bulunan {detected_codes}"
 
         # 4. Token Overlap Scoring

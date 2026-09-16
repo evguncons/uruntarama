@@ -90,7 +90,7 @@ def _discover_candidates(api_key, product_name, max_workers=4):
     if 'gm26pro' in normalized:
         by_merchant = {item['merchant']: item for item in candidates}
         for merchant, url in GM26_PRO_PRODUCT_PAGES:
-            by_merchant[merchant] = {'merchant': merchant, 'url': url}
+            by_merchant[merchant] = {'merchant': merchant, 'url': url, 'trusted_direct': True}
         candidates = list(by_merchant.values())
 
     order = {merchant: index for index, (merchant, _) in enumerate(DISCOVERY_TARGETS)}

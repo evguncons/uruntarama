@@ -47,6 +47,10 @@ class OfferVerificationService:
         # 1. Check cache
         cached = self.cache.get(raw_url, expected_product)
         if cached:
+            if candidate.get('trusted_direct') and not cached.source_url:
+                cached.source_url = raw_url
+                cached.url_verified = True
+                cached.url_status = UrlStatus.VALID
             return cached
 
         # 2. Live fetch
@@ -81,6 +85,12 @@ class OfferVerificationService:
                 verified=False,
                 notes=f'Canlı teyit yapılamadı ({status.value}); keşif fiyatı gösterilmedi'
             )
+            # A curated direct product page remains useful to the user when the
+            # merchant blocks server-side fetching. Price and stock stay hidden.
+            if candidate.get('trusted_direct'):
+                offer.source_url = raw_url
+                offer.url_verified = True
+                offer.url_status = UrlStatus.VALID
             # Short cache for failed fetches so we don't bombard
             self.cache.set(raw_url, offer, product_context=expected_product)
             return offer
