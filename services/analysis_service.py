@@ -2,6 +2,8 @@
 import json
 import re
 import logging
+from urllib.parse import urlsplit
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from services.verification_service import OfferVerificationService
@@ -76,6 +78,19 @@ Sadece JSON döndür: {{"url":""}}'''
             tools=[{"type": "google_search"}])
     result = _json(interaction.output_text)
     url = str(result.get('url') or '').strip()
+    if (urlsplit(url).hostname or '').lower() == 'vertexaisearch.cloud.google.com':
+        try:
+            response = requests.get(
+                url, allow_redirects=True, stream=True, timeout=(4, 8),
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36'})
+            url = response.url
+            response.close()
+        except requests.RequestException:
+            return None
+    expected_domain = target if '.' in target and ' ' not in target else ''
+    actual_host = (urlsplit(url).hostname or '').lower().removeprefix('www.')
+    if expected_domain and actual_host != expected_domain.removeprefix('www.'):
+        return None
     return {'merchant': merchant, 'url': url} if url.startswith(('http://', 'https://')) else None
 
 
