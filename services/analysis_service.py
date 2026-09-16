@@ -1,12 +1,15 @@
 """Server-side discovery and live verification orchestration."""
 import json
 import re
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from services.verification_service import OfferVerificationService
 from services.models import StockStatus, FetchStatus, UrlStatus
 from services.product_matcher import ProductMatcher
 from services.normalizers import PriceNormalizer
+
+logger = logging.getLogger(__name__)
 
 
 PLATFORMS = ('Marka Resmi Mağazası', 'Akakçe', 'Cimri', 'Trendyol', 'Hepsiburada', 'Vatan Bilgisayar',
@@ -88,9 +91,10 @@ def _discover_candidates(api_key, product_name, max_workers=4):
                 candidate = future.result()
                 if candidate:
                     candidates.append(candidate)
-            except Exception:
+            except Exception as exc:
                 # Discovery is deliberately isolated per merchant. Live URL and
                 # product checks below remain the source of truth.
+                logger.warning('Discovery failed for %s: %s', futures[future], exc)
                 continue
     normalized = re.sub(r'[^a-z0-9]+', '', product_name.lower())
     if 'gm26pro' in normalized:
@@ -149,9 +153,11 @@ def _enrich_from_product_pages(api_key, product_name, candidates, offers, max_wo
             index = futures[future]
             try:
                 page = future.result()
-            except Exception:
+            except Exception as exc:
+                logger.warning('URL Context failed for %s: %s', candidates[index].get('merchant'), exc)
                 continue
             if not page:
+                logger.warning('URL Context returned no matching page for %s', candidates[index].get('merchant'))
                 continue
             offer = offers[index]
             offer.model = page['title']
