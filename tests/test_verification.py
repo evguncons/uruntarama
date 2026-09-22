@@ -229,6 +229,20 @@ class TestOfferVerification(unittest.TestCase):
 
         # Test verification preserves direct source_url
         candidate = {"merchant": "Trendyol", "url": direct_url, "price": 40000.0}
+        self.assertEqual(offer.price_condition, "Sepette İndirimli")
+
+    def test_10_source_url_is_direct_product_page_not_search(self):
+        """10. Ensure source_url leads to direct product page and search URLs are detected."""
+        direct_url = "https://www.trendyol.com/samsung/galaxy-s25-p-10293847"
+        search_url = "https://www.trendyol.com/sr?q=Samsung%20Galaxy%20S25"
+
+        # Direct product URLs are recognized
+        self.assertTrue(UrlNormalizer.is_product_url(direct_url))
+        # Search queries are recognized as NOT direct product pages
+        self.assertFalse(UrlNormalizer.is_product_url(search_url))
+
+        # Test verification preserves direct source_url
+        candidate = {"merchant": "Trendyol", "url": direct_url, "price": 40000.0}
         self.mock_fetcher.fetch.return_value = {
             "status": FetchStatus.SUCCESS,
             "final_url": direct_url,
@@ -236,6 +250,45 @@ class TestOfferVerification(unittest.TestCase):
         }
         offer = self.service.verify_single_offer("Samsung Galaxy S25", candidate)
         self.assertEqual(offer.source_url, '')  # A title alone is insufficient product-page evidence.
+
+    def test_11_model_number_and_short_code_matching(self):
+        """11. Short model queries like 'philips 5547', 'dyson v15', 'ep5547' match their full product names."""
+        # Philips 5547 matches Philips EP5547/90 LatteGo
+        score, _ = ProductMatcher.match_product(
+            "philips 5547",
+            "Philips EP5547/90 5500 Serisi LatteGo Tam Otomatik Espresso Makinesi"
+        )
+        self.assertGreaterEqual(score, 0.75)
+
+        # Dyson V15 matches Dyson V15 Detect Absolute
+        score_dyson, _ = ProductMatcher.match_product(
+            "dyson v15",
+            "Dyson V15 Detect Absolute Kablosuz Dikey Süpürge"
+        )
+        self.assertGreaterEqual(score_dyson, 0.75)
+
+        # Standalone model code ep5547
+        score_ep, _ = ProductMatcher.match_product(
+            "ep5547",
+            "Philips EP5547/90 Espresso Makinesi"
+        )
+        self.assertGreaterEqual(score_ep, 0.75)
+
+    def test_12_url_normalizer_rejects_category_and_placeholder_urls(self):
+        """12. Category pages (-c-56) and placeholder URLs are rejected, while product slugs are accepted."""
+        # Category URLs must be rejected
+        self.assertFalse(UrlNormalizer.is_product_url("https://taspinar.com/cep-telefonu-c-56"))
+        self.assertFalse(UrlNormalizer.is_product_url("https://www.hepsiburada.com/cep-telefonlari-c-2147483642"))
+        self.assertFalse(UrlNormalizer.is_product_url("https://www.trendyol.com/cep-telefonu-x-c103498"))
+        
+        # Placeholder dummy URLs must be rejected
+        self.assertFalse(UrlNormalizer.is_product_url("https://www.trendyol.com/samsung/s25-p-XXXXXXXX"))
+        self.assertFalse(UrlNormalizer.is_product_url("https://www.hepsiburada.com/urun-p-123456789"))
+
+        # Real product slugs must be accepted
+        self.assertTrue(UrlNormalizer.is_product_url("https://taspinar.com/philips-ep5547-tam-otomatik-espresso-makinesi"))
+        self.assertTrue(UrlNormalizer.is_product_url("https://www.evkur.com.tr/philips-ep5547-90-tam-otomatik-espresso-makinesi"))
+        self.assertTrue(UrlNormalizer.is_product_url("https://www.philips.com.tr/c-p/EP5547_90/5500-serisi-tam-otomatik-espresso-makinesi"))
 
 if __name__ == "__main__":
     unittest.main()

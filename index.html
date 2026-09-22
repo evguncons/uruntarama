@@ -833,41 +833,46 @@
 
       try {
         // AŞAMA 1: Canlı Google Arama Taranması (Marka Resmi Sitesi + Pazaryerleri + Vatan Bilgisayar + Senetli Rakipler)
-        loadingStatusText.textContent = '1. Aşama: Marka Resmi Sitesi, Akakçe, Cimri, Trendyol, Hepsiburada, Vatan Bilgisayar taranıyor...';
-        loadingProgressBar.style.width = '45%';
+        loadingStatusText.textContent = 'Türkiye e-ticaret ve perakende piyasasında canlı fiyat ve ürün araştırması yap.
+Kullanıcının Girdiği Arama / Kod: "${productName}" (Kısa Kod/Model: "${shortName}")
 
-        // Model adından arama optimizasyonu için temiz kısa isim üret (aksesuar tuzağını önler, doğrudan ürünü bulur)
-        const shortName = productName.replace(/\s+(5g|128gb|256gb|512gb|1tb|\d+gb|\d+\s*gb|ram|siyah|beyaz|gold|altın|gri|mavi|yeşil).*$/i, '').trim() || productName;
+ÖNEMLİ KOD VE MODEL ÇÖZÜMLEME KURALI:
+Kullanıcı yalnızca bir marka ve model numarası/kodu veya kısaltma (örn: "philips 5547", "dyson v15", "s24 fe", "arçelik 9100", "ep5547", "roborock s8") girmiş olabilir.
+Google Search aracıyla ÖNCE bu kodun/numaranın Türkiye pazarındaki karşılığını araştırarak tam resmi ürün adını, serisini ve model kodunu (Örn: "Philips EP5547/90 5500 Serisi LatteGo Tam Otomatik Espresso Makinesi") tespit et.
+Raporunun en başına ZORUNLU olarak şu satırları yaz:
+TESPİT EDİLEN TAM ÜRÜN: [Marka, Model Kodu ve Tam Ürün Adı]
+KATEGORİ: [Kategori Adı]
+MODEL KODU: [Resmi Model Kodu]
 
-        const searchPrompt = `Türkiye e-ticaret ve perakende piyasasında canlı fiyat araştırması yap.
-Aranan Ürün: "${productName}" (Model: "${shortName}")
-
-Google Search aracıyla şu platformların DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ (-p- veya doğrudan ürün slug'ı olan linkler), güncel TL satış fiyatlarını ve stok durumlarını ara:
-- ${shortName} Marka resmi online satış sitesi doğrudan ürün sayfası linki (resmi sitede doğrudan bu ürünün sayfası)
-- ${shortName} hepsiburada doğrudan ürün sayfası linki (-p- veya -pm- içeren link, -c- KATEGORİ ASLA OLMASIN)
-- ${shortName} trendyol doğrudan ürün sayfası linki (-p- içeren link, /sr? ARAMA VEYA KATEGORİ ASLA OLMASIN)
-- ${shortName} vatan bilgisayar doğrudan ürün sayfası linki (.html ile biten doğrudan ürün linki)
-- ${shortName} taspinar.com doğrudan ürün sayfası linki (-p- içeren link, -c- KATEGORİ LİNKİ ASLA OLMASIN)
-- ${shortName} yonavm.com.tr doğrudan ürün sayfası linki
-- ${shortName} evkur.com.tr doğrudan ürün sayfası linki
-- ${shortName} akakce doğrudan ürün sayfası linki
-- ${shortName} cimri doğrudan ürün sayfası linki
+Ardından Google Search aracıyla bu tespit edilen tam ürün ve model kodu için şu platformların DOĞRUDAN ÜRÜN SAYFASI LİNKLERİNİ (-p- veya doğrudan ürün slug'ı olan linkler), güncel TL satış fiyatlarını ve stok durumlarını ara:
+- Marka resmi online satış sitesi doğrudan ürün sayfası linki (resmi sitede doğrudan bu ürünün sayfası)
+- Akakçe doğrudan ürün sayfası linki
+- Cimri doğrudan ürün sayfası linki
+- Trendyol doğrudan ürün sayfası linki (-p- içeren link, /sr? ARAMA VEYA KATEGORİ ASLA OLMASIN)
+- Hepsiburada doğrudan ürün sayfası linki (-p- veya -pm- içeren link, -c- KATEGORİ ASLA OLMASIN)
+- Vatan Bilgisayar doğrudan ürün sayfası linki (.html ile biten doğrudan ürün linki)
+- Taşpınar (taspinar.com) doğrudan ürün sayfası linki (-c- KATEGORİ LİNKİ ASLA OLMASIN)
+- Yön AVM (yonavm.com.tr) doğrudan ürün sayfası linki
+- Evkur (evkur.com.tr) doğrudan ürün sayfası linki
 
 ZORUNLU FORMAT VE LİNK KURALLARI:
 1. KATEGORİ VEYA ARAMA LİNKLERİ (Örn: taspinar.com/cep-telefonu-c-56 veya trendyol.com/sr?q=...) KESİNLİKLE YASAKTIR. Sadece sepete ekle butonunun bulunduğu DOĞRUDAN ÜRÜN SAYFASI linkini ver!
 2. Eğer mağazada bu spesifik ürünün doğrudan sayfası yoksa açıkça 'Doğrudan Ürün Sayfası Bulunamadı' yaz, ASLA genel kategori linki (-c-) koyma!
 3. N11'i rapordan tamamen çıkar. Teknosa'yı baz alma, sadece Vatan Bilgisayar'ı baz al.
-4. Aksesuarları (kılıf, ekran koruyucu, cam, şarj) hariç tut! Sadece cihazın kendisini raporla.
+4. Aksesuarları (kılıf, ekran koruyucu, cam, filtre, kahve çekirdeği) hariç tut! Sadece cihazın kendisini raporla.
 5. Yön AVM'de 'Gelince Haber Ver' uyarısı varsa kesinlikle Fiyat: 0 ve Stokta Yok olarak bildir.
 
 RAPOR FORMATI:
+TESPİT EDİLEN TAM ÜRÜN: [Marka, Model Kodu ve Tam Ürün Adı]
+KATEGORİ: [Kategori]
+MODEL KODU: [Model Kodu]
 - MARKA RESMİ SİTESİ: [Doğrudan Ürün URL'si] [Net TL Fiyatı veya Resmi Sitede Stokta Yok]
 - TRENDYOL: [Doğrudan Ürün URL'si (-p-)] [Net TL Satış Fiyatı veya Stokta Yok]
 - HEPSİBURADA: [Doğrudan Ürün URL'si (-p-)] [Net TL Satış Fiyatı veya Stokta Yok]
 - VATAN BİLGİSAYAR: [Doğrudan Ürün URL'si (.html)] [Net TL Satış Fiyatı veya Stokta Yok]
 - AKAKÇE: [Doğrudan Ürün URL'si] [En Ucuz Fiyat veya Stokta Yok]
 - CİMRİ: [Doğrudan Ürün URL'si] [En Ucuz Fiyat veya Stokta Yok]
-- TAŞPINAR: [Doğrudan Ürün URL'si (-p-) veya Bulunamadı] [Fiyat veya Listede Yok]
+- TAŞPINAR: [Doğrudan Ürün URL'si veya Bulunamadı] [Fiyat veya Listede Yok]
 - YÖN AVM: [Doğrudan Ürün URL'si veya Bulunamadı] [Fiyat: 0 (Gelince Haber Ver)]
 - EVKUR: [Doğrudan Ürün URL'si veya Bulunamadı] [Fiyat veya Listede Yok]`;
 
@@ -887,6 +892,27 @@ RAPOR FORMATI:
         } catch(e) {
           console.warn('Aşama 1 metin ayrıştırılamadı:', stage1Data);
         }
+
+        // Tespit edilen resmi ürün adı, kategori ve model kodunu ayrıştır
+        let resolvedProductName = '';
+        let resolvedModelCode = '';
+        let resolvedCategory = '';
+        let resolvedBrand = '';
+
+        const mProd = searchText.match(/TESPİT EDİLEN TAM ÜRÜN:\s*([^\r\n]+)/i);
+        if (mProd && mProd[1]) {
+          resolvedProductName = mProd[1].replace(/\[|\]/g, '').trim();
+        }
+        const mModel = searchText.match(/MODEL KODU:\s*([^\r\n]+)/i);
+        if (mModel && mModel[1]) {
+          resolvedModelCode = mModel[1].replace(/\[|\]/g, '').trim();
+        }
+        const mCat = searchText.match(/KATEGORİ:\s*([^\r\n]+)/i);
+        if (mCat && mCat[1]) {
+          resolvedCategory = mCat[1].replace(/\[|\]/g, '').trim();
+        }
+
+        const effectiveProductName = resolvedProductName || productName;
 
         // Canlı arama metninden ve model çıktısından DOĞRULANMIŞ doğrudan ürün linklerini ayıkla
         // Kategori linkleri (-c-56 vb.) ve geçici Google arama yönlendirmeleri KESİNLİKLE kabul edilmez!
@@ -1006,16 +1032,19 @@ CANLI PİYASA ARAŞTIRMA VERİSİ:
 ${searchText}
 
 KULLANICININ VERDİĞİ BİLGİLER:
-- Ürün ve Model: ${productName}
+- Aranan Arama / Kod: ${productName}
+- Tespit Edilen Tam Ürün: ${effectiveProductName}
+${resolvedModelCode ? `- Model Kodu: ${resolvedModelCode}` : ''}
+${resolvedCategory ? `- Kategori: ${resolvedCategory}` : ''}
 ${userCost > 0 ? `- Tedarikçi Alış Maliyeti: ${userCost} TL` : ''}
 ${extraNotes ? `- Ek Not: ${extraNotes}` : ''}
 
 Aşağıdaki JSON şemasına BİREBİR UYGUN ve SADECE GEÇERLİ JSON OLARAK çıktı ver. Markdown formatlama (örn: \`\`\`json) KULLANMA, sadece saf JSON döndür:
 {
-  "productName": "Marka ve tam model adı",
-  "brand": "Marka adı",
-  "category": "Kategori adı",
-  "modelOrCode": "Ürün model kodu",
+  "productName": "${effectiveProductName.replace(/"/g, '\\"')}",
+  "brand": "${(resolvedBrand || '').replace(/"/g, '\\"')}",
+  "category": "${(resolvedCategory || '').replace(/"/g, '\\"')}",
+  "modelOrCode": "${(resolvedModelCode || '').replace(/"/g, '\\"')}", 
   "marketPrices": {
     "min": 0,
     "average": 0,
@@ -1177,6 +1206,17 @@ NOTLAR:
         const rawJsonText = stage2Data.candidates[0].content.parts[0].text;
         const analysisData = JSON.parse(rawJsonText);
 
+        if (!analysisData.productName || analysisData.productName === productName) {
+          analysisData.productName = effectiveProductName;
+        }
+        if (resolvedModelCode && (!analysisData.modelOrCode || analysisData.modelOrCode === '-')) {
+          analysisData.modelOrCode = resolvedModelCode;
+        }
+        if (resolvedCategory && (!analysisData.category || analysisData.category === 'Genel')) {
+          analysisData.category = resolvedCategory;
+        }
+        analysisData._query = productName;
+
         // SERT KURAL: Her platform için URL SADECE Stage 1'de doğrulanmış URL olabilir.
         // Stage 2 modelinin uydurduğu URL'ler 404/yanlış ürün verir — bunlar tamamen temizlenir.
         // Akış: candidate_url -> validation -> source_url (doğrulanmadıysa buton pasif olur)
@@ -1304,8 +1344,10 @@ NOTLAR:
       const u = url.toLowerCase();
       // Google Vertex AI yönlendirmeleri genellikle kategoriye düşer veya 404 verir
       if (u.includes('vertexaisearch.cloud.google.com')) return true;
-      // Kategori linkleri: -c-56, /c-56, /kategori/, /category/, /katalog/ vb.
-      if (/-c-\d+/.test(u) || /\/c-\d+/.test(u) || /\/kategori\//.test(u) || /\/category\//.test(u) || /\/katalog\//.test(u) || /\/tum-urunler/.test(u) || /\/smartphones\/all/.test(u)) return true;
+      // Dummy veya placeholder linkler
+      if (/p-[x0]{4,}/i.test(u) || /123456789/.test(u) || /xxxx+/i.test(u)) return true;
+      // Kategori linkleri: -c-56, -c103498, /c-56, /kategori/, /category/, /katalog/ vb.
+      if (/-c-?\d+/.test(u) || /\/c-?\d+/.test(u) || /\/kategori\//.test(u) || /\/category\//.test(u) || /\/katalog\//.test(u) || /\/tum-urunler/.test(u) || /\/smartphones\/all/.test(u)) return true;
       // Genel arama linkleri
       if (u.includes('/sr?') || u.includes('/sr/') || u.includes('/ara?') || u.includes('/arama?') || u.includes('/search?') || u.includes('searchterm=') || u.includes('?q=')) return true;
       return false;
@@ -1352,10 +1394,9 @@ NOTLAR:
       if (s.includes('hepsiburada') && (u.includes('hepsiburada.com') || u.includes('hb.biz'))) {
         return (u.includes('-p-') || u.includes('-pm-')) && !u.includes('-c-');
       }
-
-      // Taşpınar doğrudan ürün sayfası (-p- içermeli, KESİNLİKLE -c- OLMAMALI)
+      // Taşpınar doğrudan ürün sayfası (slug linki olmalı, KESİNLİKLE -c- veya /ara olmamalı)
       if ((s.includes('taspinar') || s.includes('taşpınar')) && u.includes('taspinar.com')) {
-        return u.includes('-p-') && !u.includes('-c-');
+        return !u.includes('-c-') && !u.includes('/ara') && !u.includes('/kategori') && u.split('/').length >= 4 && !/taspinar\.com\/?$/.test(u);
       }
 
       // Vatan Bilgisayar doğrudan ürün sayfası (.html ile bitmeli veya ürün slug'ı olmalı, kategori -c- olmamalı)
@@ -1405,8 +1446,14 @@ NOTLAR:
       const p = (productName || '').trim();
       const s = (platformOrStore || '').toLowerCase();
       const cleanModelName = p.replace(/\s+(5g|128gb|256gb|512gb|1tb|\d+gb|\d+\s*gb|ram|siyah|beyaz|gold|altın|gri|mavi|yeşil).*$/i, '').trim() || p;
-      const enc = encodeURIComponent(cleanModelName);
-      const rawEnc = encodeURIComponent(cleanModelName);
+      let searchQ = cleanModelName;
+      // Uzun başlıklarda mağaza arama kutuları için en vurucu Marka + Model Kodunu ayıkla
+      const brandMatch = cleanModelName.match(/^(philips|samsung|apple|dyson|arçelik|arcelik|beko|vestel|karaca|tefal|huawei|xiaomi|roborock)\s+([a-z0-9\/-]+)/i);
+      if (brandMatch && cleanModelName.length > 28) {
+        searchQ = `${brandMatch[1]} ${brandMatch[2]}`;
+      }
+      const enc = encodeURIComponent(searchQ);
+      const rawEnc = encodeURIComponent(searchQ);
 
       // 2. Marka Resmi Mağazası fallback: ASLA Google arama açma! Doğrudan markanın online mağazasındaki model aramasına yönlendir!
       if (s.includes('resmi') || s.includes('marka')) {
@@ -1631,11 +1678,13 @@ NOTLAR:
         const isUrlVerified = comp.url_verified === true && comp.source_url && (comp.url_status === 'VALID' || comp.url_status === 'REDIRECTED');
         const targetUrl = comp.source_url || '';
 
+        const fallbackSearchUrl = getProductLink(comp.platform, '', data.productName, data.category);
+
         const verifiedBtnClass = isOfficialBrand
           ? 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer'
           : 'w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#c81373] hover:bg-pink-700 text-white text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer';
 
-        const disabledBtnClass = 'w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-rose-50 text-rose-800 border-2 border-rose-300 text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 cursor-not-allowed shrink-0 shadow-sm';
+        const searchFallbackBtnClass = 'w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-pink-50 text-slate-700 hover:text-[#c81373] border border-slate-300 hover:border-pink-300 text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer';
 
         const btnText = isOfficialBrand ? 'Resmi Ürün Sayfasına Git' : 'Doğrudan Ürüne Git';
 
@@ -1644,10 +1693,11 @@ NOTLAR:
                <span>${btnText}</span>
                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
              </a>`
-          : `<button type="button" disabled class="${disabledBtnClass}" title="Doğrulanmış ürün sayfası bulunamadı">
-               <i class="fa-solid fa-triangle-exclamation text-sm text-rose-600"></i>
-               <span>Doğrulanmış Ürün Sayfası Bulunamadı</span>
-             </button>`;
+          : `<a href="${fallbackSearchUrl}" target="_blank" rel="noopener noreferrer" class="${searchFallbackBtnClass}" title="Mağazada bu modeli incele">
+               <i class="fa-solid fa-magnifying-glass text-xs text-slate-400"></i>
+               <span>Mağazada İncele</span>
+               <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+             </a>`;
 
         const priceDisclaimer = `
           <span class="text-[10px] text-blue-900 font-bold inline-flex items-center gap-1 mt-1 leading-tight bg-blue-50 border border-blue-200 rounded-lg px-2 py-1">
@@ -1655,9 +1705,9 @@ NOTLAR:
           </span>
         `;
 
-        const statusNote = !isUrlVerified 
-          ? `<span class="text-[9px] text-slate-400 block text-right mt-0.5 font-medium">(Doğrulanmış ürün bağlantısı yok)</span>` 
-          : '';
+        const statusNote = isUrlVerified 
+          ? `<span class="text-[9px] text-emerald-600 block text-right mt-0.5 font-bold"><i class="fa-solid fa-check"></i> Doğrulanmış ürün sayfası</span>` 
+          : `<span class="text-[9px] text-amber-600 block text-right mt-0.5 font-medium"><i class="fa-solid fa-circle-info"></i> Model arama sayfası</span>`;
 
         const priceBadge = isAvail
           ? `<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 shrink-0">
@@ -1855,10 +1905,11 @@ NOTLAR:
                     <span>${name}'da Doğrudan Ürüne Git</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[11px] text-[#c81373] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
                   </a>`
-                : `<button type="button" disabled class="w-full mt-3 py-2.5 px-3 rounded-xl bg-rose-50 text-rose-800 border-2 border-rose-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 cursor-not-allowed shadow-sm" title="Doğrulanmış ürün sayfası bulunamadı">
-                    <i class="fa-solid fa-triangle-exclamation text-sm text-rose-600"></i>
-                    <span>Doğrulanmış Ürün Sayfası Bulunamadı</span>
-                  </button>`
+                : `<a href="${storeUrl}" target="_blank" rel="noopener noreferrer" class="w-full mt-3 py-2.5 px-3 rounded-xl bg-white hover:bg-pink-50 text-slate-700 hover:text-[#c81373] border border-slate-300 hover:border-pink-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-solid fa-magnifying-glass text-xs text-slate-400"></i>
+                    <span>${name}'da Modeli İncele</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+                  </a>`
               }
             `;
           } else {
@@ -1902,10 +1953,11 @@ NOTLAR:
                     <span>${name}'da Doğrudan Ürüne Git</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
                    </a>`
-                : `<button type="button" disabled class="w-full mt-3 py-2.5 px-3 rounded-xl bg-rose-50 text-rose-800 border-2 border-rose-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 cursor-not-allowed shadow-sm">
-                    <i class="fa-solid fa-triangle-exclamation text-sm text-rose-600"></i>
-                    <span>Doğrulanmış Ürün Sayfası Bulunamadı</span>
-                   </button>`
+                : `<a href="${storeUrl}" target="_blank" rel="noopener noreferrer" class="w-full mt-3 py-2.5 px-3 rounded-xl bg-white hover:bg-pink-50 text-slate-700 hover:text-[#c81373] border border-slate-300 hover:border-pink-300 text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-solid fa-magnifying-glass text-xs text-slate-400"></i>
+                    <span>${name}'da Modeli İncele</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+                   </a>`
               }
             `;
           }
@@ -2160,8 +2212,16 @@ ${f.headline || '-'}
       }
       if (analysis) {
         const expected = pendingProductName.toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
-        const received = String(analysis.productName || analysis.modelOrCode || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
-        if (expected && received && expected !== received) return;
+        const receivedName = String(analysis.productName || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+        const receivedModel = String(analysis.modelOrCode || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+        const originalQuery = String(analysis._query || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+
+        if (expected && originalQuery && expected !== originalQuery) return;
+        if (expected && !originalQuery && receivedName && receivedModel) {
+          const tokens = expected.split(/\s+/).filter(t => t.length >= 2);
+          const matchesAny = tokens.some(t => receivedName.includes(t) || receivedModel.includes(t));
+          if (!matchesAny && expected !== receivedName && expected !== receivedModel) return;
+        }
         pendingProductName = '';
         currentAnalysis = analysis;
         renderAnalysis(analysis);

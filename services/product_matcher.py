@@ -18,6 +18,13 @@ class ProductMatcher:
 
     CRITICAL_SUFFIXES = ('pro', 'plus', 'ultra', 'fe', 'max', 'lite', 'se', 'mini')
 
+    KNOWN_BRANDS = {
+        'philips', 'samsung', 'apple', 'dyson', 'arcelik', 'beko', 'vestel',
+        'xiaomi', 'redmi', 'poco', 'karaca', 'tefal', 'bosch', 'siemens',
+        'delonghi', 'roborock', 'gm', 'generalmobile', 'huawei', 'honor',
+        'lenovo', 'asus', 'hp', 'dell', 'sony', 'lg', 'fakir', 'braun'
+    }
+
     @classmethod
     def is_accessory(cls, title: str, query: str) -> bool:
         norm_title = normalize_text(title)
@@ -28,13 +35,19 @@ class ProductMatcher:
 
     @classmethod
     def extract_model_codes(cls, text: str) -> set:
-        """Extract alphanumeric model identifiers like GM26, S25, WW90, etc."""
+        """Extract alphanumeric model identifiers and standalone model numbers."""
+        norm = normalize_text(text)
         compact = lambda x: re.sub(r'[^a-z0-9]', '', x)
-        raw_matches = re.findall(r'([a-z]+)[\s-]*(\d+)([a-z0-9]*)', normalize_text(text))
+        raw_matches = re.findall(r'([a-z]+)[\s-]*(\d+)([a-z0-9]*)', norm)
         codes = set()
         for prefix, num, suffix in raw_matches:
-            if prefix not in ('pro', 'plus', 'ultra', 'fe', 'max', 'lite', 'ram', 'gb', 'tb', 'kg', 'mah', 'watt', 'g'):
+            if prefix in cls.KNOWN_BRANDS:
+                codes.add(num)
+            elif prefix not in ('pro', 'plus', 'ultra', 'fe', 'max', 'lite', 'ram', 'gb', 'tb', 'kg', 'mah', 'watt', 'g'):
                 codes.add(compact(prefix + num + suffix))
+                codes.add(num)
+        for num in re.findall(r'\b\d{3,5}\b', norm):
+            codes.add(num)
         return codes
 
     @classmethod
@@ -62,8 +75,6 @@ class ProductMatcher:
 
         # 1. Critical Suffix Check (Pro, Plus, Ultra, FE, Max, Lite)
         for suffix in cls.CRITICAL_SUFFIXES:
-            # Store titles often concatenate the suffix into a model code
-            # (GM26PRO, S25FE). Treat that as the same suffix as "GM 26 Pro".
             suffix_pattern = r'(?:\b' + suffix + r'\b|[a-z]+\d+' + suffix + r'\b)'
             q_has = bool(re.search(suffix_pattern, q_norm))
             t_has = bool(re.search(suffix_pattern, t_norm))
@@ -80,16 +91,18 @@ class ProductMatcher:
         # 3. Model Code Check
         expected_codes = cls.extract_model_codes(q_norm)
         detected_codes = cls.extract_model_codes(t_norm)
-        compact = lambda x: re.sub(r'[^a-z0-9]', '', x)
 
         if expected_codes:
-            # All primary model codes from query must be in detected title
             def code_matches(expected_code):
                 return any(
                     detected == expected_code or
-                    any(detected == expected_code + suffix for suffix in cls.CRITICAL_SUFFIXES)
+                    expected_code in detected or
+                    detected in expected_code or
+                    any(detected == expected_code + suffix for suffix in cls.CRITICAL_SUFFIXES) or
+                    re.search(r'\b' + re.escape(expected_code) + r'\b', t_norm)
                     for detected in detected_codes
-                )
+                ) or bool(re.search(r'\b' + re.escape(expected_code) + r'\b', t_norm))
+
             if not all(code_matches(c) for c in expected_codes):
                 return False, 0.50, f"Model kodu uyuşmuyor: Beklenen {expected_codes}, Bulunan {detected_codes}"
 
@@ -105,8 +118,11 @@ class ProductMatcher:
         if not q_tokens:
             return True, 0.80, "Temel eşleşme sağlandı"
 
-        overlap = q_tokens.intersection(t_tokens)
-        ratio = len(overlap) / len(q_tokens)
+        overlap_count = 0
+        for qt in q_tokens:
+            if any(qt == tt or (len(qt) >= 4 and qt in tt) for tt in t_tokens):
+                overlap_count += 1
+        ratio = overlap_count / len(q_tokens) if q_tokens else 1.0
 
         if ratio >= 0.85:
             confidence = 0.95

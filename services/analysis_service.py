@@ -230,12 +230,53 @@ def _enrich_from_product_pages(api_key, product_name, candidates, offers, max_wo
     return offers
 
 
+def _resolve_product_identity(api_key, product_name):
+    """Resolve short product query or model number (e.g. 'philips 5547') to its full product name using Google Search."""
+    from google import genai
+    prompt = f'''Türkiye pazarında şu arama terimini Google Arama ile incele: "{product_name}".
+Kullanıcı yalnızca bir marka ve model numarası/kodu veya kısaltma (örn: "philips 5547", "dyson v15", "s24 fe", "arçelik 9100", "ep5547") girmiş olabilir.
+Google Arama aracını kullanarak bu kodun veya ürünün Türkiye'deki tam resmi ürün adını, markasını, model kodunu ve kategorisini tespit et.
+
+Örnekler:
+"philips 5547" -> Marka: Philips, Tam Ad: Philips EP5547/90 5500 Serisi LatteGo Tam Otomatik Espresso Makinesi, Model Kodu: EP5547/90, Kategori: Kahve Makineleri
+"s24 fe" -> Marka: Samsung, Tam Ad: Samsung Galaxy S24 FE 128GB, Model Kodu: S24 FE, Kategori: Akıllı Telefonlar
+"dyson v15" -> Marka: Dyson, Tam Ad: Dyson V15 Detect Kablosuz Süpürge, Model Kodu: V15 Detect, Kategori: Süpürgeler
+
+Sadece geçerli bir JSON döndür:
+{{"brand": "", "full_name": "", "model_code": "", "category": ""}}'''
+    client = genai.Client(api_key=api_key)
+    for model_name in ('gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.8-flash'):
+        try:
+            interaction = client.interactions.create(
+                model=model_name, input=prompt,
+                tools=[{"type": "google_search"}])
+            data = _json(interaction.output_text)
+            if isinstance(data, dict) and data.get('full_name'):
+                return data
+        except Exception as exc:
+            logger.info('Identity resolution try with %s failed: %s', model_name, exc)
+            continue
+    return {
+        'brand': '',
+        'full_name': product_name,
+        'model_code': product_name,
+        'category': ''
+    }
+
+
 def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=None):
     if not api_key:
         raise RuntimeError('Sunucuda GEMINI_API_KEY tanımlı değil')
-    candidates = _discover_candidates(api_key, product_name)
-    offers = OfferVerificationService().verify_offers(product_name, candidates, max_workers=4)
-    offers = _enrich_from_product_pages(api_key, product_name, candidates, offers, max_workers=4)
+
+    identity = _resolve_product_identity(api_key, product_name)
+    resolved_name = identity.get('full_name') or product_name
+    resolved_model = identity.get('model_code') or product_name
+    resolved_brand = identity.get('brand') or ''
+    resolved_category = identity.get('category') or ''
+
+    candidates = _discover_candidates(api_key, resolved_name)
+    offers = OfferVerificationService().verify_offers(resolved_name, candidates, max_workers=4)
+    offers = _enrich_from_product_pages(api_key, resolved_name, candidates, offers, max_workers=4)
 
     def row(o):
         live_price = o.display_price if o.verified else None
@@ -270,17 +311,17 @@ def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=Non
     cash = round(minimum * 1.02) if minimum else 0
     total = round(cash * 1.38) if cash else 0
     return {
-        'productName': product_name, 'brand': '', 'category': '',
-        'modelOrCode': product_name,
+        'productName': resolved_name, 'brand': resolved_brand, 'category': resolved_category,
+        'modelOrCode': resolved_model, '_query': product_name,
         'marketPrices': {'min': minimum, 'average': average, 'max': maximum, 'currency': 'TRY'},
         'competitorBenchmarks': benchmarks, 'senetliCompetitors': installment,
         'hedefPricing': {'cashRecommendedPrice': cash, 'installmentRecommendedPrice': total,
                          'monthlyInstallmentPrice': round(total / 15) if total else 0, 'installmentCount': 15,
                          'strategyNote': 'Öneri yalnızca canlı doğrulanmış fiyatlardan hesaplandı.', 'advantageNote': ''},
         'feasibility': {'score': 50 if prices else 0, 'verdict': 'ŞARTLI SATAR' if prices else 'SATMAZ',
-                        'headline': 'Karar canlı doğrulanmış mağaza fiyatlarına dayanır.', 'reasonsToSell': [],
-                        'risksAndWatchouts': ['Doğrulanamayan mağazalar fiyat hesabına katılmadı.'],
-                        'demandLevel': 'Belirsiz', 'competitionLevel': 'Belirsiz', 'returnRisk': 'Belirsiz', 'seasonalTrend': 'Belirsiz'},
+                         'headline': 'Karar canlı doğrulanmış mağaza fiyatlarına dayanır.', 'reasonsToSell': [],
+                         'risksAndWatchouts': ['Doğrulanamayan mağazalar fiyat hesabına katılmadı.'],
+                         'demandLevel': 'Belirsiz', 'competitionLevel': 'Belirsiz', 'returnRisk': 'Belirsiz', 'seasonalTrend': 'Belirsiz'},
         'campaigns': [], '_userCost': user_cost, '_userNotes': notes, '_image': image_data,
         '_timestamp': datetime.now().strftime('%d.%m.%Y %H:%M'), '_directUrls': {}
     }

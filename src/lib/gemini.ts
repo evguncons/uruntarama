@@ -26,16 +26,21 @@ export async function analyzeProductImage(
   try {
     const searchResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: `Sen Türkiye perakende pazarında uzman bir fiyat araştırmacısısın.
-Kullanıcı şu ürünü analiz ediyor: "${productName}".
+      contents: `Sen Türkiye perakende pazarında uzman bir fiyat ve model araştırmacısısın.
+Kullanıcı şu ürünü veya model kodunu analiz ediyor: "${productName}".
+
+ÖNEMLİ KOD VE MODEL ÇÖZÜMLEME:
+Kullanıcı yalnızca bir marka ve model numarası/kodu veya kısaltma (örn: "philips 5547", "dyson v15", "s24 fe", "arçelik 9100", "ep5547", "roborock s8") girmiş olabilir.
+Google Arama aracını kullanarak ÖNCE bu kodun/numaranın tam resmi ürün adını, serisini ve model kodunu (Örn: "Philips EP5547/90 5500 Serisi LatteGo Tam Otomatik Espresso Makinesi") tespit et.
 
 GÖREVİN:
-Google Arama aracını kullanarak Türkiye'deki Akakçe, Cimri, Trendyol, Hepsiburada, Amazon Türkiye, Teknosa ve MediaMarkt sitelerindeki ŞU ANKİ EN GÜNCEL satış fiyatlarını araştır.
-1. En ucuz fiyat (TL) ve hangi sitede satıldığı
-2. Ortalama piyasa fiyatı (TL)
-3. En yüksek yetkili satıcı / mağaza liste fiyatı (TL)
-4. Trendyol ve Hepsiburada'daki güncel fiyatlar ve satıcı durumu
-5. Ürünün güncel stok/satış durumu (tükenmiş mi, yaygın mı?)
+Google Arama aracını kullanarak bu tespit edilen tam ürün ve model için Türkiye'deki Akakçe, Cimri, Trendyol, Hepsiburada, Amazon Türkiye, Vatan Bilgisayar ve marka resmi sitelerindeki ŞU ANKİ EN GÜNCEL satış fiyatlarını ve ürün bağlantılarını araştır.
+1. Tespit edilen tam marka, seri ve model adı
+2. En ucuz peşin fiyat (TL) ve hangi sitede satıldığı
+3. Ortalama piyasa fiyatı (TL)
+4. En yüksek yetkili satıcı / mağaza liste fiyatı (TL)
+5. Trendyol, Hepsiburada ve Vatan Bilgisayar'daki güncel doğrudan fiyatlar ve satıcı durumu
+6. Ürünün güncel stok/satış durumu (tükenmiş mi, yaygın mı?)
 
 Lütfen gerçek ve güncel rakamları net olarak belirt.`,
       config: {

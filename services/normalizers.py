@@ -186,12 +186,20 @@ class UrlNormalizer:
             return False
         u = url.lower()
         # Search page patterns
-        if any(sp in u for sp in ['/sr?q=', '/sr?', '/ara?q=', '/ara?', '/search?', 'searchTerm=', '?q=']):
+        if any(sp in u for sp in ['/sr?q=', '/sr?', '/ara?q=', '/ara?', '/search?', 'searchterm=', '?q=']):
+            return False
+        # Category page patterns (-c-56, /kategori/, /category/, /katalog/)
+        if any(cp in u for cp in ['/kategori/', '/category/', '/katalog/', '/koleksiyon/']):
+            return False
+        if re.search(r'-c-?\d+', u) or re.search(r'/c-?\d+', u):
+            return False
+        # Placeholder or hallucinated URLs
+        if re.search(r'p-[x0]{4,}', u) or '123456789' in u or 'xxxx' in u:
             return False
         # Specific known product patterns
-        if any(pp in u for pp in ['-p-', '/p/', '/urun/', '/product/', '.html', '/dp/']):
+        if any(pp in u for pp in ['-p-', '/p/', '/urun/', '/product/', '.html', '/dp/', '/c-p/']):
             return True
-        # If it has a path with at least 2 segments and not a search root
+        # If it has a path with at least 1 segment and not a search/category root
         parsed = urlparse(url)
         path_parts = [p for p in parsed.path.split('/') if p]
         return len(path_parts) >= 1
