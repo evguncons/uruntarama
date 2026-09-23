@@ -832,8 +832,29 @@
       startAnalyzeBtn.disabled = true;
 
       try {
+        let activeApiKey = GEMINI_API_KEY || (typeof localStorage !== 'undefined' ? (localStorage.getItem('GEMINI_API_KEY') || localStorage.getItem('gemini_api_key')) : '') || '';
+        if (!activeApiKey) {
+          const entered = prompt('Doğrudan tarayıcı modundasınız. Lütfen Gemini API anahtarınızı giriniz (veya Streamlit üzerinden "streamlit run streamlit_app.py" çalıştırınız):');
+          if (entered && entered.trim()) {
+            activeApiKey = entered.trim();
+            try { localStorage.setItem('gemini_api_key', activeApiKey); } catch(e) {}
+          } else {
+            showError('Analiz için Gemini API anahtarı gereklidir. Lütfen Streamlit üzerinden ("streamlit run streamlit_app.py") çalıştırınız veya geçerli bir API anahtarı giriniz.');
+            loadingBox.classList.add('hidden');
+            document.body.style.overflow = '';
+            startAnalyzeBtn.disabled = false;
+            return;
+          }
+        }
+
         // AŞAMA 1: Canlı Google Arama Taranması (Marka Resmi Sitesi + Pazaryerleri + Vatan Bilgisayar + Senetli Rakipler)
-        loadingStatusText.textContent = 'Türkiye e-ticaret ve perakende piyasasında canlı fiyat ve ürün araştırması yap.
+        loadingStatusText.textContent = '1. Aşama: Model kodu ve doğrudan ürün bağlantıları taranıyor...';
+        loadingProgressBar.style.width = '45%';
+
+        // Model adından arama optimizasyonu için temiz kısa isim üret (aksesuar tuzağını önler, doğrudan ürünü bulur)
+        const shortName = productName.replace(/\s+(5g|128gb|256gb|512gb|1tb|\d+gb|\d+\s*gb|ram|siyah|beyaz|gold|altın|gri|mavi|yeşil).*$/i, '').trim() || productName;
+
+        const searchPrompt = `Türkiye e-ticaret ve perakende piyasasında canlı fiyat ve ürün araştırması yap.
 Kullanıcının Girdiği Arama / Kod: "${productName}" (Kısa Kod/Model: "${shortName}")
 
 ÖNEMLİ KOD VE MODEL ÇÖZÜMLEME KURALI:
@@ -876,7 +897,7 @@ MODEL KODU: [Model Kodu]
 - YÖN AVM: [Doğrudan Ürün URL'si veya Bulunamadı] [Fiyat: 0 (Gelince Haber Ver)]
 - EVKUR: [Doğrudan Ürün URL'si veya Bulunamadı] [Fiyat veya Listede Yok]`;
 
-        const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const stage1Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1187,7 +1208,7 @@ NOTLAR:
           partsContent.push({ inline_data: { mime_type: 'image/jpeg', data: base64DataOnly } });
         }
 
-        const stage2Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const stage2Res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2201,8 +2222,16 @@ ${f.headline || '-'}
     });
 
     // Streamlit component bridge: analysis and credentials stay on the server.
+    let isStreamlitConnected = false;
+    let streamlitTimeoutTimer = null;
+
     window.addEventListener('message', (event) => {
       if (event.data?.type !== 'streamlit:render') return;
+      isStreamlitConnected = true;
+      if (streamlitTimeoutTimer) {
+        clearTimeout(streamlitTimeoutTimer);
+        streamlitTimeoutTimer = null;
+      }
       const analysis = event.data.args?.analysis;
       const serverError = event.data.args?.error;
       if (serverError) {
@@ -2232,20 +2261,47 @@ ${f.headline || '-'}
         resultContainer.scrollIntoView({ behavior: 'smooth' });
       }
     });
+
+    const isRunningInIframe = (function() {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true;
+      }
+    })();
+
     startAnalyzeBtn.addEventListener('click', (event) => {
-      event.stopImmediatePropagation();
-      const productName = productNameInput.value.trim();
-      if (!productName) { showError('Lütfen ürünün marka ve tam modelini giriniz.'); return; }
-      pendingProductName = productName;
-      hideError(); loadingBox.classList.remove('hidden'); resultContainer.classList.add('hidden');
-      startAnalyzeBtn.disabled = true; document.body.style.overflow = 'hidden';
-      window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:setComponentValue', dataType:'json', value:{
-        requestId: Date.now().toString(), productName,
-        userCost: parseFloat(costInput.value) || 0, notes: notesInput.value.trim(), image: currentImageBase64
-      }}, '*');
+      // Streamlit component ortamındaysa sunucu tarafı analizini tetikle
+      if (isRunningInIframe) {
+        event.stopImmediatePropagation();
+        const productName = productNameInput.value.trim();
+        if (!productName) { showError('Lütfen ürünün marka ve tam modelini giriniz.'); return; }
+        pendingProductName = productName;
+        hideError(); loadingBox.classList.remove('hidden'); resultContainer.classList.add('hidden');
+        startAnalyzeBtn.disabled = true; document.body.style.overflow = 'hidden';
+
+        if (streamlitTimeoutTimer) clearTimeout(streamlitTimeoutTimer);
+        streamlitTimeoutTimer = setTimeout(() => {
+          if (startAnalyzeBtn.disabled && !loadingBox.classList.contains('hidden')) {
+            showError('Analiz yanıtı zaman aşımına uğradı veya sunucu yanıt vermedi. Lütfen tekrar deneyiniz.');
+            loadingBox.classList.add('hidden');
+            document.body.style.overflow = '';
+            startAnalyzeBtn.disabled = false;
+          }
+        }, 90000);
+
+        window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:setComponentValue', dataType:'json', value:{
+          requestId: Date.now().toString(), productName,
+          userCost: parseFloat(costInput.value) || 0, notes: notesInput.value.trim(), image: currentImageBase64
+        }}, '*');
+      }
+      // Standalone modda: event yayılmaya devam eder ve satır 820'deki istemci tarafı motor çalışır.
     }, true);
-    window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:componentReady', apiVersion:1}, '*');
-    window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:setFrameHeight', height:window.innerHeight}, '*');
+
+    if (isRunningInIframe) {
+      window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:componentReady', apiVersion:1}, '*');
+      window.parent.postMessage({isStreamlitMessage:true, type:'streamlit:setFrameHeight', height:window.innerHeight}, '*');
+    }
     updateHistoryBadge();
   </script>
 </body>
