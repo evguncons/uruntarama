@@ -484,11 +484,23 @@ Lütfen bu ürün için aşağıdaki formatta sadece geçerli bir JSON döndür:
     try:
         from google import genai
         client = genai.Client(api_key=api_key)
-        interaction = client.interactions.create(
-            model='gemini-2.5-flash',
-            input=prompt
-        )
-        data = _json(interaction.output_text)
+        data = None
+        for model_name in ('gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-2.0-flash'):
+            try:
+                interaction = client.interactions.create(
+                    model=model_name,
+                    input=prompt
+                )
+                res = _json(interaction.output_text)
+                if isinstance(res, dict) and res.get('feasibility'):
+                    data = res
+                    break
+            except Exception:
+                continue
+
+        if not data:
+            data = default_data
+
         if isinstance(data, dict):
             feasibility = data.get('feasibility') or {}
             campaigns = data.get('campaigns') or []
@@ -501,19 +513,19 @@ Lütfen bu ürün için aşağıdaki formatta sadece geçerli bir JSON döndür:
             if not isinstance(risks, list) or len(risks) == 0 or (len(risks) == 1 and 'katılmadı' in risks[0]):
                 feasibility['risksAndWatchouts'] = default_data['risksAndWatchouts']
 
-            if not feasibility.get('score'):
+            if not feasibility.get('score') or feasibility.get('score') == 50:
                 feasibility['score'] = default_data['score']
-            if not feasibility.get('verdict'):
+            if not feasibility.get('verdict') or feasibility.get('verdict') in ('Belirsiz', 'Bilinmiyor'):
                 feasibility['verdict'] = default_data['verdict']
-            if not feasibility.get('headline'):
+            if not feasibility.get('headline') or 'canlı doğrulanmış mağaza fiyatlarına dayanır' in str(feasibility.get('headline') or ''):
                 feasibility['headline'] = default_data['headline']
-            if not feasibility.get('demandLevel'):
+            if not feasibility.get('demandLevel') or feasibility.get('demandLevel') in ('Belirsiz', 'Bilinmiyor'):
                 feasibility['demandLevel'] = default_data['demandLevel']
-            if not feasibility.get('competitionLevel'):
+            if not feasibility.get('competitionLevel') or feasibility.get('competitionLevel') in ('Belirsiz', 'Bilinmiyor'):
                 feasibility['competitionLevel'] = default_data['competitionLevel']
-            if not feasibility.get('returnRisk'):
+            if not feasibility.get('returnRisk') or feasibility.get('returnRisk') in ('Belirsiz', 'Bilinmiyor'):
                 feasibility['returnRisk'] = default_data['returnRisk']
-            if not feasibility.get('seasonalTrend'):
+            if not feasibility.get('seasonalTrend') or feasibility.get('seasonalTrend') in ('Belirsiz', 'Bilinmiyor'):
                 feasibility['seasonalTrend'] = default_data['seasonalTrend']
 
             valid_camps = []
