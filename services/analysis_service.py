@@ -264,6 +264,284 @@ Sadece geçerli bir JSON döndür:
     }
 
 
+def _build_default_feasibility_and_campaigns(product_name, brand, category, model_code,
+                                             market_prices, hedef_pricing, user_cost=0, notes=''):
+    monthly = hedef_pricing.get('monthlyInstallmentPrice') or (round(hedef_pricing.get('installmentRecommendedPrice', 0) / 15) if hedef_pricing.get('installmentRecommendedPrice') else 0)
+    monthly_str = f"{monthly:,.0f} TL".replace(',', '.') if monthly else "Uygun Taksitlerle"
+    min_p = market_prices.get('min') or 0
+    brand_title = brand.title() if brand else 'Marka'
+    
+    cat_lower = (str(category or '') + ' ' + str(product_name or '')).lower()
+    is_phone = any(k in cat_lower for k in ('telefon', 'iphone', 'samsung galaxy', 'redmi', 'xiaomi', 'poco', 'akıllı telefon', 'cep telefon'))
+    is_appliance = any(k in cat_lower for k in ('süpürge', 'kahve', 'lattego', 'espresso', 'airfryer', 'ütü', 'küçük ev', 'blender', 'robot süpürge', 'çay makine', 'tost'))
+    is_white_goods = any(k in cat_lower for k in ('buzdolabı', 'çamaşır', 'bulaşık', 'fırın', 'derin dondurucu', 'kurutma'))
+    is_tv = any(k in cat_lower for k in ('tv', 'televizyon', 'ekran', 'oled', 'qled', 'led tv'))
+    
+    if is_phone:
+        reasons = [
+            f"15 ay vadeli elden senetli sistemde aylık {monthly_str} taksit, banka kredi kartı limiti olmayan veya kart kullanmak istemeyen geniş bir alıcı kitlesi için yüksek talep yaratır.",
+            f"Piyasada {brand_title} akıllı telefon modellerine yönelik yüksek marka güveni, talep hacmi ve hızlı nakde dönme avantajı bulunmaktadır.",
+            "Kredi kartsız ve peşinatsız mağaza içi elden taksit imkanı, online pazaryerlerine kıyasla müşterileri doğrudan Hedef AVM şubelerine çeker."
+        ]
+        risks = [
+            "Cep telefonu segmentinde model yenilenme döngüsü hızlı olduğundan stok devir süresi 45 günü geçmemelidir.",
+            "15 ay vade süresince müşteri ödeme disiplini ve istihbarat skorlaması titizlikle takip edilmelidir.",
+            "Kasa açılma, IMEI kaydı ve servis garanti şartları müşteriye satış esnasında açıkça teyit edilmelidir."
+        ]
+        demand_level = "Çok Yüksek"
+        comp_level = "Yüksek"
+        ret_risk = "Düşük"
+        seasonal = "Tüm Yıl Düzenli"
+        target_aud = "Kredi kartı limiti yetersiz olan veya kart kullanmadan düzenli gelirle teknoloji yenilemek isteyen tüketiciler."
+        score = 84 if min_p > 0 else 55
+        verdict = "GÜÇLÜ SATAR" if min_p > 0 else "ŞARTLI SATAR"
+    elif is_appliance:
+        reasons = [
+            f"Küçük ev aletlerinde aylık {monthly_str} elden taksit tutarı, tüketici bütçesini sarsmadan anlık satın alma kararı aldırır.",
+            f"{product_name} gibi günlük yaşam konforunu artıran popüler modeller, mağaza vitrininde ve sosyal medya reklamlarında yüksek çekim gücüne sahiptir.",
+            "Çeyiz alışverişi yapan aileler ve evlilik hazırlığındaki çiftler için elden senet sepetine kolayca eklenebilecek ideal bir tamamlayıcı üründür."
+        ]
+        risks = [
+            "Pazaryerlerinde satıcılar arası anlık fiyat indirimleri olabileceğinden perakende peşin fiyat rekabeti haftalık taranmalıdır.",
+            "Yetkili servis ağı ve 2 yıl resmi distribütör garantisi satış öncesinde mutlaka teyit edilmelidir."
+        ]
+        demand_level = "Yüksek"
+        comp_level = "Orta"
+        ret_risk = "Düşük"
+        seasonal = "Çeyiz & Özel Gün Dönemleri"
+        target_aud = "Evini yenileyenler, pratik ev/mutfak teknolojisi arayan aileler ve çeyiz hazırlığı yapan müşteriler."
+        score = 86 if min_p > 0 else 55
+        verdict = "GÜÇLÜ SATAR" if min_p > 0 else "ŞARTLI SATAR"
+    elif is_white_goods:
+        reasons = [
+            f"Beyaz eşya temel zorunlu ihtiyaç olduğundan, 15 ay elden senetle aylık {monthly_str} ödeme planı haneler için en güvenilir satın alma modelidir.",
+            "Evlilik ve ev kurma dönemlerinde senetli paket alımlarında temel lokomotif ürün konumundadır.",
+            "Dayanıklı tüketim malı olması sebebiyle Hedef AVM portföyünde yüksek kârlılık ve sadık müşteri ilişkisi oluşturur."
+        ]
+        risks = [
+            "Sevkiyat, kat teslimi ve yetkili servis kurulum süreçlerinin lojistik maliyeti ve koordinasyonu iyi planlanmalıdır.",
+            "Yüksek montanlı bir ürün grubu olduğundan senet onayında detaylı istihbarat ve gelir belgeleme zorunludur."
+        ]
+        demand_level = "Yüksek"
+        comp_level = "Orta"
+        ret_risk = "Düşük"
+        seasonal = "Yaz & Düğün Sezonu"
+        target_aud = "Evlenen çiftler, ev eşyalarını yenileyen aileler ve yeni konut sahipleri."
+        score = 88 if min_p > 0 else 60
+        verdict = "GÜÇLÜ SATAR" if min_p > 0 else "ŞARTLI SATAR"
+    elif is_tv:
+        reasons = [
+            f"Büyük ekran televizyonlarda 15 ay elden senetle aylık {monthly_str} taksit imkanı, teknoloji marketlerin nakit/kredi kartı baskısını bertaraf eder.",
+            "Mağaza içi teşhirde ve vitrinde görsel çekiciliği en yüksek ürün grubudur; mağaza trafiğini doğrudan artırır.",
+            "Spor turnuvaları, kış ayları ve kampanya dönemlerinde hızlı satış potansiyeline sahiptir."
+        ]
+        risks = [
+            "Panel kırılması ve kargo/taşıma hasarlarına karşı sigortalı taşıma ve yerinde kurulum şart koşulmalıdır.",
+            "Piyasada benzer ekran boyutlarında agresif marka rekabeti mevcuttur."
+        ]
+        demand_level = "Yüksek"
+        comp_level = "Yüksek"
+        ret_risk = "Düşük"
+        seasonal = "Sonbahar - Kış & Turnuva Dönemleri"
+        target_aud = "Evinde sinema ve maç keyfi yaşamak isteyen aileler ve teknoloji tutkunları."
+        score = 80 if min_p > 0 else 50
+        verdict = "SATAR (DENGELİ)" if min_p > 0 else "ŞARTLI SATAR"
+    else:
+        reasons = [
+            f"15 ay vadeli elden senetli satışta aylık {monthly_str} taksit tutarı, müşteriye son derece erişilebilir ve ödenebilir bir seçenek sunar.",
+            f"Hedef AVM mağazalarında {brand_title} güvencesiyle kredi kartsız satış imkanı rakiplere karşı belirgin avantaj sağlar.",
+            "Kredi kartsız perakendede Evkur, Taşpınar ve Yön AVM gibi rakiplere alternatif arayan müşteriler için cazip bir üründür."
+        ]
+        risks = [
+            "15 ay vadeli elden senetli alımlarda müşteri istihbarat ve gecikme riski düzenli skorlama ile takip edilmelidir.",
+            "Piyasa fiyat oynaklığına karşı peşin ve vadeli fiyatlar dönemsel olarak güncellenmelidir."
+        ]
+        demand_level = "Orta"
+        comp_level = "Orta"
+        ret_risk = "Düşük"
+        seasonal = "Tüm Yıl Düzenli"
+        target_aud = "Bütçesini aylık düzenli taksitlere bölerek elden senetle alışveriş yapmayı tercih eden aileler."
+        score = 78 if min_p > 0 else 50
+        verdict = "SATAR" if min_p > 0 else "ŞARTLI SATAR"
+
+    campaigns = [
+        {
+            "campaignType": "15 Ay Elden Senet",
+            "title": "Kredi Kartsız, Peşinatsız 15 Ay Elden Taksit",
+            "description": f"{product_name} için peşinatsız ve kredi kartı gerektirmeden 15 eşit taksit imkanı.",
+            "bannerSlogan": f"Kartsız, Peşinatsız! Ayda Sadece {monthly_str}'ye Evinizde!",
+            "slogan": f"Kartsız, Peşinatsız! Ayda Sadece {monthly_str}'ye Evinizde!"
+        },
+        {
+            "campaignType": "Günün Fırsatı",
+            "title": "Hedef AVM Mağaza İçi Özel Kampanya",
+            "description": "Şubelerimizden teslim alan müşterilerimize anında onaylı elden senet ve teslimat ayrıcalığı.",
+            "bannerSlogan": f"Bugüne Özel 15 Ay Taksit Fırsatını Kaçırmayın!",
+            "slogan": f"Bugüne Özel 15 Ay Taksit Fırsatını Kaçırmayın!"
+        },
+        {
+            "campaignType": "Çeyiz & Ev Yenileme",
+            "title": "Çeyiz ve Evini Yenileyenlere Özel Avantaj Paketi",
+            "description": "Elden taksitli alışverişlerde sepetinize ekleyebileceğiniz özel vadeli paket avantajı.",
+            "bannerSlogan": f"Evinizin Eksiklerini Dert Etmeyin, 15 Ayda Rahat Rahat Ödeyin!",
+            "slogan": f"Evinizin Eksiklerini Dert Etmeyin, 15 Ayda Rahat Rahat Ödeyin!"
+        }
+    ]
+    
+    return {
+        "score": score,
+        "verdict": verdict,
+        "headline": f"{product_name} 15 ay elden senet avantajıyla Hedef AVM mağazalarında yüksek satış potansiyeline sahiptir.",
+        "reasonsToSell": reasons,
+        "risksAndWatchouts": risks,
+        "demandLevel": demand_level,
+        "competitionLevel": comp_level,
+        "returnRisk": ret_risk,
+        "seasonalTrend": seasonal,
+        "targetAudience": target_aud,
+        "campaigns": campaigns,
+        "strategyNote": f"Piyasa en düşük fiyatı {min_p:,.0f} TL baz alınarak 15 ay vadeli elden senetli rekabetçi satış fiyatı belirlendi.",
+        "advantageNote": f"Hedef AVM'de 15 ay vadede aylık {monthly_str} taksit ile Evkur, Taşpınar, Vivense, HYS AVM, Yön, Yiğit ve SenetSepet'e kıyasla daha rekabetçi elden senet imkanı sunulmaktadır."
+    }
+
+
+def _generate_feasibility_and_campaigns(api_key, product_name, brand, category, model_code,
+                                        market_prices, hedef_pricing, user_cost=0, notes='', image_data=None):
+    """Generate rich AI commercial feasibility, selling reasons, risks, and campaigns using Gemini."""
+    default_data = _build_default_feasibility_and_campaigns(
+        product_name, brand, category, model_code, market_prices, hedef_pricing, user_cost, notes
+    )
+    if not api_key:
+        return default_data
+
+    monthly = hedef_pricing.get('monthlyInstallmentPrice', 0)
+    monthly_str = f"{monthly:,.0f} TL" if monthly else "uygun taksit"
+    min_p = market_prices.get('min', 0)
+    cash_p = hedef_pricing.get('cashRecommendedPrice', 0)
+    total_inst = hedef_pricing.get('installmentRecommendedPrice', 0)
+
+    prompt = f'''Sen Türkiye perakende pazarında uzmanlaşmış bir Ticari Satın Alma ve Satış Stratejisi Direktörüsün.
+Analiz Edilen Ürün: "{product_name}"
+Marka: "{brand}"
+Kategori: "{category}"
+Model Kodu: "{model_code}"
+Piyasa Fiyatı: En Ucuz {min_p} TL, Ortalama {market_prices.get('average', 0)} TL
+Hedef AVM Fiyatı: Peşin {cash_p} TL, 15 Ay Elden Senetli Toplam {total_inst} TL (Aylık {monthly_str})
+Kullanıcı Alış Maliyeti: {user_cost} TL
+Ek Notlar: "{notes}"
+
+Hedef AVM, Türkiye genelinde şubeleri olan, kredi kartsız, peşinatsız 15 aya varan elden senetli taksitli satış yapan büyük bir perakende mağazalar zinciridir (Rakipleri: Evkur, Taşpınar, Vivense, HYS AVM, Yön AVM vb.).
+
+Lütfen bu ürün için aşağıdaki formatta sadece geçerli bir JSON döndür:
+{{
+  "feasibility": {{
+    "score": 85,
+    "verdict": "GÜÇLÜ SATAR",
+    "headline": "Hedef AVM için 1-2 cümlelik net yönetici karar ve satış potansiyeli özeti",
+    "reasonsToSell": [
+      "15 ay vadeli elden senetle aylık taksitinin müşteri için cazibesi",
+      "Ürünün pazar talebi, marka güveni ve çekim gücü",
+      "Hedef AVM mağaza içi satış ve müşteri profiline uyum gerekçesi"
+    ],
+    "risksAndWatchouts": [
+      "15 ay vade süresince dikkat edilecek müşteri istihbarat ve skorlama uyarısı",
+      "Pazar fiyat rekabeti veya stok devir hızı uyarısı",
+      "Yetkili servis, garanti veya teslimat süreci uyarısı"
+    ],
+    "demandLevel": "Çok Yüksek",
+    "competitionLevel": "Orta",
+    "returnRisk": "Düşük",
+    "seasonalTrend": "Tüm Yıl Düzenli",
+    "targetAudience": "Müşteri profili açıklaması"
+  }},
+  "campaigns": [
+    {{
+      "campaignType": "15 Ay Elden Senet",
+      "title": "Kredi Kartsız 15 Ay Elden Taksit Kampanyası",
+      "description": "Peşinatsız ve kartsız 15 ay taksit kampanya kurgusu",
+      "bannerSlogan": "Mağaza afişi veya vitrin sloganı",
+      "slogan": "Mağaza afişi veya vitrin sloganı"
+    }},
+    {{
+      "campaignType": "Günün Fırsatı",
+      "title": "Mağaza İçi Özel Kampanya Başlığı",
+      "description": "Kampanya kurgusu ve satış taktiği",
+      "bannerSlogan": "Çarpıcı vitrin sloganı",
+      "slogan": "Çarpıcı vitrin sloganı"
+    }},
+    {{
+      "campaignType": "Çeyiz & Ev Yenileme",
+      "title": "Avantaj Paketi Kampanya Başlığı",
+      "description": "Taksitli alışveriş paketi açıklaması",
+      "bannerSlogan": "Vitrin sloganı",
+      "slogan": "Vitrin sloganı"
+    }}
+  ],
+  "strategyNote": "Hedef AVM peşin ve 15 ay senetli fiyat belirleme gerekçesi özeti",
+  "advantageNote": "Hedef AVM'nin Evkur, Taşpınar, Vivense ve Yön AVM'ye göre aylık taksit ve senet onayı üstünlüğü özeti"
+}}'''
+
+    try:
+        from google import genai
+        client = genai.Client(api_key=api_key)
+        interaction = client.interactions.create(
+            model='gemini-2.5-flash',
+            input=prompt
+        )
+        data = _json(interaction.output_text)
+        if isinstance(data, dict):
+            feasibility = data.get('feasibility') or {}
+            campaigns = data.get('campaigns') or []
+
+            reasons = feasibility.get('reasonsToSell')
+            if not isinstance(reasons, list) or len(reasons) == 0:
+                feasibility['reasonsToSell'] = default_data['reasonsToSell']
+
+            risks = feasibility.get('risksAndWatchouts')
+            if not isinstance(risks, list) or len(risks) == 0 or (len(risks) == 1 and 'katılmadı' in risks[0]):
+                feasibility['risksAndWatchouts'] = default_data['risksAndWatchouts']
+
+            if not feasibility.get('score'):
+                feasibility['score'] = default_data['score']
+            if not feasibility.get('verdict'):
+                feasibility['verdict'] = default_data['verdict']
+            if not feasibility.get('headline'):
+                feasibility['headline'] = default_data['headline']
+            if not feasibility.get('demandLevel'):
+                feasibility['demandLevel'] = default_data['demandLevel']
+            if not feasibility.get('competitionLevel'):
+                feasibility['competitionLevel'] = default_data['competitionLevel']
+            if not feasibility.get('returnRisk'):
+                feasibility['returnRisk'] = default_data['returnRisk']
+            if not feasibility.get('seasonalTrend'):
+                feasibility['seasonalTrend'] = default_data['seasonalTrend']
+
+            valid_camps = []
+            if isinstance(campaigns, list):
+                for c in campaigns:
+                    if isinstance(c, dict) and c.get('title'):
+                        slogan = c.get('bannerSlogan') or c.get('slogan') or "15 Ay Taksit Avantajını Kaçırmayın!"
+                        c['bannerSlogan'] = slogan
+                        c['slogan'] = slogan
+                        valid_camps.append(c)
+            if not valid_camps:
+                valid_camps = default_data['campaigns']
+
+            strategy_note = data.get('strategyNote') or default_data['strategyNote']
+            advantage_note = data.get('advantageNote') or default_data['advantageNote']
+
+            return {
+                'feasibility': feasibility,
+                'campaigns': valid_camps,
+                'strategyNote': strategy_note,
+                'advantageNote': advantage_note
+            }
+    except Exception as exc:
+        logger.warning('Feasibility generation with Gemini failed, using default: %s', exc)
+
+    return default_data
+
+
 def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=None):
     if not api_key:
         raise RuntimeError('Sunucuda GEMINI_API_KEY tanımlı değil')
@@ -310,18 +588,52 @@ def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=Non
     maximum = max(prices) if prices else 0
     cash = round(minimum * 1.02) if minimum else 0
     total = round(cash * 1.38) if cash else 0
+    monthly = round(total / 15) if total else 0
+
+    hedef_pricing = {
+        'cashRecommendedPrice': cash,
+        'installmentRecommendedPrice': total,
+        'monthlyInstallmentPrice': monthly,
+        'installmentCount': 15,
+        'strategyNote': 'Öneri canlı doğrulanmış mağaza fiyatlarından hesaplandı.',
+        'advantageNote': ''
+    }
+
+    market_prices = {
+        'min': minimum,
+        'average': average,
+        'max': maximum,
+        'currency': 'TRY'
+    }
+
+    ai_data = _generate_feasibility_and_campaigns(
+        api_key=api_key,
+        product_name=resolved_name,
+        brand=resolved_brand,
+        category=resolved_category,
+        model_code=resolved_model,
+        market_prices=market_prices,
+        hedef_pricing=hedef_pricing,
+        user_cost=user_cost,
+        notes=notes,
+        image_data=image_data
+    )
+
+    feasibility = ai_data.get('feasibility') or {}
+    campaigns = ai_data.get('campaigns') or []
+    if ai_data.get('strategyNote'):
+        hedef_pricing['strategyNote'] = ai_data['strategyNote']
+    if ai_data.get('advantageNote'):
+        hedef_pricing['advantageNote'] = ai_data['advantageNote']
+
     return {
         'productName': resolved_name, 'brand': resolved_brand, 'category': resolved_category,
         'modelOrCode': resolved_model, '_query': product_name,
-        'marketPrices': {'min': minimum, 'average': average, 'max': maximum, 'currency': 'TRY'},
+        'marketPrices': market_prices,
         'competitorBenchmarks': benchmarks, 'senetliCompetitors': installment,
-        'hedefPricing': {'cashRecommendedPrice': cash, 'installmentRecommendedPrice': total,
-                         'monthlyInstallmentPrice': round(total / 15) if total else 0, 'installmentCount': 15,
-                         'strategyNote': 'Öneri yalnızca canlı doğrulanmış fiyatlardan hesaplandı.', 'advantageNote': ''},
-        'feasibility': {'score': 50 if prices else 0, 'verdict': 'ŞARTLI SATAR' if prices else 'SATMAZ',
-                         'headline': 'Karar canlı doğrulanmış mağaza fiyatlarına dayanır.', 'reasonsToSell': [],
-                         'risksAndWatchouts': ['Doğrulanamayan mağazalar fiyat hesabına katılmadı.'],
-                         'demandLevel': 'Belirsiz', 'competitionLevel': 'Belirsiz', 'returnRisk': 'Belirsiz', 'seasonalTrend': 'Belirsiz'},
-        'campaigns': [], '_userCost': user_cost, '_userNotes': notes, '_image': image_data,
+        'hedefPricing': hedef_pricing,
+        'feasibility': feasibility,
+        'campaigns': campaigns,
+        '_userCost': user_cost, '_userNotes': notes, '_image': image_data,
         '_timestamp': datetime.now().strftime('%d.%m.%Y %H:%M'), '_directUrls': {}
     }

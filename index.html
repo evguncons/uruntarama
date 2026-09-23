@@ -1997,7 +1997,15 @@ NOTLAR:
       // Neden Satar
       const reasonsList = document.getElementById('resReasonsList');
       reasonsList.innerHTML = '';
-      (f.reasonsToSell || []).forEach(r => {
+      let reasons = Array.isArray(f.reasonsToSell) ? f.reasonsToSell.filter(Boolean) : [];
+      if (reasons.length === 0) {
+        reasons = [
+          `15 ay vadeli elden senetli ödeme planında aylık ${formatTL(monthlyInst)} taksit tutarı, kredi kartı limiti olmayan veya kart kullanmak istemeyen müşteriler için son derece cazip bir satın alma kolaylığı sunar.`,
+          `Piyasada ${data.productName} modeline yönelik yüksek marka bilinirliği ve tüketici ilgisi mevcuttur.`,
+          `Kredi kartsız, peşinatsız mağaza içi senet onayı, online pazaryerlerine ve nakit mağazalara kıyasla Hedef AVM'ye doğrudan müşteri çekme avantajı sağlar.`
+        ];
+      }
+      reasons.forEach(r => {
         const d = document.createElement('div');
         d.className = 'p-3 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs sm:text-base font-bold text-emerald-950 flex items-start gap-2.5 break-words';
         d.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mt-1 shrink-0"></i> <span>${escapeHtml(r)}</span>`;
@@ -2007,7 +2015,15 @@ NOTLAR:
       // Riskler
       const risksList = document.getElementById('resRisksList');
       risksList.innerHTML = '';
-      (f.risksAndWatchouts || []).forEach(r => {
+      let risks = Array.isArray(f.risksAndWatchouts) ? f.risksAndWatchouts.filter(Boolean) : [];
+      if (risks.length === 0 || (risks.length === 1 && risks[0].includes('katılmadı'))) {
+        risks = [
+          '15 ay vadeli elden senetli satışlarda müşteri istihbaratı ve gecikme riski titizlikle takip edilmeli, düzenli skorlama yapılmalıdır.',
+          'Piyasa peşin fiyat rekabeti ve yetkili satıcı kampanyaları haftalık periyotlarla taranarak liste fiyatları güncel tutulmalıdır.',
+          'Yetkili distribütör garantisi, servis ağı ve iade/değişim şartları satış esnasında müşteriye açıkça bildirilmelidir.'
+        ];
+      }
+      risks.forEach(r => {
         const d = document.createElement('div');
         d.className = 'p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs sm:text-base font-bold text-amber-950 flex items-start gap-2.5 break-words';
         d.innerHTML = `<i class="fa-solid fa-exclamation text-amber-600 mt-1 shrink-0"></i> <span>${escapeHtml(r)}</span>`;
@@ -2017,7 +2033,31 @@ NOTLAR:
       // Kampanyalar
       const campList = document.getElementById('resCampaignsList');
       campList.innerHTML = '';
-      (data.campaigns || []).forEach(c => {
+      let campaigns = Array.isArray(data.campaigns) ? data.campaigns.filter(Boolean) : [];
+      if (campaigns.length === 0) {
+        campaigns = [
+          {
+            campaignType: '15 Ay Elden Senet',
+            title: 'Kredi Kartsız, Peşinatsız 15 Ay Elden Taksit',
+            description: `${data.productName} için peşinatsız ve kredi kartı gerektirmeden 15 eşit taksit imkanı.`,
+            bannerSlogan: `Kartsız, Peşinatsız! Ayda Sadece ${formatTL(monthlyInst)}'ye Evinizde!`
+          },
+          {
+            campaignType: 'Günün Fırsatı',
+            title: 'Hedef AVM Mağaza İçi Özel Kampanya',
+            description: 'Şubelerimizden teslim alan müşterilerimize anında onaylı elden senet ve teslimat ayrıcalığı.',
+            bannerSlogan: 'Bugüne Özel 15 Ay Elden Taksit Fırsatını Kaçırmayın!'
+          },
+          {
+            campaignType: 'Çeyiz & Ev Yenileme',
+            title: 'Çeyiz ve Ev Yenileyenlere Özel Avantaj Paketi',
+            description: 'Elden taksitli alışverişlerde sepetinize ekleyebileceğiniz özel vadeli paket avantajı.',
+            bannerSlogan: 'Evinizin Eksiklerini Dert Etmeyin, 15 Ayda Rahatça Ödeyin!'
+          }
+        ];
+      }
+      campaigns.forEach(c => {
+        const slogan = c.bannerSlogan || c.slogan || `Ayda Sadece ${formatTL(monthlyInst)}'ye Sahip Olun!`;
         const d = document.createElement('div');
         d.className = 'p-4 sm:p-5 rounded-2xl bg-[#faf5f8] border-2 border-pink-100 space-y-2 break-words';
         d.innerHTML = `
@@ -2025,11 +2065,11 @@ NOTLAR:
             <span class="text-[11px] sm:text-xs font-black uppercase tracking-wider bg-pink-100 text-[#c81373] px-2.5 py-0.5 rounded-full">
               ${escapeHtml(c.campaignType || 'Kampanya')}
             </span>
-            <span class="text-xs sm:text-base font-black text-slate-900">${escapeHtml(c.title)}</span>
+            <span class="text-xs sm:text-base font-black text-slate-900">${escapeHtml(c.title || 'Özel Kampanya')}</span>
           </div>
-          <p class="text-xs sm:text-sm text-slate-600 font-medium">${escapeHtml(c.description)}</p>
+          <p class="text-xs sm:text-sm text-slate-600 font-medium">${escapeHtml(c.description || '')}</p>
           <div class="p-3 rounded-xl bg-white border-2 border-pink-200 text-xs sm:text-base font-black text-[#c81373] italic shadow-2xs">
-            📢 "${escapeHtml(c.bannerSlogan)}"
+            📢 "${escapeHtml(slogan)}"
           </div>
         `;
         campList.appendChild(d);

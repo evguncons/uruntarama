@@ -290,5 +290,26 @@ class TestOfferVerification(unittest.TestCase):
         self.assertTrue(UrlNormalizer.is_product_url("https://www.evkur.com.tr/philips-ep5547-90-tam-otomatik-espresso-makinesi"))
         self.assertTrue(UrlNormalizer.is_product_url("https://www.philips.com.tr/c-p/EP5547_90/5500-serisi-tam-otomatik-espresso-makinesi"))
 
+    def test_13_feasibility_and_campaigns_generation(self):
+        """13. Feasibility selling points, risks, and campaigns are populated and never empty."""
+        from services.analysis_service import _build_default_feasibility_and_campaigns
+        data = _build_default_feasibility_and_campaigns(
+            product_name="Philips EP5547/90 Espresso Makinesi",
+            brand="Philips",
+            category="Kahve Makineleri",
+            model_code="EP5547/90",
+            market_prices={"min": 24999, "average": 27500, "max": 31000},
+            hedef_pricing={"cashRecommendedPrice": 25500, "installmentRecommendedPrice": 35190, "monthlyInstallmentPrice": 2346}
+        )
+        self.assertGreater(data["score"], 0)
+        self.assertIn("SATAR", data["verdict"])
+        self.assertGreaterEqual(len(data["reasonsToSell"]), 2)
+        self.assertGreaterEqual(len(data["risksAndWatchouts"]), 2)
+        self.assertGreaterEqual(len(data["campaigns"]), 2)
+        for camp in data["campaigns"]:
+            self.assertTrue(camp.get("title"))
+            self.assertTrue(camp.get("bannerSlogan"))
+            self.assertTrue(camp.get("slogan"))
+
 if __name__ == "__main__":
     unittest.main()
