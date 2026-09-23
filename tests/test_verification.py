@@ -311,5 +311,70 @@ class TestOfferVerification(unittest.TestCase):
             self.assertTrue(camp.get("bannerSlogan"))
             self.assertTrue(camp.get("slogan"))
 
+    def test_14_pricing_fallbacks_when_all_stores_out_of_stock(self):
+        """14. When all stores have out-of-stock status but have verified prices, market prices and hedef pricing are NOT 0."""
+        from services.models import ProductOffer, StockStatus, UrlStatus
+        from unittest.mock import patch
+
+        mock_offers = [
+            ProductOffer(
+                merchant="Marka Resmi Mağazası",
+                source_url="https://www.dyson.com.tr/dyson-v15-detect",
+                candidate_url="https://www.dyson.com.tr/dyson-v15-detect",
+                url_verified=True,
+                url_status=UrlStatus.VALID,
+                display_price=42999.0,
+                stock_status=StockStatus.OUT_OF_STOCK,
+                verified=True,
+                notes="Stokta yok, Haber Ver"
+            ),
+            ProductOffer(
+                merchant="Vatan Bilgisayar",
+                source_url="https://www.vatanbilgisayar.com/dyson-v15.html",
+                candidate_url="https://www.vatanbilgisayar.com/dyson-v15.html",
+                url_verified=True,
+                url_status=UrlStatus.VALID,
+                display_price=45999.0,
+                stock_status=StockStatus.OUT_OF_STOCK,
+                verified=True,
+                notes="Tükendi"
+            )
+        ]
+
+        with patch('services.analysis_service._resolve_product_identity') as mock_ident, \
+             patch('services.analysis_service._discover_candidates') as mock_disc, \
+             patch('services.analysis_service.OfferVerificationService.verify_offers') as mock_ver, \
+             patch('services.analysis_service._enrich_from_product_pages') as mock_enrich, \
+             patch('services.analysis_service._generate_feasibility_and_campaigns') as mock_feas:
+            
+            mock_ident.return_value = {
+                'full_name': 'Dyson V15 Detect Kablosuz Süpürge',
+                'model_code': 'V15 Detect',
+                'brand': 'Dyson',
+                'category': 'Süpürgeler'
+            }
+            mock_disc.return_value = []
+            mock_ver.return_value = mock_offers
+            mock_enrich.return_value = mock_offers
+            mock_feas.return_value = {
+                'feasibility': {'score': 85, 'verdict': 'GÜÇLÜ SATAR'},
+                'campaigns': []
+            }
+
+            from services.analysis_service import analyze_product
+            res = analyze_product("Dyson V15 Detect", api_key="test_key")
+
+            mp = res.get('marketPrices', {})
+            hp = res.get('hedefPricing', {})
+
+            # Must NOT be 0!
+            self.assertEqual(mp.get('min'), 42999.0)
+            self.assertEqual(mp.get('max'), 45999.0)
+            self.assertGreater(mp.get('average'), 42000.0)
+            self.assertGreater(hp.get('cashRecommendedPrice'), 40000.0)
+            self.assertGreater(hp.get('installmentRecommendedPrice'), 50000.0)
+            self.assertGreater(hp.get('monthlyInstallmentPrice'), 3000.0)
+
 if __name__ == "__main__":
     unittest.main()
+

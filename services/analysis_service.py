@@ -400,7 +400,11 @@ def _build_default_feasibility_and_campaigns(product_name, brand, category, mode
         "seasonalTrend": seasonal,
         "targetAudience": target_aud,
         "campaigns": campaigns,
-        "strategyNote": f"Piyasa en düşük fiyatı {min_p:,.0f} TL baz alınarak 15 ay vadeli elden senetli rekabetçi satış fiyatı belirlendi.",
+        "strategyNote": (
+            f"Piyasa en düşük fiyatı {min_p:,.0f} TL baz alınarak 15 ay vadeli elden senetli rekabetçi satış fiyatı belirlendi."
+            if min_p > 0 else
+            "Piyasa fiyatı ve mağaza teklifleri taranarak 15 ay vadeli elden senetli satış fiyatı belirlendi."
+        ),
         "advantageNote": f"Hedef AVM'de 15 ay vadede aylık {monthly_str} taksit ile Evkur, Taşpınar, Vivense, HYS AVM, Yön, Yiğit ve SenetSepet'e kıyasla daha rekabetçi elden senet imkanı sunulmaktadır."
     }
 
@@ -594,7 +598,24 @@ def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=Non
             installment.append({'name': name, 'website': '', 'isAvailable': False, 'productUrl': '',
                                 'source_url': '', 'url_verified': False, 'url_status': 'NOT_FOUND',
                                 'estimatedTotalPrice': 0, 'estimatedMonthly': 0, 'notes': 'Doğrulanmış ürün sayfası bulunamadı'})
-    prices = [r['estimatedPrice'] for r in benchmarks if r['isAvailable'] and r['estimatedPrice'] > 0]
+    # 1. Öncelik: Aktif stokta olan mağaza fiyatları
+    prices = [r['estimatedPrice'] for r in benchmarks if r.get('isAvailable') and (r.get('estimatedPrice') or 0) > 0]
+
+    # 2. Öncelik: Eğer tüm mağazalar geçici olarak stok dışı veya haber ver ise, tespit edilen son canlı fiyatlar
+    if not prices:
+        prices = [r['estimatedPrice'] for r in benchmarks if (r.get('estimatedPrice') or 0) > 0]
+
+    # 3. Öncelik: Senetli rakiplerde tespit edilen peşin/toplam fiyatlar
+    if not prices:
+        inst_prices = [r['estimatedTotalPrice'] for r in installment if (r.get('estimatedTotalPrice') or 0) > 0]
+        if inst_prices:
+            # Senetli toplam fiyattan peşin piyasa ortalamasına çevir (vade katsayısı ~1.38)
+            prices = [round(p / 1.38) for p in inst_prices]
+
+    # 4. Öncelik: Teklif havuzundaki doğrulanmış veya keşfedilmiş pozitif fiyatlar
+    if not prices:
+        prices = [o.display_price for o in offers if (o.display_price or 0) > 0]
+
     minimum = min(prices) if prices else 0
     average = round(sum(prices) / len(prices)) if prices else 0
     maximum = max(prices) if prices else 0
@@ -602,12 +623,17 @@ def analyze_product(product_name, api_key, user_cost=0, notes='', image_data=Non
     total = round(cash * 1.38) if cash else 0
     monthly = round(total / 15) if total else 0
 
+    strategy_note = (
+        f"Piyasa en düşük fiyatı ({minimum:,.0f} TL) baz alınarak 15 ay vadeli elden senetli rekabetçi satış fiyatı belirlendi."
+        if minimum > 0 else 'Öneri canlı doğrulanmış mağaza fiyatlarından hesaplandı.'
+    )
+
     hedef_pricing = {
         'cashRecommendedPrice': cash,
         'installmentRecommendedPrice': total,
         'monthlyInstallmentPrice': monthly,
         'installmentCount': 15,
-        'strategyNote': 'Öneri canlı doğrulanmış mağaza fiyatlarından hesaplandı.',
+        'strategyNote': strategy_note,
         'advantageNote': ''
     }
 

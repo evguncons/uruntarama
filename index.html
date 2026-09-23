@@ -1589,6 +1589,73 @@ NOTLAR:
       const hp = data.hedefPricing || {};
       const mp = data.marketPrices || {};
 
+      // 1. Piyasa Fiyatları ve Tutarlılık Doğrulaması (Öncelik: Aktif stoktaki fiyatlar; Yedek: Son tespit edilen fiyatlar)
+      let validPrices = (data.competitorBenchmarks || [])
+        .filter(c => {
+          const p = Number(c.estimatedPrice) || 0;
+          const n = (c.notes || '').toLowerCase();
+          const isOut = 
+            c.isAvailable === false || 
+            p <= 0 || 
+            n.includes('yok') || 
+            n.includes('bulunamadı') || 
+            n.includes('tükendi') || 
+            n.includes('tükenmiş') || 
+            n.includes('satışı yok') || 
+            n.includes('satılmıyor') || 
+            n.includes('bulunmuyor') || 
+            n.includes('temin edilemiyor') || 
+            n.includes('stokta yok') ||
+            n.includes('stok yok');
+          return !isOut && p > 0;
+        })
+        .map(c => Number(c.estimatedPrice));
+
+      // Yedek 1: Eğer aktif stokta mağaza yoksa ancak mağazalarda son tespit edilen geçerli fiyatlar varsa (örn: Vatan 45.999 ₺, Resmi Site 42.999 ₺)
+      if (validPrices.length === 0) {
+        validPrices = (data.competitorBenchmarks || [])
+          .map(c => Number(c.estimatedPrice) || 0)
+          .filter(p => p > 0);
+      }
+
+      // Yedek 2: Senetli rakiplerdeki tespit edilen toplam fiyatlar üzerinden
+      if (validPrices.length === 0 && Array.isArray(data.senetliCompetitors)) {
+        validPrices = data.senetliCompetitors
+          .map(c => Number(c.estimatedTotalPrice) || 0)
+          .filter(p => p > 0)
+          .map(p => Math.round(p / 1.38));
+      }
+
+      let marketMin = Number(mp.min) || 0;
+      let marketAvg = Number(mp.average) || 0;
+      let marketMax = Number(mp.max) || 0;
+
+      if (validPrices.length > 0) {
+        const calcMin = Math.min(...validPrices);
+        const calcMax = Math.max(...validPrices);
+        const calcAvg = Math.round(validPrices.reduce((a, b) => a + b, 0) / validPrices.length);
+
+        if (!marketMin || marketMin <= 0) marketMin = calcMin;
+        if (!marketMax || marketMax <= 0) marketMax = calcMax;
+        if (!marketAvg || marketAvg <= 0) marketAvg = calcAvg;
+      }
+      if (!marketMin || marketMin <= 0) marketMin = 0;
+      if (!marketAvg || marketAvg <= 0) marketAvg = 0;
+      if (!marketMax || marketMax <= 0) marketMax = 0;
+
+      let baseCash = Number(hp.cashRecommendedPrice) || 0;
+      if (!baseCash || baseCash <= 0) {
+        baseCash = marketMin > 0 ? Math.round(marketMin * 1.02) : (marketAvg > 0 ? marketAvg : 0);
+      }
+      let totalInst = Number(hp.installmentRecommendedPrice) || 0;
+      if (!totalInst || totalInst <= 0) {
+        totalInst = baseCash > 0 ? Math.round(baseCash * 1.38) : 0;
+      }
+      let monthlyInst = Number(hp.monthlyInstallmentPrice) || 0;
+      if (!monthlyInst || monthlyInst <= 0) {
+        monthlyInst = totalInst > 0 ? Math.round(totalInst / (Number(hp.installmentCount) || 15)) : 0;
+      }
+
       document.getElementById('reportTimestamp').textContent = 'Tarih: ' + (data._timestamp || 'Şimdi');
       
       const imgElem = document.getElementById('resProductImage');
@@ -1709,57 +1776,15 @@ NOTLAR:
       document.getElementById('resReturnRisk').textContent = cleanReturn;
       document.getElementById('resSeasonal').textContent = cleanSeasonal;
 
-      // Piyasa Fiyatları ve Tutarlılık Doğrulaması (Yalnızca aktif STOKTA OLAN ürünlerin fiyatları üzerinden)
-      const validInStockPrices = (data.competitorBenchmarks || [])
-        .filter(c => {
-          const p = Number(c.estimatedPrice) || 0;
-          const n = (c.notes || '').toLowerCase();
-          const isOut = 
-            c.isAvailable === false || 
-            p <= 0 || 
-            n.includes('yok') || 
-            n.includes('bulunamadı') || 
-            n.includes('tükendi') || 
-            n.includes('tükenmiş') || 
-            n.includes('satışı yok') || 
-            n.includes('satılmıyor') || 
-            n.includes('bulunmuyor') || 
-            n.includes('temin edilemiyor') || 
-            n.includes('stokta yok') ||
-            n.includes('stok yok');
-          return !isOut && p > 0;
-        })
-        .map(c => Number(c.estimatedPrice));
-
-      let marketMin = Number(mp.min) || 0;
-      let marketAvg = Number(mp.average) || 0;
-      let marketMax = Number(mp.max) || 0;
-
-      if (validInStockPrices.length > 0) {
-        const calcMin = Math.min(...validInStockPrices);
-        const calcMax = Math.max(...validInStockPrices);
-        const calcAvg = Math.round(validInStockPrices.reduce((a, b) => a + b, 0) / validInStockPrices.length);
-
-        if (!marketMin || marketMin <= 0 || marketMin < calcMin * 0.7) marketMin = calcMin;
-        if (!marketMax || marketMax <= 0 || marketMax > calcMax * 1.3) marketMax = calcMax;
-        if (!marketAvg || marketAvg <= 0) marketAvg = calcAvg;
-      }
-      if (!marketMin || marketMin <= 0) marketMin = 0;
-      if (!marketAvg || marketAvg <= 0) marketAvg = 0;
-      if (!marketMax || marketMax <= 0) marketMax = 0;
-
-      const baseCash = hp.cashRecommendedPrice || Math.round(marketMin * 1.02);
-      const totalInst = hp.installmentRecommendedPrice || Math.round(baseCash * 1.38);
-      const monthlyInst = hp.monthlyInstallmentPrice || Math.round(totalInst / 15);
-
       document.getElementById('resInstallmentTotal').textContent = formatTL(totalInst);
       document.getElementById('resMonthlyInstallment').textContent = formatTL(monthlyInst);
       document.getElementById('resInstallmentCount').textContent = hp.installmentCount || 15;
       document.getElementById('resCashPrice').textContent = formatTL(baseCash);
 
       const stratBox = document.getElementById('resStrategyNoteBox');
-      if (hp.strategyNote) {
-        document.getElementById('resStrategyNote').textContent = hp.strategyNote;
+      const stratNoteText = hp.strategyNote || (marketMin > 0 ? `Piyasa en düşük fiyatı (${formatTL(marketMin)}) baz alınarak 15 ay vadeli elden senetli rekabetçi satış fiyatı belirlendi.` : '');
+      if (stratNoteText) {
+        document.getElementById('resStrategyNote').textContent = stratNoteText;
         stratBox.classList.remove('hidden');
       } else {
         stratBox.classList.add('hidden');
